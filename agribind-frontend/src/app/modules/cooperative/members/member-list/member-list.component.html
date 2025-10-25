@@ -1,0 +1,193 @@
+<div class="members-container">
+  <!-- Statistics Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon total">👥</div>
+        <span class="stat-label">Total Members</span>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">12</div>
+        <p class="stat-description">All Types registered</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon farmers">🌱</div>
+        <span class="stat-label">Farmers</span>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">8</div>
+        <p class="stat-description"><span class="highlight">66.7%</span> of members</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon cooperatives">🏢</div>
+        <span class="stat-label">Operatives</span>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">2</div>
+        <p class="stat-description"><span class="highlight">16.7%</span> of members</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-icon officials">👨‍💼</div>
+        <span class="stat-label">Government Officials</span>
+      </div>
+      <div class="stat-content">
+        <div class="stat-number">2</div>
+        <p class="stat-description"><span class="highlight">16.7%</span> of members</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions Bar -->
+  <div class="actions-bar">
+    <div class="search-box">
+      <i>🔍</i>
+      <input type="text" placeholder="Search members by name, ID, or phone...">
+    </div>
+    <div class="actions">
+      <button class="btn-primary">
+        <i>+</i>
+        Add Member
+      </button>
+      <button class="btn-secondary">
+        <i>📊</i>
+        Export
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Row -->
+  <div class="filters-row">
+    <div class="filter-group">
+      <label>Member Type</label>
+      <select>
+        <option>All Types</option>
+        <option>Farmers</option>
+        <option>Operatives</option>
+        <option>Government Officials</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Region</label>
+      <select>
+        <option>All Regions</option>
+        <option>North West</option>
+        <option>South West</option>
+        <option>Littoral</option>
+        <option>Centre</option>
+        <option>North</option>
+        <option>West</option>
+        <option>Adamawa</option>
+        <option>South</option>
+        <option>Far North</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Status</label>
+      <select>
+        <option>All Status</option>
+        <option>Active</option>
+        <option>Inactive</option>
+        <option>Pending</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Primary Crop</label>
+      <select>
+        <option>All Crops</option>
+        <option>Coffee</option>
+        <option>Cocoa</option>
+        <option>Maize</option>
+        <option>Plantains</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Members Table -->
+  <div class="table-container">
+    <table class="members-table">
+      <thead>
+      <tr>
+        <th class="checkbox-col">
+          <input type="checkbox">
+        </th>
+        <th>Member</th>
+        <th>Contact</th>
+        <th>Type</th>
+        <th>Location</th>
+        <th>Farm Details</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let member of members">
+        <td class="checkbox-col">
+          <input type="checkbox">
+        </td>
+        <td>
+          <div class="member-id">
+            <div class="id-icon">{{ getInitials(member.name) }}</div>
+            <div>
+              <div class="member-name">{{ member.name }}</div>
+              <div class="id-text">{{ member.id }}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div class="contact">
+            <i>📞</i>
+            {{ member.phone }}
+          </div>
+        </td>
+        <td>
+            <span class="type-badge" [attr.data-type]="member.type">
+              {{ member.type }}
+            </span>
+        </td>
+        <td>
+          <div class="location">
+            <i>📍</i>
+            <div>
+              <div class="location-main">{{ member.region }}</div>
+              <div class="location-sub">Cameroon</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div class="details">
+            <i>🌿</i>
+            <div>
+              <div class="crop-name">{{ member.primaryCrop }}</div>
+              <div class="farm-size">2.5 hectares</div>
+            </div>
+          </div>
+        </td>
+        <td>
+            <span class="status-badge" [class]="'status-' + member.status.toLowerCase()">
+              {{ member.status }}
+            </span>
+        </td>
+        <td>
+          <div class="action-buttons">
+            <button class="btn-icon" title="Edit">✏️</button>
+            <button class="btn-icon" title="View">👁️</button>
+            <button class="btn-icon" title="Delete">🗑️</button>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

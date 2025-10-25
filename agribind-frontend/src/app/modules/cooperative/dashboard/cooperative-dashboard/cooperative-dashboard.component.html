@@ -1,0 +1,284 @@
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <h3>AgriBind</h3>
+      <p>Cooperative Portal</p>
+    </div>
+
+    <div class="sidebar-nav">
+      <a routerLink="/cooperative/members" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">👥</span>
+        <span class="nav-text">Members</span>
+      </a>
+
+      <a routerLink="/cooperative/inventory" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📦</span>
+        <span class="nav-text">Inventory</span>
+      </a>
+
+      <a routerLink="/cooperative/credits" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">💰</span>
+        <span class="nav-text">Microcredits</span>
+      </a>
+
+      <a routerLink="/cooperative/reports" routerLinkActive="active" class="nav-item">
+        <span class="nav-icon">📊</span>
+        <span class="nav-text">Reports</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main Content Area -->
+  <div class="main-content-area">
+    <!-- Main Header -->
+    <header class="main-header">
+      <div class="header-left">
+        <h1 class="app-title">Agribind</h1>
+        <span class="app-subtitle">Management Distributed</span>
+      </div>
+
+      <div class="header-center">
+        <h2 class="page-title">Members</h2>
+        <p class="welcome-text">Welcome back, Cooperative Manager</p>
+      </div>
+
+      <div class="header-right">
+        <div class="customer-cycle-badge">
+          <span class="cycle-text">Customer Cycle</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Horizontal Stats Section -->
+    <section class="stats-section-horizontal">
+      <div class="stats-row">
+        <div class="stat-item total-members">
+          <div class="stat-label">Total Members</div>
+          <div class="stat-number-large">300</div>
+          <div class="stat-change">+12 this month</div>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="stat-item active-members">
+          <div class="stat-label">Active Members</div>
+          <div class="stat-number">287</div>
+          <div class="stat-description">95.7% activity rate</div>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="stat-item new-members">
+          <div class="stat-label">New This Month</div>
+          <div class="stat-number">12</div>
+          <div class="stat-description">+15% vs last month</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Business Section -->
+    <section class="business-section">
+      <div class="business-header">
+        <h3 class="section-title">Business</h3>
+        <div class="business-actions">
+          <div class="search-box">
+            <input type="text" placeholder="Search members by name, ID, or phone...">
+          </div>
+          <button class="btn btn-primary">Add Member</button>
+          <button class="btn btn-secondary">Export</button>
+        </div>
+      </div>
+
+      <div class="filters-row-horizontal">
+        <div class="filter-item">
+          <label>Status</label>
+          <select>
+            <option>All Members</option>
+            <option>Active</option>
+            <option>Inactive</option>
+            <option>Pending</option>
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label>Regions</label>
+          <select>
+            <option>All Regions</option>
+            <option>North West</option>
+            <option>South West</option>
+            <option>Littoral</option>
+            <option>Centre</option>
+            <option>North</option>
+            <option>West</option>
+            <option>Adamawa</option>
+            <option>South</option>
+            <option>Far North</option>
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label>Primary Crops</label>
+          <select>
+            <option>All crops</option>
+            <option>Cocoa</option>
+            <option>Coffee</option>
+            <option>Maize</option>
+            <option>Plantains</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Table Section (No Contracts/Microcredits title) -->
+    <section class="table-section">
+      <!-- Members Table -->
+      <div class="table-wrapper">
+        <table class="members-table">
+          <thead>
+          <tr>
+            <th>Member ID</th>
+            <th>Name</th>
+            <th>Contact</th>
+            <th>Location</th>
+            <th>Primary Crop</th>
+            <th>Farm Size</th>
+            <th>Last Production</th>
+            <th>Credit Status</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td class="member-id">M001</td>
+            <td class="member-name">Kwame Orel</td>
+            <td class="member-contact">+237 84234597</td>
+            <td class="member-location">North West</td>
+            <td class="member-crop">Cocoa</td>
+            <td class="farm-size">5.2</td>
+            <td>
+              <span class="badge production-good">Good</span>
+            </td>
+            <td>
+              <span class="badge status-active">Active</span>
+            </td>
+            <td>
+              <span class="badge status-active">Active</span>
+            </td>
+            <td class="actions">
+              <button class="icon-btn">✏️</button>
+              <button class="icon-btn">👁️</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="member-id">M002</td>
+            <td class="member-name">Arna Boaleng</td>
+            <td class="member-contact">+237 78438887</td>
+            <td class="member-location">South West</td>
+            <td class="member-crop">Coffee</td>
+            <td class="farm-size">3.8</td>
+            <td>
+              <span class="badge production-good">Good</span>
+            </td>
+            <td>
+              <span class="badge status-active">Active</span>
+            </td>
+            <td>
+              <span class="badge status-active">Active</span>
+            </td>
+            <td class="actions">
+              <button class="icon-btn">✏️</button>
+              <button class="icon-btn">👁️</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="member-id">M003</td>
+            <td class="member-name">Yann Mensah</td>
+            <td class="member-contact">+237 84284756</td>
+            <td class="member-location">Littoral</td>
+            <td class="member-crop">Cocoa</td>
+            <td class="farm-size">7.5</td>
+            <td>
+              <span class="badge production-excellent">Excellent</span>
+            </td>
+            <td>
+              <span class="badge status-inactive">Inactive</span>
+            </td>
+            <td>
+              <span class="badge status-inactive">Inactive</span>
+            </td>
+            <td class="actions">
+              <button class="icon-btn">✏️</button>
+              <button class="icon-btn">👁️</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="member-id">M004</td>
+            <td class="member-name">Alessua Datta</td>
+            <td class="member-contact">+237 55602833</td>
+            <td class="member-location">North West</td>
+            <td class="member-crop">Maize</td>
+            <td class="farm-size">4.2</td>
+            <td>
+              <span class="badge production-good">Good</span>
+            </td>
+            <td>
+              <span class="badge status-active">Active</span>
+            </td>
+            <td>
+              <span class="badge status-active">Active</span>
+            </td>
+            <td class="actions">
+              <button class="icon-btn">✏️</button>
+              <button class="icon-btn">👁️</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="member-id">M005</td>
+            <td class="member-name">Koffi Aisante</td>
+            <td class="member-contact">+237 56700432</td>
+            <td class="member-location">South West</td>
+            <td class="member-crop">Cassava</td>
+            <td class="farm-size">6.0</td>
+            <td>
+              <span class="badge production-fair">Fair</span>
+            </td>
+            <td>
+              <span class="badge status-active">Active</span>
+            </td>
+            <td>
+              <span class="badge status-active">Active</span>
+            </td>
+            <td class="actions">
+              <button class="icon-btn">✏️</button>
+              <button class="icon-btn">👁️</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="member-id">M006</td>
+            <td class="member-name">Alessua Dumas</td>
+            <td class="member-contact">+237 88493844</td>
+            <td class="member-location">Littoral</td>
+            <td class="member-crop">Coffee</td>
+            <td class="farm-size">4.5</td>
+            <td>
+              <span class="badge production-excellent">Excellent</span>
+            </td>
+            <td>
+              <span class="badge status-inactive">Inactive</span>
+            </td>
+            <td>
+              <span class="badge status-inactive">Inactive</span>
+            </td>
+            <td class="actions">
+              <button class="icon-btn">✏️</button>
+              <button class="icon-btn">👁️</button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
