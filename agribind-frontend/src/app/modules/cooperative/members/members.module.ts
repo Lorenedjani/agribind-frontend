@@ -4,11 +4,11 @@ import { MemberListComponent } from './member-list/member-list.component';
 import { MembersRoutingModule } from './members-routing.module';
 
 @NgModule({
-  declarations: [],
+  declarations: [], // Empty declarations
   imports: [
     CommonModule,
     MembersRoutingModule,
-    MemberListComponent,
+    MemberListComponent // Import standalone component
   ]
 })
 export class MembersModule { }

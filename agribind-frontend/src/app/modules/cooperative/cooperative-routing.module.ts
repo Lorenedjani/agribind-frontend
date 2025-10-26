@@ -5,8 +5,14 @@ import { CooperativeDashboardComponent } from './dashboard/cooperative-dashboard
 const routes: Routes = [
   {
     path: '',
-    component: CooperativeDashboardComponent
-    // Remove the children routes since the table is now in the dashboard
+    component: CooperativeDashboardComponent,
+    children: [
+      {
+        path: 'members',
+        loadChildren: () => import('./members/members.module').then(m => m.MembersModule)
+      },
+      { path: '', redirectTo: 'members', pathMatch: 'full' }
+    ]
   }
 ];
 
