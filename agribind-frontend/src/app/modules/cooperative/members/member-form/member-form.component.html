@@ -1,0 +1,89 @@
+<!-- Modal Wrapper -->
+<div class="modal-overlay" *ngIf="isModalOpen">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add New Member</h2>
+      <button class="close-btn" (click)="closeModal()">✖</button>
+    </div>
+
+    <form [formGroup]="memberForm" (ngSubmit)="onSubmit()">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>First Name</label>
+          <input formControlName="firstName" placeholder="Enter first name">
+          <small *ngIf="isFieldInvalid('firstName')">First name is required</small>
+        </div>
+
+        <div class="form-group">
+          <label>Last Name</label>
+          <input formControlName="lastName" placeholder="Enter last name">
+          <small *ngIf="isFieldInvalid('lastName')">Last name is required</small>
+        </div>
+
+        <div class="form-group">
+          <label>Phone</label>
+          <input formControlName="phone" placeholder="+237 6xx xxx xxx">
+          <small *ngIf="isFieldInvalid('phone')">Valid phone number required</small>
+        </div>
+
+        <div class="form-group">
+          <label>Email</label>
+          <input formControlName="email" placeholder="example@email.com">
+        </div>
+
+        <div class="form-group">
+          <label>Member Type</label>
+          <select formControlName="memberType">
+            <option value="">Select type</option>
+            <option>Farmer</option>
+            <option>Cooperative</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Region</label>
+          <select formControlName="region">
+            <option value="">Select region</option>
+            <option>North West</option>
+            <option>South West</option>
+            <option>Littoral</option>
+            <option>Centre</option>
+            <option>West</option>
+            <option>Far North</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Location</label>
+          <input formControlName="location" placeholder="Enter location">
+        </div>
+
+        <div class="form-group">
+          <label>Primary Crop</label>
+          <select formControlName="primaryCrop">
+            <option value="">Select crop</option>
+            <option>Cocoa</option>
+            <option>Coffee</option>
+            <option>Maize</option>
+            <option>Plantains</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Farm Size (ha)</label>
+          <input formControlName="farmSize" type="number" placeholder="Optional">
+        </div>
+
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea formControlName="notes" rows="3" placeholder="Optional notes"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="closeModal()">Cancel</button>
+        <button type="submit" class="btn-submit" [disabled]="isSubmitting">Save Member</button>
+      </div>
+    </form>
+  </div>
+</div>

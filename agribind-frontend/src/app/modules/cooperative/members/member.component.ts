@@ -1,43 +1,36 @@
+// members.component.ts
 import { Component, ViewChild } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { MemberFormComponent } from './modules/cooperative/members/member-form/member-form.component';
+import { MemberFormComponent } from './member-form/member-form.component';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
+  selector: 'app-members',
+  templateUrl: './members.component.html',
+  styleUrls: ['./members.component.scss'],
   standalone: true,
-  imports: [RouterOutlet, CommonModule, MemberFormComponent]
+  imports: [CommonModule, MemberFormComponent] // Import MemberFormComponent here
 })
-export class AppComponent {
-  title = 'agribind-frontend';
-
+export class MembersComponent {
   @ViewChild(MemberFormComponent) memberFormComponent!: MemberFormComponent;
 
-  // Your existing members data
   members: any[] = [
-    // Your existing members data here
+    // Your existing members data
   ];
 
-  // Method to open the modal
   openAddMemberModal(): void {
     this.memberFormComponent.openModal();
   }
 
-  // Handle new member
   onMemberAdded(newMember: any): void {
     this.members.unshift(newMember);
     this.updateStats();
   }
 
-  // Handle modal close
   onModalClosed(): void {
     // Any cleanup if needed
   }
 
   private updateStats(): void {
-    // Update your statistics here
     console.log('Stats updated with new member');
   }
 }
