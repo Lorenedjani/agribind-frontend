@@ -1,7 +1,9 @@
+// member-list.component.ts
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MemberFormComponent } from '../member-form/member-form.component';
+import { EditMemberFormComponent } from '../edit-member-form/edit-member-form.component';
 
 interface Member {
   id: string;
@@ -11,6 +13,8 @@ interface Member {
   region: string;
   primaryCrop: string;
   status: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 @Component({
@@ -18,10 +22,11 @@ interface Member {
   templateUrl: './member-list.component.html',
   styleUrls: ['./member-list.component.scss'],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MemberFormComponent]
+  imports: [CommonModule, ReactiveFormsModule, MemberFormComponent, EditMemberFormComponent]
 })
 export class MemberListComponent implements OnInit {
   @ViewChild(MemberFormComponent, { static: false }) memberFormComponent!: MemberFormComponent;
+  @ViewChild(EditMemberFormComponent, { static: false }) editMemberFormComponent!: EditMemberFormComponent;
 
   members: Member[] = [
     {
@@ -66,8 +71,22 @@ export class MemberListComponent implements OnInit {
     console.log('MemberListComponent loaded with', this.members.length, 'members');
   }
 
+  private getNextMemberId(): string {
+    if (this.members.length === 0) {
+      return 'M001';
+    }
+
+    const existingIds = this.members.map(member => {
+      const numericPart = member.id.replace('M', '');
+      return parseInt(numericPart, 10);
+    });
+
+    const maxId = Math.max(...existingIds);
+    const nextId = maxId + 1;
+    return 'M' + nextId.toString().padStart(3, '0');
+  }
+
   openAddMemberModal(): void {
-    console.log('Opening modal...');
     if (this.memberFormComponent) {
       this.memberFormComponent.openModal();
     } else {
@@ -75,25 +94,47 @@ export class MemberListComponent implements OnInit {
     }
   }
 
-  // Add this method to handle new members
+  openEditMemberModal(member: Member): void {
+    if (this.editMemberFormComponent) {
+      this.editMemberFormComponent.openModal(member);
+    } else {
+      console.error('EditMemberFormComponent not found!');
+    }
+  }
+
+
+
   onMemberAdded(newMember: any): void {
     console.log('New member received:', newMember);
+
+    const nextId = this.getNextMemberId();
     const convertedMember: Member = {
-      id: newMember.id,
-      name: `${newMember.firstName} ${newMember.lastName}`,
-      phone: newMember.phone,
-      type: newMember.memberType,
-      region: newMember.region,
+      id: nextId,
+      name: newMember.Name,
+      phone: newMember.contact,
+      type: newMember.Type,
+      region: newMember.location,
       primaryCrop: newMember.primaryCrop,
       status: newMember.status
     };
 
-    this.members.unshift(convertedMember);
+    this.members.push(convertedMember);
     this.updateStats();
     console.log('Total members now:', this.members.length);
   }
 
-  // Add this method to handle modal close
+  onMemberUpdated(updatedMember: Member): void {
+    console.log('Member updated:', updatedMember);
+
+    const index = this.members.findIndex(member => member.id === updatedMember.id);
+    if (index !== -1) {
+      this.members[index] = updatedMember;
+      console.log('Member successfully updated');
+    } else {
+      console.error('Member not found for update');
+    }
+  }
+
   onModalClosed(): void {
     console.log('Modal closed');
   }

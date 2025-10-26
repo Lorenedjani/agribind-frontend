@@ -5,17 +5,11 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 
 export interface NewMember {
   id?: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  email?: string;
-  memberType: string;
-  region: string;
+  Name: string;
+  contact: string;
+  Type: string;
   location: string;
   primaryCrop: string;
-  farmSize?: number;
-  registrationDate?: string;
-  notes?: string;
   status?: string;
 }
 
@@ -45,26 +39,29 @@ export class MemberFormComponent implements OnInit {
 
   private initForm(): void {
     this.memberForm = this.fb.group({
-      firstName: ['', [Validators.required, Validators.minLength(2)]],
-      lastName: ['', [Validators.required, Validators.minLength(2)]],
-      phone: ['', [Validators.required, Validators.pattern(/^\+?[\d\s-]+$/)]],
-      email: ['', [Validators.email]],
-      memberType: ['', Validators.required],
-      region: ['', Validators.required],
+      FirstName: ['', [Validators.required, Validators.minLength(2), Validators.pattern(/^[a-zA-Z\s]+$/)]],
+      LastName: ['', [Validators.required, Validators.minLength(2), Validators.pattern(/^[a-zA-Z\s]+$/)]],
+      contact: ['', [Validators.required, Validators.pattern(/^\+237\s[0-9]{8}$/)]],
+      Type: ['', Validators.required],
       location: ['', Validators.required],
       primaryCrop: ['', Validators.required],
-      farmSize: [''],
-      registrationDate: [''],
-      notes: ['']
+      status: ['Active', Validators.required]
     });
   }
 
   openModal(): void {
     console.log('✅ openModal() called');
     this.isModalOpen = true;
-    this.memberForm.reset();
+    this.memberForm.reset({
+      FirstName: '',
+      LastName: '',
+      contact: '+237 ',
+      Type: '',
+      location: '',
+      primaryCrop: '',
+      status: 'Active'
+    });
     document.body.style.overflow = 'hidden';
-    alert('Modal opened!');
   }
 
 
@@ -79,22 +76,25 @@ export class MemberFormComponent implements OnInit {
 
   onSubmit(): void {
     console.log('Form submitted');
+    console.log('Form valid:', this.memberForm.valid);
+    console.log('Form values:', this.memberForm.value);
+
     if (this.memberForm.valid) {
-      this.isSubmitting = true;
-      const newMember: NewMember = {
-        ...this.memberForm.value,
-        id: 'M' + Math.floor(1000 + Math.random() * 9000),
-        status: 'Active',
-        registrationDate: new Date().toISOString().split('T')[0]
+      console.log('Form is valid, proceeding...');
+      const formData = this.memberForm.value;
+      const fullName = `${formData.FirstName} ${formData.LastName}`.trim();
+      const newMember = {
+        ...formData,
+        Name: fullName
       };
 
-      setTimeout(() => {
-        this.memberAdded.emit(newMember);
-        this.closeModal();
-        this.isSubmitting = false;
-      }, 800);
-    }  else {
-      this.markFormGroupTouched(this.memberForm);
+      console.log('Emitting new member:', newMember);
+      this.memberAdded.emit(newMember);
+      this.closeModal();
+    } else {
+      console.log('Form is invalid');
+      // Mark all fields as touched to show validation errors
+      this.memberForm.markAllAsTouched();
     }
   }
 

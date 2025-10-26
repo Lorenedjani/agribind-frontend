@@ -1,8 +1,7 @@
-<!-- Modal Wrapper -->
 <div class="modal-overlay" *ngIf="isModalOpen">
   <div class="modal">
     <div class="modal-header">
-      <h2>Add New Member</h2>
+      <h2>Edit Member</h2>
       <button class="close-btn" (click)="closeModal()">✖</button>
     </div>
 
@@ -95,7 +94,7 @@
 
       <div class="modal-footer">
         <button type="button" class="btn-cancel" (click)="closeModal()">Cancel</button>
-        <button type="submit" class="btn-submit" [disabled]="isSubmitting">Save Member</button>
+        <button type="submit" class="btn-submit" [disabled]="isSubmitting">Update Member</button>
       </div>
     </form>
   </div>

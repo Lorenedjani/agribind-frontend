@@ -1,5 +1,4 @@
 <div class="member-list-content">
-  <!-- Horizontal Stats Section -->
   <section class="stats-section-horizontal">
     <div class="stats-row">
       <div class="stat-item total-members">
@@ -42,7 +41,6 @@
         <div class="search-box">
           <input type="text" placeholder="Search members by name, ID, or phone...">
         </div>
-        <!-- Updated Add Member button -->
         <button class="btn btn-primary" (click)="openAddMemberModal()">Add Member</button>
         <button class="btn btn-secondary">Export</button>
       </div>
@@ -119,7 +117,7 @@
         </span>
           </td>
           <td class="actions">
-            <button class="icon-btn">✏️</button>
+            <button class="icon-btn" (click)="openEditMemberModal(member)">✏️</button>
             <button class="icon-btn">👁️</button>
             <button class="icon-btn qr-icon">📱</button>
           </td>
@@ -135,3 +133,7 @@
   (memberAdded)="onMemberAdded($event)"
   (modalClosed)="onModalClosed()">
 </app-member-form>
+<app-edit-member-form
+  (memberUpdated)="onMemberUpdated($event)"
+  (modalClosed)="onModalClosed()">
+</app-edit-member-form>
