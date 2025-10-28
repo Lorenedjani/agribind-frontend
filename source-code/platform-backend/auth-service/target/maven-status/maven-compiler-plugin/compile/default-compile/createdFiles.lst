@@ -1,0 +1,3 @@
+com\agribind\auth\entity\UserRole.class
+com\agribind\auth_service\AuthServiceApplication.class
+com\agribind\auth\entity\User.class
