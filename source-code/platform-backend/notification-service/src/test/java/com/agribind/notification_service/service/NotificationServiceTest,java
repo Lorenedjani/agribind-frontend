@@ -1,0 +1,152 @@
+package com.agribind.notification_service.service;
+
+import com.example.notificationservice.model.NotificationRequest;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.time.LocalDateTime;
+
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+@ExtendWith(MockitoExtension.class)
+class NotificationServiceTest {
+
+    @InjectMocks
+    private NotificationService notificationService;
+
+    private NotificationRequest emailNotification;
+    private NotificationRequest smsNotification;
+    private NotificationRequest pushNotification;
+
+    @BeforeEach
+    void setUp() {
+        emailNotification = new NotificationRequest();
+        emailNotification.setUserId("user123");
+        emailNotification.setType("EMAIL");
+        emailNotification.setSubject("Test Email");
+        emailNotification.setMessage("This is a test email");
+        emailNotification.setRecipient("test@example.com");
+        emailNotification.setTimestamp(LocalDateTime.now());
+
+        smsNotification = new NotificationRequest();
+        smsNotification.setUserId("user456");
+        smsNotification.setType("SMS");
+        smsNotification.setSubject("Test SMS");
+        smsNotification.setMessage("This is a test SMS");
+        smsNotification.setRecipient("+1234567890");
+        smsNotification.setTimestamp(LocalDateTime.now());
+
+        pushNotification = new NotificationRequest();
+        pushNotification.setUserId("user789");
+        pushNotification.setType("PUSH");
+        pushNotification.setSubject("Test Push");
+        pushNotification.setMessage("This is a test push notification");
+        pushNotification.setRecipient("device123");
+        pushNotification.setTimestamp(LocalDateTime.now());
+    }
+
+    @Test
+    void processNotification_WithEmailType_ShouldProcessSuccessfully() {
+        // Given - setup is done in @BeforeEach
+
+        // When
+        assertDoesNotThrow(() -> notificationService.processNotification(emailNotification));
+
+        // Then - No exception should be thrown
+        // We can verify through logging or check if methods were called
+    }
+
+    @Test
+    void processNotification_WithSmsType_ShouldProcessSuccessfully() {
+        // Given - setup is done in @BeforeEach
+
+        // When
+        assertDoesNotThrow(() -> notificationService.processNotification(smsNotification));
+
+        // Then - No exception should be thrown
+    }
+
+    @Test
+    void processNotification_WithPushType_ShouldProcessSuccessfully() {
+        // Given - setup is done in @BeforeEach
+
+        // When
+        assertDoesNotThrow(() -> notificationService.processNotification(pushNotification));
+
+        // Then - No exception should be thrown
+    }
+
+    @Test
+    void processNotification_WithUnknownType_ShouldLogWarning() {
+        // Given
+        NotificationRequest unknownNotification = new NotificationRequest();
+        unknownNotification.setUserId("user999");
+        unknownNotification.setType("UNKNOWN");
+        unknownNotification.setMessage("Unknown type message");
+        unknownNotification.setTimestamp(LocalDateTime.now());
+
+        // When
+        assertDoesNotThrow(() -> notificationService.processNotification(unknownNotification));
+
+        // Then - Should handle gracefully without throwing exception
+    }
+
+    @Test
+    void processNotification_WithNullNotification_ShouldThrowException() {
+        // Given
+        NotificationRequest nullNotification = null;
+
+        // When & Then
+        assertThrows(NullPointerException.class,
+            () -> notificationService.processNotification(nullNotification));
+    }
+
+    @Test
+    void processNotification_WithNullType_ShouldHandleGracefully() {
+        // Given
+        NotificationRequest nullTypeNotification = new NotificationRequest();
+        nullTypeNotification.setUserId("user111");
+        nullTypeNotification.setType(null);
+        nullTypeNotification.setMessage("Test message");
+        nullTypeNotification.setTimestamp(LocalDateTime.now());
+
+        // When & Then
+        assertDoesNotThrow(() -> notificationService.processNotification(nullTypeNotification));
+    }
+
+    @Test
+    void sendEmail_ShouldExecuteWithoutErrors() {
+        // Given
+        NotificationService service = new NotificationService();
+
+        // When & Then
+        assertDoesNotThrow(() ->
+            ReflectionTestUtils.invokeMethod(service, "sendEmail", emailNotification));
+    }
+
+    @Test
+    void sendSMS_ShouldExecuteWithoutErrors() {
+        // Given
+        NotificationService service = new NotificationService();
+
+        // When & Then
+        assertDoesNotThrow(() ->
+            ReflectionTestUtils.invokeMethod(service, "sendSMS", smsNotification));
+    }
+
+    @Test
+    void sendPush_ShouldExecuteWithoutErrors() {
+        // Given
+        NotificationService service = new NotificationService();
+
+        // When & Then
+        assertDoesNotThrow(() ->
+            ReflectionTestUtils.invokeMethod(service, "sendPush", pushNotification));
+    }
+}

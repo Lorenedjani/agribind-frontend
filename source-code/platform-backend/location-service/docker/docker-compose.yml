@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  location-service:
+    build: .
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:mysql://mysql:3306/cooperative_db
+      - DB_USERNAME=cooperative_user
+      - DB_PASSWORD=cooperative_pass
+    depends_on:
+      - mysql
+    networks:
+      - cooperative-network
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: cooperative_db
+      MYSQL_USER: cooperative_user
+      MYSQL_PASSWORD: cooperative_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/db-init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - cooperative-network
+
+volumes:
+  mysql_data:
+
+networks:
+  cooperative-network:
+    driver: bridge
