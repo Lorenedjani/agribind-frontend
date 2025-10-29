@@ -73,6 +73,10 @@
             <option>Coffee</option>
             <option>Maize</option>
             <option>Plantains</option>
+            <option>Cotton</option>
+            <option>Palm oil</option>
+            <option>Cassava</option>
+            <option>Rice</option>
           </select>
           <small *ngIf="isFieldInvalid('primaryCrop')" class="error-message">
             <span *ngIf="memberForm.get('primaryCrop')?.errors?.['required']">Primary crop is required</span>
@@ -89,6 +93,45 @@
           <small *ngIf="memberForm.get('status')?.invalid && memberForm.get('status')?.touched" class="error-message">
             Status is required
           </small>
+        </div>
+
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" formControlName="email" placeholder="Enter email address">
+          <small *ngIf="isFieldInvalid('email')" class="error-message">
+            <span *ngIf="memberForm.get('email')?.errors?.['email']">Please enter a valid email</span>
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label>Join Date</label>
+          <input type="date" formControlName="joinDate">
+        </div>
+
+        <div class="form-group">
+          <label>Farm Size</label>
+          <input formControlName="farmSize" placeholder="e.g., 5 hectares">
+        </div>
+
+        <div class="form-group">
+          <label>Address</label>
+          <textarea formControlName="address" placeholder="Enter full address" rows="2"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Last Production</label>
+          <input formControlName="lastProduction" placeholder="e.g., 2.5 tons">
+        </div>
+
+        <div class="form-group">
+          <label>Credit Status</label>
+          <select formControlName="creditStatus">
+            <option value="">Select credit status</option>
+            <option>Excellent</option>
+            <option>Good</option>
+            <option>Fair</option>
+            <option>Poor</option>
+          </select>
         </div>
       </div>
 

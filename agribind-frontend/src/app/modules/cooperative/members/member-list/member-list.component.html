@@ -81,14 +81,16 @@
           <option>Coffee</option>
           <option>Maize</option>
           <option>Plantains</option>
+          <option>Cotton</option>
+          <option>Palm oil</option>
+          <option>Cassava</option>
+          <option>Rice</option>
         </select>
       </div>
     </div>
   </section>
 
-  <!-- Table Section -->
   <section class="table-section">
-    <!-- Members Table -->
     <div class="table-wrapper">
       <table class="members-table">
         <thead>
@@ -117,9 +119,9 @@
         </span>
           </td>
           <td class="actions">
-            <button class="icon-btn" (click)="openEditMemberModal(member)">✏️</button>
-            <button class="icon-btn">👁️</button>
+            <button class="icon-btn" (click)="openViewMemberModal(member)">👁️</button>
             <button class="icon-btn qr-icon">📱</button>
+            <button class="icon-btn" (click)="openEditMemberModal(member)">✏️</button>
           </td>
         </tr>
         </tbody>
@@ -137,3 +139,7 @@
   (memberUpdated)="onMemberUpdated($event)"
   (modalClosed)="onModalClosed()">
 </app-edit-member-form>
+
+<app-member-detail
+  (modalClosed)="onModalClosed()">
+</app-member-detail>

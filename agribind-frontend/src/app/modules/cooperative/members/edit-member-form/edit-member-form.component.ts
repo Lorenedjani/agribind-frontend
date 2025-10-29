@@ -42,7 +42,13 @@ export class EditMemberFormComponent implements OnInit {
       type: ['', Validators.required],
       region: ['', Validators.required],
       primaryCrop: ['', Validators.required],
-      status: ['Active', Validators.required]
+      status: ['Active', Validators.required],
+      email: ['', [Validators.email]],
+      joinDate: [''],
+      farmSize: [''],
+      address: [''],
+      lastProduction: [''],
+      creditStatus: ['']
     });
   }
 
