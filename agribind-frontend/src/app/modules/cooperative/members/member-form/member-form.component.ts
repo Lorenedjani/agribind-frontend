@@ -34,7 +34,6 @@ export class MemberFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log('MemberFormComponent ngOnInit called');
     this.initForm();
   }
 
@@ -46,12 +45,17 @@ export class MemberFormComponent implements OnInit {
       Type: ['', Validators.required],
       location: ['', Validators.required],
       primaryCrop: ['', Validators.required],
-      status: ['Active', Validators.required]
+      status: ['Active', Validators.required],
+      email: ['', [Validators.email]],
+      joinDate: [new Date().toISOString().split('T')[0]],
+      farmSize: [''],
+      address: [''],
+      lastProduction: [''],
+      creditStatus: ['']
     });
   }
 
   openModal(): void {
-    console.log('✅ openModal() called');
     this.isModalOpen = true;
     this.memberForm.reset({
       FirstName: '',

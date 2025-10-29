@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MemberFormComponent } from '../member-form/member-form.component';
 import { EditMemberFormComponent} from '../edit-member-form/edit-member-form.component';
+import { MemberDetailComponent } from '../member-detail/member-detail.component';
 
 
 interface Member {
@@ -15,6 +16,12 @@ interface Member {
   status: string;
   firstName?: string;
   lastName?: string;
+  email?: string;
+  joinDate?: string;
+  farmSize?: string;
+  address?: string;
+  lastProduction?: string;
+  creditStatus?: string;
 }
 
 @Component({
@@ -22,11 +29,12 @@ interface Member {
   templateUrl: './member-list.component.html',
   styleUrls: ['./member-list.component.scss'],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MemberFormComponent, EditMemberFormComponent]
+  imports: [CommonModule, ReactiveFormsModule, MemberFormComponent, EditMemberFormComponent, MemberDetailComponent]
 })
 export class MemberListComponent implements OnInit {
   @ViewChild(MemberFormComponent, { static: false }) memberFormComponent!: MemberFormComponent;
   @ViewChild(EditMemberFormComponent, { static: false }) editMemberFormComponent!: EditMemberFormComponent;
+  @ViewChild(MemberDetailComponent, { static: false }) memberDetailComponent!: MemberDetailComponent;
 
   members: Member[] = [
     {
@@ -86,6 +94,14 @@ export class MemberListComponent implements OnInit {
     return 'M' + nextId.toString().padStart(3, '0');
   }
 
+  openViewMemberModal(member: Member): void {
+    console.log('Opening view modal for member:', member);
+    if (this.memberDetailComponent) {
+      this.memberDetailComponent.openModal(member);
+    } else {
+      console.error('MemberDetailComponent not found!');
+    }
+  }
   openAddMemberModal(): void {
     if (this.memberFormComponent) {
       this.memberFormComponent.openModal();
@@ -115,7 +131,13 @@ export class MemberListComponent implements OnInit {
       type: newMember.Type,
       region: newMember.location,
       primaryCrop: newMember.primaryCrop,
-      status: newMember.status
+      status: newMember.status,
+      email: newMember.email || '',
+      joinDate: newMember.joinDate || new Date().toISOString().split('T')[0],
+      farmSize: newMember.farmSize || '',
+      address: newMember.address || '',
+      lastProduction: newMember.lastProduction || '',
+      creditStatus: newMember.creditStatus || ''
     };
 
     this.members.push(convertedMember);
