@@ -51,7 +51,8 @@ export class MemberFormComponent implements OnInit {
       farmSize: [''],
       address: [''],
       lastProduction: [''],
-      creditStatus: ['']
+      creditStatus: [''],
+      farmLocation: [''],
     });
   }
 

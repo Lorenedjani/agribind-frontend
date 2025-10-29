@@ -15,6 +15,7 @@ export interface Member {
   address?: string;
   lastProduction?: string;
   creditStatus?: string;
+  farmLocation?: string;
 }
 
 @Component({
