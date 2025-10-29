@@ -34,12 +34,11 @@
     </div>
   </section>
 
-  <!-- Business Section -->
   <section class="business-section">
     <div class="business-header">
       <div class="business-actions">
         <div class="search-box">
-          <input type="text" placeholder="Search members by name, ID, or phone...">
+          <input type="text" placeholder="Search members by name, ID, or type...">
         </div>
         <button class="btn btn-primary" (click)="openAddMemberModal()">Add Member</button>
         <button class="btn btn-secondary">Export</button>
@@ -122,6 +121,7 @@
             <button class="icon-btn" (click)="openViewMemberModal(member)">👁️</button>
             <button class="icon-btn qr-icon">📱</button>
             <button class="icon-btn" (click)="openEditMemberModal(member)">✏️</button>
+            <button class="icon-btn delete-btn" (click)="openDeleteConfirmModal(member)" title="Delete Member">🗑️</button>
           </td>
         </tr>
         </tbody>
@@ -143,3 +143,8 @@
 <app-member-detail
   (modalClosed)="onModalClosed()">
 </app-member-detail>
+
+<app-delete-member
+  (memberDeleted)="onMemberDeleted($event)"
+  (modalClosed)="onModalClosed()">
+</app-delete-member>

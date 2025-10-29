@@ -6,6 +6,7 @@
     </div>
 
     <div class="modal-body">
+      <!-- Member Header -->
       <div class="member-header">
         <div class="member-avatar">
           <span class="avatar-icon">{{ getMemberTypeIcon(member.type) }}</span>
@@ -19,7 +20,9 @@
         </div>
       </div>
 
+      <!-- Main Details Grid -->
       <div class="details-grid">
+        <!-- Contact Information -->
         <div class="detail-section">
           <h4 class="section-title">📞 Contact Information</h4>
           <div class="detail-item">
@@ -59,6 +62,7 @@
           </div>
         </div>
 
+        <!-- Farming Information -->
         <div class="detail-section">
           <h4 class="section-title">🌱 Farming Information</h4>
           <div class="detail-item">
@@ -70,11 +74,16 @@
             <span class="detail-value">{{ member.farmSize || 'Not specified' }}</span>
           </div>
           <div class="detail-item">
+            <span class="detail-label">Farm Location:</span>
+            <span class="detail-value">{{ member.farmLocation || 'Not specified' }}</span>
+          </div>
+          <div class="detail-item">
             <span class="detail-label">Last Production:</span>
             <span class="detail-value">{{ member.lastProduction || 'Not recorded' }}</span>
           </div>
         </div>
 
+        <!-- Financial Information -->
         <div class="detail-section">
           <h4 class="section-title">💰 Financial Information</h4>
           <div class="detail-item">
@@ -86,6 +95,7 @@
         </div>
       </div>
 
+      <!-- Quick Stats Section -->
       <div class="quick-stats" *ngIf="hasAdditionalInfo()">
         <h4 class="section-title">📊 Quick Overview</h4>
         <div class="stats-grid">
@@ -96,6 +106,15 @@
               <div class="stat-label">Farm Size</div>
             </div>
           </div>
+
+          <div class="stat-item" *ngIf="member.farmLocation">
+            <div class="stat-icon">📍</div>
+            <div class="stat-info">
+              <div class="stat-value">{{ member.farmLocation }}</div>
+              <div class="stat-label">Farm Location</div>
+            </div>
+          </div>
+
           <div class="stat-item" *ngIf="member.lastProduction">
             <div class="stat-icon">📦</div>
             <div class="stat-info">
@@ -103,6 +122,7 @@
               <div class="stat-label">Last Production</div>
             </div>
           </div>
+
           <div class="stat-item" *ngIf="member.creditStatus">
             <div class="stat-icon">💳</div>
             <div class="stat-info">
@@ -113,6 +133,7 @@
         </div>
       </div>
 
+      <!-- Action Buttons -->
       <div class="action-buttons">
         <button class="btn btn-secondary" (click)="closeModal()">Close</button>
         <button class="btn btn-primary">View Member</button>

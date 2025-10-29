@@ -4,6 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MemberFormComponent } from '../member-form/member-form.component';
 import { EditMemberFormComponent} from '../edit-member-form/edit-member-form.component';
 import { MemberDetailComponent } from '../member-detail/member-detail.component';
+import { DeleteMemberComponent } from '../delete-member/delete-member.component';
 
 
 interface Member {
@@ -20,6 +21,7 @@ interface Member {
   joinDate?: string;
   farmSize?: string;
   address?: string;
+  farmLocation?: string;
   lastProduction?: string;
   creditStatus?: string;
 }
@@ -29,12 +31,13 @@ interface Member {
   templateUrl: './member-list.component.html',
   styleUrls: ['./member-list.component.scss'],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MemberFormComponent, EditMemberFormComponent, MemberDetailComponent]
+  imports: [CommonModule, ReactiveFormsModule, MemberFormComponent, EditMemberFormComponent, MemberDetailComponent,  DeleteMemberComponent]
 })
 export class MemberListComponent implements OnInit {
   @ViewChild(MemberFormComponent, { static: false }) memberFormComponent!: MemberFormComponent;
   @ViewChild(EditMemberFormComponent, { static: false }) editMemberFormComponent!: EditMemberFormComponent;
   @ViewChild(MemberDetailComponent, { static: false }) memberDetailComponent!: MemberDetailComponent;
+  @ViewChild(DeleteMemberComponent, { static: false }) deleteMemberComponent!: DeleteMemberComponent;
 
   members: Member[] = [
     {
@@ -118,7 +121,31 @@ export class MemberListComponent implements OnInit {
     }
   }
 
+  openDeleteConfirmModal(member: Member): void {
+    console.log('Opening delete confirmation for member:', member);
+    if (this.deleteMemberComponent) {
+      this.deleteMemberComponent.openModal(member);
+    } else {
+      console.error('DeleteMemberComponent not found!');
+    }
+  }
 
+  onMemberDeleted(deletedMember: Member): void {
+    console.log('Member deleted:', deletedMember);
+    this.deleteMember(deletedMember);
+  }
+
+  private deleteMember(member: Member): void {
+    const index = this.members.findIndex(m => m.id === member.id);
+    if (index !== -1) {
+      this.members.splice(index, 1);
+      console.log('Member deleted successfully:', member.name);
+      this.updateStats();
+
+      // Show success message
+      alert(`Member ${member.name} has been deleted successfully.`);
+    }
+  }
 
   onMemberAdded(newMember: any): void {
     console.log('New member received:', newMember);
@@ -136,6 +163,7 @@ export class MemberListComponent implements OnInit {
       joinDate: newMember.joinDate || new Date().toISOString().split('T')[0],
       farmSize: newMember.farmSize || '',
       address: newMember.address || '',
+      farmLocation: newMember.farmLocation || '',
       lastProduction: newMember.lastProduction || '',
       creditStatus: newMember.creditStatus || ''
     };

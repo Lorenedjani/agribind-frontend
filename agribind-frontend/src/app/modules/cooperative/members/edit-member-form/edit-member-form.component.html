@@ -87,6 +87,12 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label>Farm Location</label>
+        <input formControlName="farmLocation" placeholder="e.g.,Mankon Town, GPS coordinates">
+        <small class="field-description">Specific location of the farm (village, town, or GPS)</small>
+      </div>
+
       <div class="modal-footer">
         <button type="button" class="btn-cancel" (click)="closeModal()">Cancel</button>
         <button type="submit" class="btn-submit" [disabled]="isSubmitting || !memberForm.valid">

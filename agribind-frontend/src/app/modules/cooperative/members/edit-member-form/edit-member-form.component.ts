@@ -48,7 +48,8 @@ export class EditMemberFormComponent implements OnInit {
       farmSize: [''],
       address: [''],
       lastProduction: [''],
-      creditStatus: ['']
+      creditStatus: [''],
+      farmLocation: [''],
     });
   }
 
