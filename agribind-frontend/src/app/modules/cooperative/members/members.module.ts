@@ -2,13 +2,15 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MemberListComponent } from './member-list/member-list.component';
 import { MembersRoutingModule } from './members-routing.module';
+import {ReactiveFormsModule} from '@angular/forms';
 
 @NgModule({
-  declarations: [], // Empty declarations
+  declarations: [],
   imports: [
     CommonModule,
+    ReactiveFormsModule,
     MembersRoutingModule,
-    MemberListComponent // Import standalone component
+    MemberListComponent
   ]
 })
 export class MembersModule { }

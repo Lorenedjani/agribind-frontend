@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 
@@ -10,8 +10,6 @@ export interface Member {
   region: string;
   primaryCrop: string;
   status: string;
-  firstName?: string;
-  lastName?: string;
 }
 
 @Component({
@@ -24,12 +22,11 @@ export interface Member {
 export class EditMemberFormComponent implements OnInit {
   @Output() memberUpdated = new EventEmitter<Member>();
   @Output() modalClosed = new EventEmitter<void>();
-  @Input() memberToEdit!: Member;
 
-  // Add these properties to resolve the template errors
   isModalOpen = false;
   isSubmitting = false;
   memberForm!: FormGroup;
+  currentMember: Member | null = null;
 
   constructor(private fb: FormBuilder) {}
 
@@ -39,81 +36,67 @@ export class EditMemberFormComponent implements OnInit {
 
   private initForm(): void {
     this.memberForm = this.fb.group({
-      FirstName: ['', [Validators.required, Validators.minLength(2), Validators.pattern(/^[a-zA-Z\s]+$/)]],
-      LastName: ['', [Validators.required, Validators.minLength(2), Validators.pattern(/^[a-zA-Z\s]+$/)]],
-      contact: ['', [Validators.required, Validators.pattern(/^\+237\s[0-9]{8}$/)]],
-      Type: ['', Validators.required],
-      location: ['', Validators.required],
+      id: [{ value: '', disabled: true }],
+      name: ['', [Validators.required, Validators.minLength(2)]],
+      phone: ['', [Validators.required, Validators.pattern(/^\+237\s[0-9]{8}$/)]],
+      type: ['', Validators.required],
+      region: ['', Validators.required],
       primaryCrop: ['', Validators.required],
       status: ['Active', Validators.required]
     });
   }
 
-  // Add this method to open the modal
   openModal(member: Member): void {
     console.log('Opening edit modal for member:', member);
+    this.currentMember = member;
+    this.isModalOpen = true;
 
-    // Split the name into first and last name
-    const nameParts = member.name.split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || '';
-
-    // Pre-populate the form with member data
+    // Populate form with member data
     this.memberForm.patchValue({
-      FirstName: firstName,
-      LastName: lastName,
-      contact: member.phone,
-      Type: member.type,
-      location: member.region,
+      id: member.id,
+      name: member.name,
+      phone: member.phone,
+      type: member.type,
+      region: member.region,
       primaryCrop: member.primaryCrop,
       status: member.status
     });
 
-    this.memberToEdit = member;
-    this.isModalOpen = true;
     document.body.style.overflow = 'hidden';
   }
 
-  // Add this method to close the modal
   closeModal(): void {
     this.isModalOpen = false;
     this.isSubmitting = false;
+    this.currentMember = null;
     this.memberForm.reset();
     document.body.style.overflow = 'auto';
     this.modalClosed.emit();
   }
 
-  // Add this method for form submission
   onSubmit(): void {
-    console.log('Edit form submitted');
-
-    if (this.memberForm.valid) {
+    if (this.memberForm.valid && this.currentMember) {
       this.isSubmitting = true;
-      const formData = this.memberForm.value;
 
-      // Create updated member object
+      const formData = this.memberForm.getRawValue();
       const updatedMember: Member = {
-        ...this.memberToEdit,
-        name: `${formData.FirstName} ${formData.LastName}`.trim(),
-        phone: formData.contact,
-        type: formData.Type,
-        region: formData.location,
+        id: formData.id,
+        name: formData.name,
+        phone: formData.phone,
+        type: formData.type,
+        region: formData.region,
         primaryCrop: formData.primaryCrop,
-        status: formData.status,
-        firstName: formData.FirstName,
-        lastName: formData.LastName
+        status: formData.status
       };
 
       console.log('Emitting updated member:', updatedMember);
       this.memberUpdated.emit(updatedMember);
       this.closeModal();
     } else {
-      // Mark all fields as touched to show validation errors
       this.memberForm.markAllAsTouched();
     }
   }
 
-  // Add this method for field validation
   isFieldInvalid(fieldName: string): boolean {
     const control = this.memberForm.get(fieldName);
     return !!(control && control.invalid && control.touched);

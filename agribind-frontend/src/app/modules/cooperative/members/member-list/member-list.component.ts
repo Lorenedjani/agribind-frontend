@@ -1,9 +1,9 @@
-// member-list.component.ts
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MemberFormComponent } from '../member-form/member-form.component';
-import { EditMemberFormComponent } from '../edit-member-form/edit-member-form.component';
+import { EditMemberFormComponent} from '../edit-member-form/edit-member-form.component';
+
 
 interface Member {
   id: string;
