@@ -2,34 +2,43 @@
   <section class="stats-section-horizontal">
     <div class="stats-row">
       <div class="stat-item total-members">
-        <div class="stat-icon-box">
-          <span class="stat-icon">👥</span>
+        <div class="stat-icon-box primary">
+          <i class="fas fa-users"></i>
         </div>
-        <div class="stat-label">Total Members</div>
-        <div class="stat-number-large">{{ getTotalMembers() }}</div>
-        <div class="stat-change">+12 this month</div>
+        <div class="stat-details">
+          <div class="stat-label">Total Members</div>
+          <div class="stat-number-large">{{ getTotalMembers() }}</div>
+          <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            <span>+12 this month</span>
+          </div>
+        </div>
       </div>
 
       <div class="stat-divider"></div>
 
       <div class="stat-item active-members">
-        <div class="stat-icon-box">
-          <span class="stat-icon">👨‍🌾</span>
+        <div class="stat-icon-box success">
+          <i class="fas fa-user-tie"></i>
         </div>
-        <div class="stat-label">Farmers</div>
-        <div class="stat-number">{{ getFarmersCount() }}</div>
-        <div class="stat-description">{{ getFarmersPercentage() }}% of members</div>
+        <div class="stat-details">
+          <div class="stat-label">Farmers</div>
+          <div class="stat-number">{{ getFarmersCount() }}</div>
+          <div class="stat-description">{{ getFarmersPercentage() }}% of members</div>
+        </div>
       </div>
 
       <div class="stat-divider"></div>
 
       <div class="stat-item new-members">
-        <div class="stat-icon-box">
-          <span class="stat-icon">🏢</span>
+        <div class="stat-icon-box warning">
+          <i class="fas fa-building"></i>
         </div>
-        <div class="stat-label">Cooperatives</div>
-        <div class="stat-number">{{ getCooperativesCount() }}</div>
-        <div class="stat-description">{{ getCooperativesPercentage() }}% of members</div>
+        <div class="stat-details">
+          <div class="stat-label">Cooperatives</div>
+          <div class="stat-number">{{ getCooperativesCount() }}</div>
+          <div class="stat-description">{{ getCooperativesPercentage() }}% of members</div>
+        </div>
       </div>
     </div>
   </section>
@@ -38,16 +47,25 @@
     <div class="business-header">
       <div class="business-actions">
         <div class="search-box">
+          <i class="fas fa-search search-icon"></i>
           <input type="text" placeholder="Search members by name, ID, or type...">
         </div>
-        <button class="btn btn-primary" (click)="openAddMemberModal()">Add Member</button>
-        <button class="btn btn-secondary">Export</button>
+        <div class="action-buttons">
+          <button class="btn btn-primary" (click)="openAddMemberModal()">
+            <i class="fas fa-plus"></i>
+            <span>Add Member</span>
+          </button>
+          <button class="btn btn-secondary">
+            <i class="fas fa-download"></i>
+            <span>Export</span>
+          </button>
+        </div>
       </div>
     </div>
 
     <div class="filters-row-horizontal">
       <div class="filter-item">
-        <label>Status</label>
+        <label><i class="fas fa-toggle-on"></i> Status</label>
         <select>
           <option>All Status</option>
           <option>Active</option>
@@ -57,7 +75,7 @@
       </div>
 
       <div class="filter-item">
-        <label>Regions</label>
+        <label><i class="fas fa-map-marker-alt"></i> Regions</label>
         <select>
           <option>All Regions</option>
           <option>North West</option>
@@ -73,7 +91,7 @@
       </div>
 
       <div class="filter-item">
-        <label>Primary Crops</label>
+        <label><i class="fas fa-leaf"></i> Primary Crops</label>
         <select>
           <option>All crops</option>
           <option>Cocoa</option>
@@ -94,34 +112,66 @@
       <table class="members-table">
         <thead>
         <tr>
-          <th>Member ID</th>
-          <th>Name</th>
-          <th>Contact</th>
-          <th>Type</th>
-          <th>Location</th>
-          <th>Primary Crop</th>
-          <th>Status</th>
-          <th>Actions</th>
+          <th><i class="fas fa-hashtag"></i> Member ID</th>
+          <th><i class="fas fa-user"></i> Name</th>
+          <th><i class="fas fa-phone"></i> Contact</th>
+          <th><i class="fas fa-tag"></i> Type</th>
+          <th><i class="fas fa-map-pin"></i> Location</th>
+          <th><i class="fas fa-seedling"></i> Primary Crop</th>
+          <th><i class="fas fa-circle"></i> Status</th>
+          <th><i class="fas fa-cog"></i> Actions</th>
         </tr>
         </thead>
         <tbody>
         <tr *ngFor="let member of members">
-          <td class="member-id">{{ member.id }}</td>
-          <td class="member-name">{{ member.name }}</td>
-          <td class="member-contact"><span class="phone-icon">📞</span>{{ member.phone }}</td>
-          <td class="member-type">{{ member.type }}</td>
-          <td class="member-location">{{ member.region }}</td>
-          <td class="member-crop">{{ member.primaryCrop }}</td>
+          <td class="member-id">
+            <span class="id-badge">{{ member.id }}</span>
+          </td>
+          <td class="member-name">
+            <div class="name-cell">
+              <div class="member-avatar">{{ member.name.charAt(0) }}</div>
+              <span>{{ member.name }}</span>
+            </div>
+          </td>
+          <td class="member-contact">
+            <div class="contact-cell">
+              <i class="fas fa-phone-alt phone-icon"></i>
+              <span>{{ member.phone }}</span>
+            </div>
+          </td>
+          <td class="member-type">
+            <span class="type-badge">{{ member.type }}</span>
+          </td>
+          <td class="member-location">
+            <div class="location-cell">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>{{ member.region }}</span>
+            </div>
+          </td>
+          <td class="member-crop">
+            <span class="crop-tag">{{ member.primaryCrop }}</span>
+          </td>
           <td>
-        <span class="badge status-badge" [class]="'status-' + member.status.toLowerCase()">
-          {{ member.status }}
-        </span>
+            <span class="status-badge" [class]="'status-' + member.status.toLowerCase()">
+              <i class="fas fa-circle"></i>
+              {{ member.status }}
+            </span>
           </td>
           <td class="actions">
-            <button class="icon-btn" (click)="openViewMemberModal(member)">👁️</button>
-            <button class="icon-btn qr-icon">📱</button>
-            <button class="icon-btn" (click)="openEditMemberModal(member)">✏️</button>
-            <button class="icon-btn delete-btn" (click)="openDeleteConfirmModal(member)" title="Delete Member">🗑️</button>
+            <div class="action-buttons-group">
+              <button class="icon-btn view-btn" (click)="openViewMemberModal(member)" title="View Details">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="icon-btn qr-btn" title="QR Code">
+                <i class="fas fa-qrcode"></i>
+              </button>
+              <button class="icon-btn edit-btn" (click)="openEditMemberModal(member)" title="Edit Member">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="icon-btn delete-btn" (click)="openDeleteConfirmModal(member)" title="Delete Member">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
           </td>
         </tr>
         </tbody>
