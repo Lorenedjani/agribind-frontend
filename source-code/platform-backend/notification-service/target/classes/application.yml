@@ -29,6 +29,7 @@ spring:
     enabled: true
     host: localhost
     port: 5672
+    connection-timeout: 5s
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
@@ -59,7 +60,9 @@ spring:
       auto-offset-reset: earliest
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.JsonSerializer
+    properties:
+      spring.json.add.type.headers: false
   rabbitmq:
     enabled: true
     host: localhost

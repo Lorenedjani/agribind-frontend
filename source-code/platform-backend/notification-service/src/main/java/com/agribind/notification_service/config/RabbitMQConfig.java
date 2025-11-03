@@ -1,46 +1,37 @@
 package com.agribind.notification_service.config;
 
-import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConditionalOnProperty(name = "spring.rabbitmq.enabled", havingValue = "true")
-@ConditionalOnClass(ConnectionFactory.class)
-
 public class RabbitMQConfig {
 
-    @Value("${app.rabbitmq.exchange}")
-    private String exchange;
+    @Value("${spring.rabbitmq.host:localhost}")
+    private String host;
 
-    @Value("${app.rabbitmq.queue}")
-    private String queue;
+    @Value("${spring.rabbitmq.port:5672}")
+    private int port;
 
-    @Value("${app.rabbitmq.routing-key}")
-    private String routingKey;
+    @Value("${spring.rabbitmq.username:guest}")
+    private String username;
 
-    @Bean
-    public Queue queue() {
-        return new Queue(queue, true);
-    }
+    @Value("${spring.rabbitmq.password:guest}")
+    private String password;
 
     @Bean
-    public DirectExchange exchange() {
-        return new DirectExchange(exchange);
-    }
-
-    @Bean
-    public Binding binding(Queue queue, DirectExchange exchange) {
-        return BindingBuilder.bind(queue)
-                .to(exchange)
-                .with(routingKey);
+    public ConnectionFactory connectionFactory() {
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
+        connectionFactory.setHost(host);
+        connectionFactory.setPort(port);
+        connectionFactory.setUsername(username);
+        connectionFactory.setPassword(password);
+        return connectionFactory;
     }
 
     @Bean
