@@ -1,10 +1,20 @@
 package cm.agribind.auth.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import jakarta.validation.constraints.*;
+import lombok.*;
+import java.time.LocalDateTime;
 
+// LoginRequest.java
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class LoginRequest {
-    @NotBlank private String username;
-    @NotBlank private String password;
+    @NotBlank(message = "Username/email is required")
+    private String username;
+
+    @NotBlank(message = "Password is required")
+    private String password;
+
+    private String deviceId;
 }

@@ -1,47 +1,38 @@
 package cm.agribind.usermanagement.entity;
 
+import cm.agribind.usermanagement.enums.GovernmentRole;
+import cm.agribind.usermanagement.enums.Region;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.time.Instant;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
-@Table(name = "government_officials", indexes = {
-        @Index(name = "idx_user", columnList = "user_id")
-})
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class GovernmentOfficial {
+@Table(name = "government_officials")
+@PrimaryKeyJoinColumn(name = "user_id")
+@Getter
+@Setter
+public class GovernmentOfficial extends User {
 
-    @Id
-    @Column(length = 36)
-    private String id;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private GovernmentRole role;
 
-    @Column(name = "user_id", unique = true, nullable = false, length = 36)
-    private String userId;
+    @Embedded
+    private GovernmentDetails governmentDetails;
 
-    @Column(unique = true, nullable = false)
-    private String email;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Region assignedRegion;
 
-    @Builder.Default
-    @Column(name = "is_admin")
-    private Boolean isAdmin = false;
-
-    @Column(nullable = false, length = 100)
     private String department;
 
-    @Column(name = "office_address")
-    private String officeAddress;
+    private String employeeId;
 
-    @Column(name = "created_by", nullable = false, length = 36)
-    private String createdBy;
+    private String jurisdiction; // Specific area of responsibility
 
-    @Builder.Default
-    @Column(name = "created_at")
-    private Instant createdAt = Instant.now();
+    private Boolean canApproveLoans = false;
+
+    private Boolean canViewStatistics = true;
+
+    private String supervisor;
 }

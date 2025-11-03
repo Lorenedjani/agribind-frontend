@@ -1,59 +1,44 @@
 package cm.agribind.usermanagement.entity;
 
+import cm.agribind.usermanagement.enums.CooperativeType;
+import cm.agribind.usermanagement.enums.Region;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(name = "cooperatives", indexes = {
-        @Index(name = "idx_region", columnList = "region"),
-        @Index(name = "idx_active", columnList = "is_active")
-})
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class Cooperative {
+@Table(name = "cooperatives")
+@PrimaryKeyJoinColumn(name = "user_id")
+@Getter
+@Setter
+public class Cooperative extends User {
 
-    @Id
-    @Column(length = 36)
-    private String id;
-
-    @Column(nullable = false)
-    private String name;
-
-    @Column(name = "registration_number", unique = true, nullable = false, length = 50)
-    private String registrationNumber;
-
-    @Column(name = "headquarters_address", nullable = false)
-    private String headquartersAddress;
-
-    @Column(name = "operating_zones", columnDefinition = "JSON", nullable = false)
-    private String operatingZones;
-
-    @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
-    private Region region;
+    @Column(nullable = false)
+    private CooperativeType cooperativeType;
 
-    @Column(name = "contact_phone", nullable = false, length = 20)
-    private String contactPhone;
+    @Embedded
+    private CooperativeDetails cooperativeDetails;
 
-    @Column(name = "contact_email", nullable = false)
-    private String contactEmail;
+    @OneToMany(mappedBy = "cooperative", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Farmer> members = new ArrayList<>();
 
-    @Builder.Default
-    @Column(name = "is_active")
-    private Boolean isActive = true;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Region operatingRegion;
 
-    @Column(name = "created_by", nullable = false, length = 36)
-    private String createdBy;
+    private String legalRegistrationNumber;
 
-    @Builder.Default
-    @Column(name = "created_at")
-    private Instant createdAt = Instant.now();
+    private Integer establishmentYear;
 
+    private String contactPerson;
+
+    private String contactPersonPhone;
+
+    private Double totalLandArea; // Total area managed by cooperative
+
+    private Integer activeMemberCount;
 }

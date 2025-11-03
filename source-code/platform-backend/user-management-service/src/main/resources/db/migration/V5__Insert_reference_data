@@ -1,0 +1,108 @@
+-- Insert reference data for testing and initial setup
+
+-- Insert sample cooperatives
+INSERT INTO users (user_id, type, name, phone_number, status, region, department, created_by) VALUES
+('C001', 'COOPERATIVE', 'Northwest Farmers Union', '+237680000001', 'ACTIVE', 'NORD_OUEST', 'Bamenda', 'system'),
+('C002', 'COOPERATIVE', 'Centre Region Coffee Growers', '+237680000002', 'ACTIVE', 'CENTRE', 'Yaoundé', 'system'),
+('C003', 'COOPERATIVE', 'Littoral Cocoa Producers', '+237680000003', 'ACTIVE', 'LITTORAL', 'Douala', 'system');
+
+SET @coop1_id = LAST_INSERT_ID();
+SET @coop2_id = LAST_INSERT_ID();
+SET @coop3_id = LAST_INSERT_ID();
+
+INSERT INTO cooperatives (user_id, cooperative_type, operating_region, legal_registration_number, establishment_year, contact_person, total_members, active_member_count) VALUES
+(@coop1_id, 'FARMERS_UNION', 'NORD_OUEST', 'REG-COOP-001', 2018, 'John Mbeng', 156, 145),
+(@coop2_id, 'PRODUCER_COOPERATIVE', 'CENTRE', 'REG-COOP-002', 2019, 'Marie Ngo', 89, 82),
+(@coop3_id, 'MARKETING_COOPERATIVE', 'LITTORAL', 'REG-COOP-003', 2020, 'Pierre Djemo', 203, 190);
+
+-- Insert sample government officials
+INSERT INTO users (user_id, type, name, phone_number, status, region, department, created_by) VALUES
+('G001', 'GOVERNMENT', 'Dr. Emmanuel Njoya', '+237680000004', 'ACTIVE', 'CENTRE', 'Yaoundé', 'system'),
+('G002', 'GOVERNMENT', 'Sarah Mischa', '+237680000005', 'ACTIVE', 'NORD_OUEST', 'Bamenda', 'system'),
+('G003', 'GOVERNMENT', 'Ahmed Ousmanou', '+237680000006', 'ACTIVE', 'EXTREME_NORD', 'Maroua', 'system');
+
+SET @gov1_id = LAST_INSERT_ID();
+SET @gov2_id = LAST_INSERT_ID();
+SET @gov3_id = LAST_INSERT_ID();
+
+INSERT INTO government_officials (user_id, role, assigned_region, department, employee_id, can_approve_loans, can_view_statistics) VALUES
+(@gov1_id, 'REGIONAL_COORDINATOR', 'CENTRE', 'Ministry of Agriculture', 'GOV-001', TRUE, TRUE),
+(@gov2_id, 'DISTRICT_OFFICER', 'NORD_OUEST', 'Rural Development', 'GOV-002', FALSE, TRUE),
+(@gov3_id, 'AGRICULTURAL_EXTENSION_AGENT', 'EXTREME_NORD', 'Agricultural Services', 'GOV-003', FALSE, TRUE);
+
+-- Insert sample farmers
+INSERT INTO users (user_id, type, name, phone_number, status, region, department, district, village, created_by) VALUES
+('F001', 'FARMER', 'Kwame Ovid', '+237680000007', 'ACTIVE', 'NORD_OUEST', 'Bamenda', 'Bamenda I', 'Mankon', 'system'),
+('F002', 'FARMER', 'Amoah Boakye', '+237680000008', 'ACTIVE', 'CENTRE', 'Yaoundé', 'Yaoundé IV', 'Mvog-Betsi', 'system'),
+('F003', 'FARMER', 'Yao Mensah', '+237680000009', 'ACTIVE', 'SUD_OUEST', 'Buea', 'Buea', 'Molyko', 'system'),
+('F004', 'FARMER', 'Adwoa Diabate', '+237680000010', 'ACTIVE', 'LITTORAL', 'Douala', 'Douala III', 'Bonaberi', 'system'),
+('F005', 'FARMER', 'Kofi Asare', '+237680000011', 'ACTIVE', 'NORD', 'Garoua', 'Garoua I', 'Lainde', 'system'),
+('F006', 'FARMER', 'Akosua Owusu', '+237680000012', 'ACTIVE', 'EST', 'Bertoua', 'Bertoua I', 'Mbidambamba', 'system');
+
+SET @farmer1_id = LAST_INSERT_ID();
+SET @farmer2_id = LAST_INSERT_ID();
+SET @farmer3_id = LAST_INSERT_ID();
+SET @farmer4_id = LAST_INSERT_ID();
+SET @farmer5_id = LAST_INSERT_ID();
+SET @farmer6_id = LAST_INSERT_ID();
+
+INSERT INTO farmers (user_id, agricultural_type, cooperative_id, years_farming, education_level, has_bank_account, total_land_area, cultivated_area, soil_type, owns_land) VALUES
+(@farmer1_id, 'CROP', @coop1_id, 8, 'SECONDARY', FALSE, 5.3, 5.0, 'Volcanic', TRUE),
+(@farmer2_id, 'CROP', @coop2_id, 5, 'PRIMARY', TRUE, 3.8, 3.5, 'Clay', TRUE),
+(@farmer3_id, 'MIXED', @coop1_id, 12, 'SECONDARY', FALSE, 7.5, 6.0, 'Loam', TRUE),
+(@farmer4_id, 'CROP', @coop3_id, 3, 'PRIMARY', FALSE, 4.2, 4.0, 'Sandy', FALSE),
+(@farmer5_id, 'LIVESTOCK', NULL, 6, 'SECONDARY', TRUE, 6.0, 2.0, 'Pasture', TRUE),
+(@farmer6_id, 'CROP', @coop3_id, 4, 'PRIMARY', FALSE, 4.5, 4.2, 'Clay-Loam', TRUE);
+
+-- Insert crop types for farmers
+INSERT INTO farmer_crops (farmer_id, crop_type) VALUES
+(@farmer1_id, 'COCOA'), (@farmer1_id, 'MAIZE'), (@farmer1_id, 'PLANTAINS'),
+(@farmer2_id, 'COFFEE'), (@farmer2_id, 'BEANS'),
+(@farmer3_id, 'COCOA'), (@farmer3_id, 'MAIZE'), (@farmer3_id, 'CASSAVA'),
+(@farmer4_id, 'MAIZE'), (@farmer4_id, 'BEANS'), (@farmer4_id, 'TOMATOES'),
+(@farmer6_id, 'COCOA'), (@farmer6_id, 'BANANAS');
+
+-- Insert livestock types for farmers
+INSERT INTO farmer_livestock (farmer_id, livestock_type) VALUES
+(@farmer3_id, 'POULTRY'), (@farmer3_id, 'GOATS'),
+(@farmer5_id, 'CATTLE'), (@farmer5_id, 'GOATS'), (@farmer5_id, 'POULTRY');
+
+-- Create profiles for all users
+INSERT INTO profiles (user_id, preferred_language, receive_sms_notifications) VALUES
+(@coop1_id, 'en', TRUE), (@coop2_id, 'fr', TRUE), (@coop3_id, 'fr', TRUE),
+(@gov1_id, 'fr', TRUE), (@gov2_id, 'en', TRUE), (@gov3_id, 'fr', TRUE),
+(@farmer1_id, 'en', TRUE), (@farmer2_id, 'fr', TRUE), (@farmer3_id, 'en', TRUE),
+(@farmer4_id, 'fr', TRUE), (@farmer5_id, 'fr', TRUE), (@farmer6_id, 'en', TRUE);
+
+SET @profile1_id = LAST_INSERT_ID();
+SET @profile2_id = LAST_INSERT_ID();
+SET @profile3_id = LAST_INSERT_ID();
+SET @profile4_id = LAST_INSERT_ID();
+SET @profile5_id = LAST_INSERT_ID();
+SET @profile6_id = LAST_INSERT_ID();
+SET @profile7_id = LAST_INSERT_ID();
+SET @profile8_id = LAST_INSERT_ID();
+SET @profile9_id = LAST_INSERT_ID();
+SET @profile10_id = LAST_INSERT_ID();
+SET @profile11_id = LAST_INSERT_ID();
+SET @profile12_id = LAST_INSERT_ID();
+
+-- Update users with profile references
+UPDATE users SET profile_id = @profile1_id WHERE id = @coop1_id;
+UPDATE users SET profile_id = @profile2_id WHERE id = @coop2_id;
+UPDATE users SET profile_id = @profile3_id WHERE id = @coop3_id;
+UPDATE users SET profile_id = @profile4_id WHERE id = @gov1_id;
+UPDATE users SET profile_id = @profile5_id WHERE id = @gov2_id;
+UPDATE users SET profile_id = @profile6_id WHERE id = @gov3_id;
+UPDATE users SET profile_id = @profile7_id WHERE id = @farmer1_id;
+UPDATE users SET profile_id = @profile8_id WHERE id = @farmer2_id;
+UPDATE users SET profile_id = @profile9_id WHERE id = @farmer3_id;
+UPDATE users SET profile_id = @profile10_id WHERE id = @farmer4_id;
+UPDATE users SET profile_id = @profile11_id WHERE id = @farmer5_id;
+UPDATE users SET profile_id = @profile12_id WHERE id = @farmer6_id;
+
+-- Insert some audit log entries for demonstration
+INSERT INTO user_audit_log (user_id, action, action_type, changed_by) VALUES
+('F001', 'USER_CREATED', 'CREATE', 'system'),
+('C001', 'COOPERATIVE_REGISTERED', 'CREATE', 'system'),
+('G001', 'OFFICIAL_ADDED', 'CREATE', 'system');

@@ -1,0 +1,11 @@
+package cm.agribind.usermanagement.enums;
+
+public enum CooperativeType {
+    FARMERS_UNION,
+    PRODUCER_COOPERATIVE,
+    MARKETING_COOPERATIVE,
+    CREDIT_COOPERATIVE,
+    MULTIPURPOSE_COOPERATIVE,
+    WOMENS_COOPERATIVE,
+    YOUTH_COOPERATIVE
+}

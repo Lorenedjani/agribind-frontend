@@ -1,5 +1,7 @@
 package cm.agribind.auth.exception;
 
-public class UserNotFoundException extends RuntimeException {
-    public UserNotFoundException(String message) { super(message); }
+public class UserNotFoundException extends BusinessException {
+    public UserNotFoundException(String message) {
+        super(message, "USER_NOT_FOUND");
+    }
 }

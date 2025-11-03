@@ -1,0 +1,85 @@
+-- Cooperative specific table
+CREATE TABLE cooperatives (
+    user_id BIGINT PRIMARY KEY,
+    cooperative_type ENUM(
+        'FARMERS_UNION', 'PRODUCER_COOPERATIVE', 'MARKETING_COOPERATIVE',
+        'CREDIT_COOPERATIVE', 'MULTIPURPOSE_COOPERATIVE',
+        'WOMENS_COOPERATIVE', 'YOUTH_COOPERATIVE'
+    ) NOT NULL,
+    operating_region ENUM('ADAMAOUA', 'CENTRE', 'EST', 'EXTREME_NORD', 'LITTORAL', 'NORD', 'NORD_OUEST', 'OUEST', 'SUD', 'SUD_OUEST') NOT NULL,
+    legal_registration_number VARCHAR(100) UNIQUE,
+    establishment_year INT,
+    contact_person VARCHAR(255),
+    contact_person_phone VARCHAR(25),
+    total_land_area DECIMAL(12,2),
+    active_member_count INT DEFAULT 0,
+
+    -- Cooperative details (embedded)
+    total_members INT,
+    female_members INT,
+    male_members INT,
+    annual_production DECIMAL(12,2),
+    annual_revenue DECIMAL(15,2),
+    primary_products TEXT,
+    certification VARCHAR(200),
+    has_storage_facilities BOOLEAN DEFAULT FALSE,
+    has_processing_equipment BOOLEAN DEFAULT FALSE,
+    has_transport_vehicles BOOLEAN DEFAULT FALSE,
+    bank_name VARCHAR(200),
+    bank_account_number VARCHAR(100),
+    mobile_money_number VARCHAR(25),
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_cooperative_type (cooperative_type),
+    INDEX idx_operating_region (operating_region),
+    INDEX idx_establishment_year (establishment_year)
+);
+
+-- Government officials table
+CREATE TABLE government_officials (
+    user_id BIGINT PRIMARY KEY,
+    role ENUM(
+        'REGIONAL_COORDINATOR', 'DISTRICT_OFFICER', 'AGRICULTURAL_EXTENSION_AGENT',
+        'VETERINARY_OFFICER', 'INSPECTOR', 'DATA_ANALYST', 'PROGRAM_MANAGER', 'DIRECTOR'
+    ) NOT NULL,
+    assigned_region ENUM('ADAMAOUA', 'CENTRE', 'EST', 'EXTREME_NORD', 'LITTORAL', 'NORD', 'NORD_OUEST', 'OUEST', 'SUD', 'SUD_OUEST') NOT NULL,
+    department VARCHAR(200),
+    employee_id VARCHAR(100) UNIQUE,
+    jurisdiction VARCHAR(300),
+    can_approve_loans BOOLEAN DEFAULT FALSE,
+    can_view_statistics BOOLEAN DEFAULT TRUE,
+
+    -- Government details (embedded)
+    office_location VARCHAR(500),
+    office_phone VARCHAR(25),
+    official_email VARCHAR(255),
+    rank VARCHAR(100),
+    employment_date VARCHAR(20),
+    responsibilities TEXT,
+    supervisor VARCHAR(255),
+    is_field_officer BOOLEAN DEFAULT TRUE,
+    vehicle_assignment VARCHAR(100),
+    assigned_equipment TEXT,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_role (role),
+    INDEX idx_assigned_region (assigned_region),
+    INDEX idx_department (department),
+    INDEX idx_employee_id (employee_id)
+);
+
+-- Audit log for user actions
+CREATE TABLE user_audit_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(20) NOT NULL,
+    action VARCHAR(100) NOT NULL,
+    action_type ENUM('CREATE', 'UPDATE', 'DELETE', 'STATUS_CHANGE') NOT NULL,
+    old_values JSON,
+    new_values JSON,
+    changed_by VARCHAR(100),
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX idx_user_id (user_id),
+    INDEX idx_action_type (action_type),
+    INDEX idx_changed_at (changed_at)
+);

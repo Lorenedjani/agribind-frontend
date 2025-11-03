@@ -1,5 +1,7 @@
 package cm.agribind.auth.exception;
 
-public class BadCredentialsException extends RuntimeException {
-    public BadCredentialsException(String message) { super(message); }
+public class BadCredentialsException extends BusinessException {
+    public BadCredentialsException(String message) {
+        super(message, "BAD_CREDENTIALS");
+    }
 }

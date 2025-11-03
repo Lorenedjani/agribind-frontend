@@ -1,18 +1,19 @@
 package cm.agribind.auth.service;
 
-import cm.agribind.auth.entity.UserAccount;
+import cm.agribind.auth.dto.*;
+
+import java.util.List;
 
 public interface AuthService {
-
-    /** Authenticate and return JWT token */
-    String login(String username, String password);
-
-    /** Create a cooperative manager or other web user (admin creates them) */
-    UserAccount createManager(String username, String email, String phone, String rawPassword);
-
-    /** Register a farmer (by cooperative manager/admin) and send SMS with registration number */
-    UserAccount registerFarmer(String phone);
-
-    /** Change password and mark first login complete */
-    void changePassword(String userId, String newPass);
+    LoginResponse login(LoginRequest request);
+    LoginResponse qrLogin(QrLoginRequest request);
+    LoginResponse refreshToken(RefreshTokenRequest request);
+    void logout(String userId, String deviceId);
+    void changePassword(String userId, PasswordChangeRequest request);
+    void setFirstLoginPassword(String userId, FirstLoginPasswordRequest request);
+    void initiatePasswordReset(PasswordResetInitRequest request);
+    void completePasswordReset(PasswordResetCompleteRequest request);
+    void revokeAllTokens(String userId);
+    List<DeviceInfo> getUserDevices(String userId);
+    void revokeDevice(String userId, String deviceId);
 }

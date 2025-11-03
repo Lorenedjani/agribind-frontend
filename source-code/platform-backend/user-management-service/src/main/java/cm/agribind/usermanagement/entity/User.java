@@ -1,78 +1,50 @@
 package cm.agribind.usermanagement.entity;
 
+import cm.agribind.usermanagement.enums.UserStatus;
+import cm.agribind.usermanagement.enums.UserType;
 import jakarta.persistence.*;
-import lombok.*;
-import java.time.Instant;
-
-// ===== BASE USER ENTITY =====
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
-@Table(name = "users", indexes = {
-        @Index(name = "idx_username", columnList = "username"),
-        @Index(name = "idx_phone", columnList = "phone_number"),
-        @Index(name = "idx_active_role", columnList = "is_active,role")
-})
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class User {
-
-    @Id
-    @Column(length = 36)
-    private String id;
+@Table(name = "users")
+@Inheritance(strategy = InheritanceType.JOINED)
+@Getter
+@Setter
+public class User extends BaseEntity {
 
     @Column(unique = true, nullable = false)
-    private String username;
+    private String userId; // Custom ID like F001, C001, G001
 
-    @Column(name = "phone_number", nullable = false, length = 20)
-    private String phoneNumber;
-
-    @Column(length = 255)
-    private String email;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserType type;
 
     @Column(nullable = false)
-    private String address;
+    private String name;
 
-    @Column(name = "preferred_language", nullable = false, length = 10)
+    @Column(unique = true)
+    private String email;
+
+    @Column(unique = true, nullable = false)
+    private String phoneNumber;
+
     @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private Language preferredLanguage = Language.FR;
+    @Column(nullable = false)
+    private UserStatus status = UserStatus.ACTIVE;
 
-    @Column(nullable = false, length = 50)
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    @Column(unique = true)
+    private String registrationNumber; // For QR code registration
 
-    @Column(name = "password_hash")
-    private String passwordHash;
+    private String qrCodeData; // Encrypted QR data for login
 
-    @Builder.Default
-    @Column(name = "is_active")
-    private Boolean isActive = true;
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_id")
+    private Profile profile;
 
-    @Builder.Default
-    @Column(name = "is_first_login")
-    private Boolean isFirstLogin = true;
+    @Embedded
+    private Address address;
 
-    @Builder.Default
-    @Column(name = "created_at")
-    private Instant createdAt = Instant.now();
-
-    @Builder.Default
-    @Column(name = "updated_at")
-    private Instant updatedAt = Instant.now();
-
-    @Column(name = "deactivated_at")
-    private Instant deactivatedAt;
-
-    @Column(name = "deactivated_by", length = 36)
-    private String deactivatedBy;
-
-    @Column(name = "last_login_at")
-    private Instant lastLoginAt;
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = Instant.now();
-    }
+    @Column(length = 1000)
+    private String notes;
 }

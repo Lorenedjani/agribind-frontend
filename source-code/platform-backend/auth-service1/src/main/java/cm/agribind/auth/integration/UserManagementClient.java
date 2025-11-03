@@ -1,13 +1,32 @@
 package cm.agribind.auth.integration;
 
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.util.Map;
 
-@FeignClient(name = "user-management-service", url = "${user.service.url:http://localhost:8082}")
+// UserManagementClient.java
+//@FeignClient(name = "user-management-service", url = "${services.user-management}")
 public interface UserManagementClient {
 
-    @PostMapping("/api/v1/users/sync")
-    Map<String, Object> syncUser(@RequestBody Map<String, Object> userData);
+    @GetMapping("/username/{username}")
+    UserDto getUserByUsername(@PathVariable String username);
+
+    @GetMapping("/registration/{registrationNumber}")
+    UserDto getUserByRegistrationNumber(@PathVariable String registrationNumber);
+
+    @GetMapping("/{userId}")
+    UserDto getUserById(@PathVariable String userId);
+
+    @PutMapping("/{userId}/password")
+    void updatePassword(@PathVariable String userId, @RequestBody PasswordUpdateRequest request);
+
+    @PutMapping("/{userId}/first-login")
+    void markFirstLoginComplete(@PathVariable String userId);
+
+    @PutMapping("/{userId}/language")
+    void updateLanguage(@PathVariable String userId, @RequestBody LanguageUpdateRequest request);
 }

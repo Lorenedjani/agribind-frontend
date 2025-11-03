@@ -1,61 +1,51 @@
 package cm.agribind.usermanagement.entity;
 
+import cm.agribind.usermanagement.enums.AgriculturalType;
+import cm.agribind.usermanagement.enums.CropType;
+import cm.agribind.usermanagement.enums.LivestockType;
+import cm.agribind.usermanagement.enums.Region;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
-@Table(name = "farmers", indexes = {
-        @Index(name = "idx_user", columnList = "user_id"),
-        @Index(name = "idx_cooperative", columnList = "cooperative_id"),
-        @Index(name = "idx_status", columnList = "status"),
-        @Index(name = "idx_reg_number", columnList = "registration_number")
-})
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class Farmer {
+@Table(name = "farmers")
+@PrimaryKeyJoinColumn(name = "user_id")
+@Getter
+@Setter
+public class Farmer extends User {
 
-    @Id
-    @Column(length = 36)
-    private String id;
-
-    @Column(name = "user_id", unique = true, nullable = false, length = 36)
-    private String userId;
-
-    @Column(name = "cooperative_id", nullable = false, length = 36)
-    private String cooperativeId;
-
-    @Column(name = "registration_number", unique = true, nullable = false, length = 20)
-    private String registrationNumber;
-
-    @Column(name = "full_name", nullable = false)
-    private String fullName;
-
-    @Builder.Default
-    @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
-    private Status status = Status.PENDING;
+    @Column(nullable = false)
+    private AgriculturalType agriculturalType;
 
-    @Column(name = "activation_method", length = 30)
+    @ElementCollection
+    @CollectionTable(name = "farmer_crops", joinColumns = @JoinColumn(name = "farmer_id"))
+    @Column(name = "crop_type")
     @Enumerated(EnumType.STRING)
-    private ActivationMethod activationMethod;
+    private Set<CropType> cropTypes = new HashSet<>();
 
-    @Column(name = "created_by", nullable = false, length = 36)
-    private String createdBy;
+    @ElementCollection
+    @CollectionTable(name = "farmer_livestock", joinColumns = @JoinColumn(name = "farmer_id"))
+    @Column(name = "livestock_type")
+    @Enumerated(EnumType.STRING)
+    private Set<LivestockType> livestockTypes = new HashSet<>();
 
-    @Builder.Default
-    @Column(name = "created_at")
-    private Instant createdAt = Instant.now();
+    @Embedded
+    private FarmDetails farmDetails;
 
-    @Column(name = "activated_at")
-    private Instant activatedAt;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cooperative_id")
+    private Cooperative cooperative;
 
-    @Column(name = "activated_by", length = 36)
-    private String activatedBy;
+    private Integer yearsFarming;
+
+    private String educationLevel;
+
+    private Boolean hasBankAccount = false;
+
+    private Boolean hasMobileMoney = true;
 }
