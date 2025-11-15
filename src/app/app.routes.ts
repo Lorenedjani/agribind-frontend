@@ -1,18 +1,23 @@
 import { Routes } from '@angular/router';
 import { ProductionComponent } from './modules/cooperative/production/production.component';
+import { MemberListComponent } from './modules/cooperative/members/member-list/member-list.component';
 
 export const routes: Routes = [
-  {
-    path: '',
-    redirectTo: 'production',
-    pathMatch: 'full'
-  },
   {
     path: 'production',
     component: ProductionComponent
   },
   {
-    path: 'test',
-    component: ProductionComponent
+    path: 'members',
+    component: MemberListComponent
+  },
+  {
+    path: '',
+    redirectTo: '/production',
+    pathMatch: 'full'
+  },
+  {
+    path: '**',
+    redirectTo: '/production'
   }
 ];

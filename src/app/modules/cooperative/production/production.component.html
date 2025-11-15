@@ -1,7 +1,7 @@
 <div class="wrapper">
   <app-cooperative-sidebar></app-cooperative-sidebar>
 
-  <!-- Top Bar (now fixed and full-width for main content area) -->
+  <!-- Top Bar -->
   <header class="top-bar">
     <div class="page-title">
       <h3>Production</h3>
@@ -65,26 +65,25 @@
 
     <!-- Top Filters: Search + Buttons -->
     <section class="top-filters">
-  <div class="search-wrapper">
-    <!-- Search icon SVG, and input -->
-    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"
-      stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-      viewBox="0 0 24 24">
-      <circle cx="11" cy="11" r="7" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-    <input
-      type="text"
-      class="search-input"
-      placeholder="Search by farmer, crop, or production ID..."
-      [(ngModel)]="searchQuery"
-    />
-  </div>
-  <div class="button-group">
-    <button class="btn btn-primary" (click)="onRecordProduction()">+ Record Production</button>
-    <button class="btn btn-outline" (click)="onExport()">Export</button>
-  </div>
-</section>
+      <div class="search-wrapper">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"
+          stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="7" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search by farmer, crop, or production ID..."
+          [(ngModel)]="searchQuery"
+        />
+      </div>
+      <div class="button-group">
+        <button class="btn btn-primary" (click)="onRecordProduction()">+ Record Production</button>
+        <button class="btn btn-outline" (click)="onExport()">Export</button>
+      </div>
+    </section>
 
     <!-- Dropdown Filters -->
     <section class="filters">
@@ -144,4 +143,187 @@
       </div>
     </section>
   </main>
+
+  <!-- Record Production Modal -->
+  <div class="modal-overlay" *ngIf="showRecordModal" (click)="closeRecordModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Record New Production</h2>
+        <button class="modal-close" (click)="closeRecordModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <form>
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label for="farmerSelect">Farmer *</label>
+              <select id="farmerSelect" [(ngModel)]="newProduction.farmer" name="farmer" required class="form-input">
+                <option value="" disabled>Select a farmer</option>
+                <option *ngFor="let farmer of farmers" [value]="farmer">{{ farmer }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cropInput">Crop Type *</label>
+              <select id="cropInput" [(ngModel)]="newProduction.crop" name="crop" required class="form-input">
+                <option value="Cocoa">Cocoa</option>
+                <option value="Coffee">Coffee</option>
+                <option value="Maize">Maize</option>
+                <option value="Palm Oil">Palm Oil</option>
+                <option value="Cotton">Cotton</option>
+                <option value="Cassava">Cassava</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="quantityInput">Quantity (MT) *</label>
+              <input
+                type="number"
+                id="quantityInput"
+                [(ngModel)]="newProduction.quantity"
+                name="quantity"
+                min="0.1"
+                step="0.1"
+                required
+                class="form-input"
+                placeholder="e.g., 2.5"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="gradeInput">Quality Grade *</label>
+              <select id="gradeInput" [(ngModel)]="newProduction.grade" name="grade" required class="form-input">
+                <option value="Grade A">Grade A</option>
+                <option value="Grade B">Grade B</option>
+                <option value="Grade C">Grade C</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="warehouseInput">Warehouse *</label>
+              <select id="warehouseInput" [(ngModel)]="newProduction.warehouse" name="warehouse" required class="form-input">
+                <option *ngFor="let warehouse of warehouses" [value]="warehouse">{{ warehouse }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label for="dateInput">Delivery Date *</label>
+              <input
+                type="date"
+                id="dateInput"
+                [(ngModel)]="newProduction.date"
+                name="date"
+                required
+                class="form-input"
+              />
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline" (click)="closeRecordModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="submitProduction()">Record Production</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Modal -->
+  <div class="modal-overlay" *ngIf="showExportModal" (click)="closeExportModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Export Production Data</h2>
+        <button class="modal-close" (click)="closeExportModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <form>
+          <div class="form-group full-width">
+            <label>Export Format</label>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" name="format" value="csv" [(ngModel)]="exportFormat" />
+                <span class="radio-label">
+                  <strong>CSV</strong>
+                  <small>Comma-separated values (Excel compatible)</small>
+                </span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="format" value="json" [(ngModel)]="exportFormat" />
+                <span class="radio-label">
+                  <strong>JSON</strong>
+                  <small>JavaScript Object Notation</small>
+                </span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="format" value="pdf" [(ngModel)]="exportFormat" />
+                <span class="radio-label">
+                  <strong>PDF</strong>
+                  <small>Portable Document Format (Report)</small>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Date Range</label>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" name="dateRange" value="all" [(ngModel)]="exportDateRange" />
+                <span class="radio-label">
+                  <strong>All Data</strong>
+                  <small>Export all production records</small>
+                </span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="dateRange" value="custom" [(ngModel)]="exportDateRange" />
+                <span class="radio-label">
+                  <strong>Custom Range</strong>
+                  <small>Select specific date range</small>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-row" *ngIf="exportDateRange === 'custom'">
+            <div class="form-group">
+              <label for="startDate">Start Date</label>
+              <input
+                type="date"
+                id="startDate"
+                [(ngModel)]="exportStartDate"
+                name="startDate"
+                class="form-input"
+              />
+            </div>
+            <div class="form-group">
+              <label for="endDate">End Date</label>
+              <input
+                type="date"
+                id="endDate"
+                [(ngModel)]="exportEndDate"
+                name="endDate"
+                class="form-input"
+              />
+            </div>
+          </div>
+
+          <div class="export-info">
+            <p><strong>{{ filteredProduction.length }}</strong> records will be exported with current filters</p>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline" (click)="closeExportModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="performExport()">Export Data</button>
+      </div>
+    </div>
+  </div>
 </div>
