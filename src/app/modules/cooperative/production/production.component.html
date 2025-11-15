@@ -1,0 +1,147 @@
+<div class="wrapper">
+  <app-cooperative-sidebar></app-cooperative-sidebar>
+
+  <!-- Top Bar (now fixed and full-width for main content area) -->
+  <header class="top-bar">
+    <div class="page-title">
+      <h3>Production</h3>
+    </div>
+
+    <button *ngIf="searchQuery" class="btn-clear" (click)="searchQuery = ''">×</button>
+
+    <div class="top-bar-actions">
+      <button class="notification-btn" title="Notifications">🔔</button>
+
+      <div class="user-info" title="{{ user.name }}">
+        <div class="avatar">{{ user.initials }}</div>
+        <div class="user-details">
+          <span class="user-name">{{ user.name }}</span>
+          <small>{{ user.role }}</small>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- Cards Overview -->
+    <section class="cards-overview">
+      <div class="card">
+        <div class="card-content">
+          <h2>{{ totalProduction }}</h2>
+          <p class="green-text">{{ totalProductionPercent }}</p>
+          <p class="card-title">Total Production (Current Cycle)</p>
+        </div>
+        <div class="icon-box green">📦</div>
+      </div>
+
+      <div class="card">
+        <div class="card-content">
+          <h2>{{ activeFarmers }}</h2>
+          <p class="green-text">{{ activeFarmersParticipation }}</p>
+          <p class="card-title">Active Farmers Delivering</p>
+        </div>
+        <div class="icon-box green">📈</div>
+      </div>
+
+      <div class="card">
+        <div class="card-content">
+          <h2>{{ gradeAProduction }}</h2>
+          <p class="yellow-text">{{ gradeAPercent }}</p>
+          <p class="card-title">Grade A Production</p>
+        </div>
+        <div class="icon-box yellow">🔑</div>
+      </div>
+
+      <div class="card">
+        <div class="card-content">
+          <h2>{{ thisMonthDeliveries }}</h2>
+          <p class="green-text">{{ thisMonthChange }}</p>
+          <p class="card-title">This Month Deliveries</p>
+        </div>
+        <div class="icon-box green">📅</div>
+      </div>
+    </section>
+
+    <!-- Top Filters: Search + Buttons -->
+    <section class="top-filters">
+  <div class="search-wrapper">
+    <!-- Search icon SVG, and input -->
+    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"
+      stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+      viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="7" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Search by farmer, crop, or production ID..."
+      [(ngModel)]="searchQuery"
+    />
+  </div>
+  <div class="button-group">
+    <button class="btn btn-primary" (click)="onRecordProduction()">+ Record Production</button>
+    <button class="btn btn-outline" (click)="onExport()">Export</button>
+  </div>
+</section>
+
+    <!-- Dropdown Filters -->
+    <section class="filters">
+      <div class="filter-group">
+        <label for="cropSelect">Crop Type</label>
+        <select id="cropSelect" [(ngModel)]="selectedCrop" class="filter-select" aria-label="Filter by Crop Type">
+          <option *ngFor="let crop of cropTypes" [value]="crop">{{ crop }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="gradeSelect">Quality Grade</label>
+        <select id="gradeSelect" [(ngModel)]="selectedGrade" class="filter-select" aria-label="Filter by Quality Grade">
+          <option *ngFor="let grade of qualityGrades" [value]="grade">{{ grade }}</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Production Table -->
+    <section class="table-section">
+      <table>
+        <thead>
+          <tr>
+            <th>Production ID</th>
+            <th>Date</th>
+            <th>Farmer</th>
+            <th>Crop</th>
+            <th>Quantity</th>
+            <th>Grade</th>
+            <th>Warehouse</th>
+            <th>Value (XAF)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let record of paginatedProduction">
+            <td>{{ record.id }}</td>
+            <td>{{ record.date }}</td>
+            <td>{{ record.farmer }}</td>
+            <td>{{ record.crop }}</td>
+            <td>{{ record.quantity }}</td>
+            <td><span class="badge" [ngClass]="record.gradeClass">{{ record.grade }}</span></td>
+            <td>{{ record.warehouse }}</td>
+            <td>{{ record.value }}</td>
+            <td><span class="status-badge" [ngClass]="record.statusClass">{{ record.status }}</span></td>
+          </tr>
+          <tr *ngIf="filteredProduction.length === 0">
+            <td colspan="9" class="no-data">No data matches the filters.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination Controls -->
+      <div class="pagination">
+        <button (click)="previousPage()" [disabled]="currentPage === 1">← Prev</button>
+        <span>Page {{ currentPage }} of {{ totalPages }}</span>
+        <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next →</button>
+      </div>
+    </section>
+  </main>
+</div>
