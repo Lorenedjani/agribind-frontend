@@ -1,5 +1,120 @@
+server:
+  port: 8082
+  servlet:
+    context-path: /user-management
+
 spring:
   application:
     name: user-management-service
-server:
-  port: 0
+
+  datasource:
+    url: jdbc:mysql://localhost:3307/agribind_users?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: ISI3Eng!2025
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+        batch_versioned_data: true
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    out-of-order: false
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+    consumer:
+      group-id: user-management-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+  cloud:
+    config:
+      enabled: false
+
+# Application specific configuration
+agribind:
+  security:
+    jwt-secret: ${JWT_SECRET:agribindSuperSecretKeyForJWTGeneration2024}
+    jwt-expiration-ms: 86400000 # 24 hours
+
+  qrcode:
+    default-size: 300
+    default-format: PNG
+    expiration-minutes: 30
+
+  export:
+    max-records: 10000
+    default-format: EXCEL
+
+  openapi:
+    dev-url: http://localhost:8082
+    prod-url: https://api.agribind.cm
+
+  notification:
+    enabled: true
+    sms-enabled: false # Set to true when SMS gateway is configured
+
+  localization:
+    default-language: fr
+    supported-languages: fr,en,ful,ewe,dua
+
+# Logging configuration
+logging:
+  level:
+    cm.agribind.usermanagement: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/user-management-service.log
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+
+# File storage
+file:
+  upload-dir: ./uploads
+  max-size: 10MB

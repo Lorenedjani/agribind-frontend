@@ -30,6 +30,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     List<User> findByStatus(UserStatus status);
 
+
     long countByType(UserType type);
 
     long countByStatus(UserStatus status);

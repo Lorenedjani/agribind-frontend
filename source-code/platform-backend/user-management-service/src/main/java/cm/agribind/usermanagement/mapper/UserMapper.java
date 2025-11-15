@@ -5,13 +5,12 @@ import cm.agribind.usermanagement.dto.command.UpdateUserCommand;
 import cm.agribind.usermanagement.dto.response.UserResponse;
 import cm.agribind.usermanagement.entity.*;
 import cm.agribind.usermanagement.enums.UserStatus;
-import cm.agribind.usermanagement.enums.UserType;
 import org.mapstruct.*;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring",
-        uses = {ProfileMapper.class}, // Remove AddressMapper from uses
+        uses = {ProfileMapper.class},
         injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public interface UserMapper {
 
@@ -67,29 +66,46 @@ public interface UserMapper {
     }
 
     @Named("toAddressFromUpdate")
-    default Address toAddressFromUpdate(UpdateUserCommand command, @MappingTarget User user) {
-        Address existingAddress = user.getAddress();
-        if (existingAddress == null) {
-            existingAddress = new Address();
+    default Address toAddressFromUpdate(UpdateUserCommand command) {
+        if (command.getRegion() == null &&
+                command.getDepartment() == null &&
+                command.getDistrict() == null &&
+                command.getVillage() == null &&
+                command.getGpsCoordinates() == null) {
+            return null;
         }
 
-        if (command.getRegion() != null) {
-            existingAddress.setRegion(command.getRegion());
-        }
-        if (command.getDepartment() != null) {
-            existingAddress.setDepartment(command.getDepartment());
-        }
-        if (command.getDistrict() != null) {
-            existingAddress.setDistrict(command.getDistrict());
-        }
-        if (command.getVillage() != null) {
-            existingAddress.setVillage(command.getVillage());
-        }
-        if (command.getGpsCoordinates() != null) {
-            existingAddress.setGpsCoordinates(command.getGpsCoordinates());
-        }
+        Address address = new Address();
+        address.setRegion(command.getRegion());
+        address.setDepartment(command.getDepartment());
+        address.setDistrict(command.getDistrict());
+        address.setVillage(command.getVillage());
+        address.setGpsCoordinates(command.getGpsCoordinates());
+        return address;
+    }
 
-        return existingAddress;
+    @AfterMapping
+    default void afterUpdateMapping(@MappingTarget User user, UpdateUserCommand command) {
+        // Handle address update separately to merge with existing address
+        if (user.getAddress() != null && command != null) {
+            Address existingAddress = user.getAddress();
+
+            if (command.getRegion() != null) {
+                existingAddress.setRegion(command.getRegion());
+            }
+            if (command.getDepartment() != null) {
+                existingAddress.setDepartment(command.getDepartment());
+            }
+            if (command.getDistrict() != null) {
+                existingAddress.setDistrict(command.getDistrict());
+            }
+            if (command.getVillage() != null) {
+                existingAddress.setVillage(command.getVillage());
+            }
+            if (command.getGpsCoordinates() != null) {
+                existingAddress.setGpsCoordinates(command.getGpsCoordinates());
+            }
+        }
     }
 
     @AfterMapping
