@@ -1,0 +1,96 @@
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background-color: #fff;
+  border-right: 1px solid #eaeaea;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  font-family: 'Inter', sans-serif;
+  overflow-y: auto;
+  z-index: 1000;
+
+  .sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid #eaeaea;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .logo-icon {
+      background: #328048;
+      border-radius: 10px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      svg {
+        stroke: #fff;
+        width: 22px;
+        height: 22px;
+      }
+    }
+
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+
+      .brand-name {
+        font-weight: 700;
+        color: #1d1f20;
+        font-size: 18px;
+      }
+
+      .brand-subtitle {
+        font-size: 11px;
+        color: #939598;
+      }
+    }
+  }
+
+  .sidebar-nav {
+    margin-top: 10px;
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 12px 24px;
+      color: #505050;
+      font-weight: 500;
+      font-size: 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      text-decoration: none;
+
+      .nav-icon {
+        color: #8e8e8e;
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+      }
+
+      &:hover {
+        background-color: #e8f7e9;
+        color: #265028;
+
+        .nav-icon {
+          color: #328048;
+        }
+      }
+
+      &.active {
+        background-color: #328048;
+        color: white;
+        font-weight: 600;
+
+        .nav-icon {
+          color: white;
+        }
+      }
+    }
+  }
+}
