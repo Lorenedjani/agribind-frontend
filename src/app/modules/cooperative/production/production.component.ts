@@ -277,3 +277,242 @@ export class RecordProductionModalComponent {
     }
   }
 }
+
+// Main Production Component
+@Component({
+  selector: 'app-production',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RecordProductionModalComponent],
+  templateUrl: './production.component.html',
+  styleUrls: ['./production.component.scss']
+})
+export class ProductionComponent {
+  // User info
+  user = {
+    name: 'John Kamga',
+    role: 'Cooperative Manager',
+    initials: 'JK'
+  };
+
+  // Overview stats
+  totalProduction = '2,450 MT';
+  totalProductionPercent = '+12.5% from last cycle';
+  activeFarmers = '342';
+  activeFarmersParticipation = '85% participation';
+  gradeAProduction = '1,850 MT';
+  gradeAPercent = '75.5% of total';
+  thisMonthDeliveries = '156';
+  thisMonthChange = '+8.3% vs last month';
+
+  // Filter options
+  cropTypes = ['All Crops', 'Cocoa', 'Coffee', 'Maize', 'Palm Oil', 'Cotton', 'Cassava'];
+  qualityGrades = ['All Grades', 'Grade A', 'Grade B', 'Grade C'];
+  
+  selectedCrop = 'All Crops';
+  selectedGrade = 'All Grades';
+  searchQuery = '';
+
+  // Production data
+  productionData: ProductionRecord[] = [
+    {
+      id: 'PROD-001',
+      date: '2024-01-15',
+      farmer: 'Paul Biya',
+      crop: 'Cocoa',
+      quantity: 25.5,
+      grade: 'Grade A',
+      warehouse: 'Douala Central',
+      value: 53550000,
+      status: 'Verified',
+      gradeClass: 'grade-a',
+      statusClass: 'verified'
+    },
+    {
+      id: 'PROD-002',
+      date: '2024-01-15',
+      farmer: 'Marie Ngono',
+      crop: 'Coffee',
+      quantity: 18.2,
+      grade: 'Grade A',
+      warehouse: 'Yaoundé North',
+      value: 40040000,
+      status: 'Verified',
+      gradeClass: 'grade-a',
+      statusClass: 'verified'
+    },
+    {
+      id: 'PROD-003',
+      date: '2024-01-14',
+      farmer: 'Jean Fotso',
+      crop: 'Maize',
+      quantity: 45.0,
+      grade: 'Grade B',
+      warehouse: 'Bafoussam',
+      value: 22500000,
+      status: 'Pending',
+      gradeClass: 'grade-b',
+      statusClass: 'pending'
+    },
+    {
+      id: 'PROD-004',
+      date: '2024-01-14',
+      farmer: 'Grace Mballa',
+      crop: 'Palm Oil',
+      quantity: 32.8,
+      grade: 'Grade A',
+      warehouse: 'Limbe',
+      value: 52480000,
+      status: 'Verified',
+      gradeClass: 'grade-a',
+      statusClass: 'verified'
+    },
+    {
+      id: 'PROD-005',
+      date: '2024-01-13',
+      farmer: 'Samuel Nkeng',
+      crop: 'Cotton',
+      quantity: 28.5,
+      grade: 'Grade B',
+      warehouse: 'Garoua',
+      value: 37050000,
+      status: 'Pending',
+      gradeClass: 'grade-b',
+      statusClass: 'pending'
+    },
+    {
+      id: 'PROD-006',
+      date: '2024-01-13',
+      farmer: 'Beatrice Atanga',
+      crop: 'Cassava',
+      quantity: 55.0,
+      grade: 'Grade A',
+      warehouse: 'Kumba',
+      value: 27500000,
+      status: 'Verified',
+      gradeClass: 'grade-a',
+      statusClass: 'verified'
+    },
+    {
+      id: 'PROD-007',
+      date: '2024-01-12',
+      farmer: 'Thomas Ewane',
+      crop: 'Cocoa',
+      quantity: 22.0,
+      grade: 'Grade A',
+      warehouse: 'Douala Central',
+      value: 46200000,
+      status: 'Verified',
+      gradeClass: 'grade-a',
+      statusClass: 'verified'
+    },
+    {
+      id: 'PROD-008',
+      date: '2024-01-12',
+      farmer: 'Alice Njoya',
+      crop: 'Coffee',
+      quantity: 15.5,
+      grade: 'Grade B',
+      warehouse: 'Yaoundé North',
+      value: 34100000,
+      status: 'Rejected',
+      gradeClass: 'grade-b',
+      statusClass: 'rejected'
+    },
+    {
+      id: 'PROD-009',
+      date: '2024-01-11',
+      farmer: 'David Manga',
+      crop: 'Maize',
+      quantity: 38.0,
+      grade: 'Grade A',
+      warehouse: 'Bafoussam',
+      value: 19000000,
+      status: 'Verified',
+      gradeClass: 'grade-a',
+      statusClass: 'verified'
+    },
+    {
+      id: 'PROD-010',
+      date: '2024-01-11',
+      farmer: 'Rose Tabi',
+      crop: 'Palm Oil',
+      quantity: 29.5,
+      grade: 'Grade A',
+      warehouse: 'Limbe',
+      value: 47200000,
+      status: 'Pending',
+      gradeClass: 'grade-a',
+      statusClass: 'pending'
+    }
+  ];
+
+  // Pagination
+  currentPage = 1;
+  itemsPerPage = 10;
+
+  // Modal state
+  showRecordModal = false;
+  showExportModal = false;
+
+  // Computed properties
+  get filteredProduction(): ProductionRecord[] {
+    return this.productionData.filter(record => {
+      const matchesCrop = this.selectedCrop === 'All Crops' || record.crop === this.selectedCrop;
+      const matchesGrade = this.selectedGrade === 'All Grades' || record.grade === this.selectedGrade;
+      const matchesSearch = !this.searchQuery || 
+        record.farmer.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        record.crop.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        record.id.toLowerCase().includes(this.searchQuery.toLowerCase());
+      
+      return matchesCrop && matchesGrade && matchesSearch;
+    });
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredProduction.length / this.itemsPerPage);
+  }
+
+  get paginatedProduction(): ProductionRecord[] {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    return this.filteredProduction.slice(start, end);
+  }
+
+  // Methods
+  onRecordProduction(): void {
+    this.showRecordModal = true;
+  }
+
+  onExport(): void {
+    this.showExportModal = true;
+  }
+
+  closeRecordModal(): void {
+    this.showRecordModal = false;
+  }
+
+  closeExportModal(): void {
+    this.showExportModal = false;
+  }
+
+  onRecordSubmitted(record: ProductionRecord): void {
+    // Add the new record to the beginning of the array
+    this.productionData.unshift(record);
+    this.closeRecordModal();
+    
+    // Reset to first page to show the new record
+    this.currentPage = 1;
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+    }
+  }
+}
