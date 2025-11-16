@@ -1,0 +1,9 @@
+.inventory-page { padding: 18px; }
+.search-actions { display:flex; gap:12px; align-items:center; margin:12px 0; }
+.search-input { flex:1; padding:10px 14px; border-radius:8px; border:1px solid #e6e6e6; }
+.btn { padding:8px 14px; border-radius:8px; border:none; cursor:pointer; }
+.btn.add { background:#2f8a3a; color:white; }
+.btn.export { background:#fff; border:1px solid #e2e2e2; }
+.tabs { display:flex; gap:8px; background:#f2f2f2; padding:8px; border-radius:20px; }
+.tabs button { background:transparent; border:none; padding:8px 18px; border-radius:16px; }
+.tabs button.active { background:white; box-shadow: 0 0 0 2px rgba(0,0,0,0.03); }
