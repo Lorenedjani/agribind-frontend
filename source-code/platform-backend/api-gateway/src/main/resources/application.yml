@@ -11,41 +11,99 @@ spring:
           enabled: true
           lower-case-service-id: true
       routes:
+        # Farmer Service Route
+        - id: farmer-service
+          uri: lb://farmer-service
+          predicates:
+            - Path=/api/farmers/**
+          filters:
+            - name: JwtAuthenticationFilter
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                redis-rate-limiter.requestedTokens: 1
+
+        # Cooperative Service Route
+        - id: cooperative-service
+          uri: lb://cooperative-service
+          predicates:
+            - Path=/api/cooperatives/**
+          filters:
+            - name: JwtAuthenticationFilter
+            - StripPrefix=1
+
+        # Government Service Route
+        - id: government-service
+          uri: lb://government-service
+          predicates:
+            - Path=/api/government/**
+          filters:
+            - name: JwtAuthenticationFilter
+            - StripPrefix=1
+
+        # Authentication Service Route
         - id: auth-service
           uri: lb://auth-service
           predicates:
             - Path=/api/auth/**
           filters:
             - StripPrefix=1
-            
-        - id: farmer-service
-          uri: lb://farmer-service
+
+        # Weather Service Route
+        - id: weather-service
+          uri: lb://weather-service
           predicates:
-            - Path=/api/farmers/**
+            - Path=/api/weather/**
           filters:
+            - name: JwtAuthenticationFilter
             - StripPrefix=1
-            
-        - id: cooperative-service
-          uri: lb://cooperative-service
+
+        # Market Service Route
+        - id: market-service
+          uri: lb://market-service
           predicates:
-            - Path=/api/cooperatives/**
+            - Path=/api/market/**
           filters:
+            - name: JwtAuthenticationFilter
             - StripPrefix=1
-            
+
+        # Notification Service Route
         - id: notification-service
           uri: lb://notification-service
           predicates:
             - Path=/api/notifications/**
           filters:
+            - name: JwtAuthenticationFilter
             - StripPrefix=1
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://auth-service:8081
+
+  redis:
+    host: redis-service
+    port: 6379
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://discovery-service:8761/eureka
   instance:
     prefer-ip-address: true
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway
+  endpoint:
+    health:
+      show-details: always
+
 logging:
   level:
-    org.springframework.cloud.gateway: DEBUG
+    '[com.cooperative.gateway]': DEBUG
+    '[org.springframework.cloud.gateway]': DEBUG

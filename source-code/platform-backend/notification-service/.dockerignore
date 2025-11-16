@@ -1,0 +1,17 @@
+.git
+.gitignore
+README.md
+target/
+*.jar
+*.war
+*.ear
+.DS_Store
+.classpath
+.project
+.settings
+.idea
+*.iml
+bin/
+build/
+logs/
+node_modules/
