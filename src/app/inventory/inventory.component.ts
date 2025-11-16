@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { InventoryService } from './inventory.service';
 import { InventoryItem } from '../models/item.model';
+import { InventoryDashboardComponent } from "./inventory-dashboard/inventory-dashboard.component";
 
 @Component({
   selector: 'app-inventory',
   templateUrl: './inventory.component.html',
-  styleUrls: ['./inventory.component.scss']
+  styleUrls: ['./inventory.component.scss'],
+  imports: [InventoryDashboardComponent]
 })
 export class InventoryComponent implements OnInit {
   items: InventoryItem[] = [];
