@@ -1,0 +1,132 @@
+<div class="modal-overlay" *ngIf="isModalOpen">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>{{ isEditMode ? 'Edit Production Record' : 'Record Production' }}</h2>
+      <button class="close-btn" (click)="closeModal()">✖</button>
+    </div>
+
+    <form [formGroup]="productionForm" (ngSubmit)="onSubmit()">
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Farmer <span class="required">*</span></label>
+            <select formControlName="farmerId">
+              <option value="">Select farmer</option>
+              <option *ngFor="let farmer of farmers" [value]="farmer.id">
+                {{ farmer.name }} ({{ farmer.id }})
+              </option>
+            </select>
+            <small *ngIf="isFieldInvalid('farmerId')" class="error-message">
+              {{ getErrorMessage('farmerId') }}
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label>Product <span class="required">*</span></label>
+            <select formControlName="product">
+              <option value="">Select product</option>
+              <option *ngFor="let product of products" [value]="product">
+                {{ product }}
+              </option>
+            </select>
+            <small *ngIf="isFieldInvalid('product')" class="error-message">
+              {{ getErrorMessage('product') }}
+            </small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Quantity <span class="required">*</span></label>
+            <input type="number" formControlName="quantity" placeholder="Enter quantity" min="0" step="0.01">
+            <small *ngIf="isFieldInvalid('quantity')" class="error-message">
+              {{ getErrorMessage('quantity') }}
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label>Unit <span class="required">*</span></label>
+            <select formControlName="unit">
+              <option *ngFor="let unit of units" [value]="unit">
+                {{ unit }}
+              </option>
+            </select>
+            <small *ngIf="isFieldInvalid('unit')" class="error-message">
+              {{ getErrorMessage('unit') }}
+            </small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Quality Grade <span class="required">*</span></label>
+            <select formControlName="quality">
+              <option value="">Select quality</option>
+              <option *ngFor="let quality of qualities" [value]="quality">
+                {{ quality }}
+              </option>
+            </select>
+            <small *ngIf="isFieldInvalid('quality')" class="error-message">
+              {{ getErrorMessage('quality') }}
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label>Harvest Date <span class="required">*</span></label>
+            <input type="date" formControlName="harvestDate">
+            <small *ngIf="isFieldInvalid('harvestDate')" class="error-message">
+              {{ getErrorMessage('harvestDate') }}
+            </small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Location <span class="required">*</span></label>
+            <select formControlName="location">
+              <option value="">Select region</option>
+              <option *ngFor="let region of regions" [value]="region">
+                {{ region }}
+              </option>
+            </select>
+            <small *ngIf="isFieldInvalid('location')" class="error-message">
+              {{ getErrorMessage('location') }}
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label>Estimated Value (XAF) <span class="required">*</span></label>
+            <input type="number" formControlName="value" placeholder="Enter value in XAF" min="0" step="1000">
+            <small *ngIf="isFieldInvalid('value')" class="error-message">
+              {{ getErrorMessage('value') }}
+            </small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Status <span class="required">*</span></label>
+          <select formControlName="status">
+            <option value="Pending">Pending</option>
+            <option value="Verified">Verified</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+          <small *ngIf="isFieldInvalid('status')" class="error-message">
+            {{ getErrorMessage('status') }}
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea formControlName="notes" placeholder="Add any additional notes or observations" rows="3"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="closeModal()">Cancel</button>
+        <button type="submit" class="btn-submit" [disabled]="isSubmitting">
+          {{ isEditMode ? 'Update Production' : 'Save Production' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

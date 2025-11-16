@@ -1,0 +1,243 @@
+<div class="production-list-content">
+  <!-- Stats Section -->
+  <section class="stats-section-horizontal">
+    <div class="stats-row">
+      <div class="stat-item total-production">
+        <div class="stat-icon-box primary">
+          <i class="fas fa-industry"></i>
+        </div>
+        <div class="stat-details">
+          <div class="stat-label">Total Records</div>
+          <div class="stat-number-large">{{ getTotalProduction() }}</div>
+          <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            <span>+8 this month</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-divider"></div>
+
+      <div class="stat-item total-quantity">
+        <div class="stat-icon-box success">
+          <i class="fas fa-weight"></i>
+        </div>
+        <div class="stat-details">
+          <div class="stat-label">Total Quantity</div>
+          <div class="stat-number">{{ getTotalQuantity() }} kg</div>
+          <div class="stat-description">Across all products</div>
+        </div>
+      </div>
+
+      <div class="stat-divider"></div>
+
+      <div class="stat-item total-value">
+        <div class="stat-icon-box warning">
+          <i class="fas fa-coins"></i>
+        </div>
+        <div class="stat-details">
+          <div class="stat-label">Total Value</div>
+          <div class="stat-number">{{ formatCurrency(getTotalValue()) }}</div>
+          <div class="stat-description">Estimated market value</div>
+        </div>
+      </div>
+
+      <div class="stat-divider"></div>
+
+      <div class="stat-item verified">
+        <div class="stat-icon-box info">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-details">
+          <div class="stat-label">Verified</div>
+          <div class="stat-number">{{ getVerifiedCount() }}</div>
+          <div class="stat-description">Quality checked</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Actions Section -->
+  <section class="business-section">
+    <div class="business-header">
+      <div class="business-actions">
+        <div class="search-box">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" placeholder="Search production by farmer, product, or ID...">
+        </div>
+        <div class="action-buttons">
+          <button class="btn btn-primary" (click)="openAddProductionModal()">
+            <i class="fas fa-plus"></i>
+            <span>Record Production</span>
+          </button>
+          <button class="btn btn-secondary">
+            <i class="fas fa-download"></i>
+            <span>Export</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="filters-row-horizontal">
+      <div class="filter-item">
+        <label><i class="fas fa-toggle-on"></i> Status</label>
+        <select>
+          <option>All Status</option>
+          <option>Verified</option>
+          <option>Pending</option>
+          <option>Rejected</option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label><i class="fas fa-leaf"></i> Product</label>
+        <select>
+          <option>All Products</option>
+          <option>Cocoa Beans</option>
+          <option>Coffee Beans</option>
+          <option>Palm Oil</option>
+          <option>Cotton</option>
+          <option>Maize</option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label><i class="fas fa-star"></i> Quality</label>
+        <select>
+          <option>All Grades</option>
+          <option>Grade A</option>
+          <option>Grade B</option>
+          <option>Grade C</option>
+          <option>Premium</option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label><i class="fas fa-calendar"></i> Period</label>
+        <select>
+          <option>All Time</option>
+          <option>This Week</option>
+          <option>This Month</option>
+          <option>Last 3 Months</option>
+          <option>This Year</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- Table Section -->
+  <section class="table-section">
+    <div class="table-wrapper">
+      <table class="production-table">
+        <thead>
+        <tr>
+          <th><i class="fas fa-hashtag"></i> ID</th>
+          <th><i class="fas fa-user"></i> Farmer</th>
+          <th><i class="fas fa-leaf"></i> Product</th>
+          <th><i class="fas fa-weight"></i> Quantity</th>
+          <th><i class="fas fa-star"></i> Quality</th>
+          <th><i class="fas fa-calendar"></i> Harvest Date</th>
+          <th><i class="fas fa-map-marker-alt"></i> Location</th>
+          <th><i class="fas fa-coins"></i> Value (XAF)</th>
+          <th><i class="fas fa-circle"></i> Status</th>
+          <th><i class="fas fa-cog"></i> Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let production of paginatedProductions">
+          <td class="production-id">
+            <span class="id-badge">{{ production.id }}</span>
+          </td>
+          <td class="farmer-name">
+            <div class="name-cell">
+              <div class="farmer-avatar">{{ production.farmerName.charAt(0) }}</div>
+              <div class="farmer-info">
+                <span class="name">{{ production.farmerName }}</span>
+                <span class="farmer-id">{{ production.farmerId }}</span>
+              </div>
+            </div>
+          </td>
+          <td class="product">
+            <span class="product-tag">{{ production.product }}</span>
+          </td>
+          <td class="quantity">
+            <span class="quantity-value">{{ production.quantity }} {{ production.unit }}</span>
+          </td>
+          <td class="quality">
+            <span class="quality-badge" [class]="'quality-' + production.quality.toLowerCase().replace(' ', '-')">
+              {{ production.quality }}
+            </span>
+          </td>
+          <td class="harvest-date">
+            <i class="fas fa-calendar-alt"></i>
+            <span>{{ production.harvestDate }}</span>
+          </td>
+          <td class="location">
+            <i class="fas fa-map-pin"></i>
+            <span>{{ production.location }}</span>
+          </td>
+          <td class="value">
+            <span class="value-amount">{{ production.value.toLocaleString() }}</span>
+          </td>
+          <td>
+            <span class="status-badge" [class]="'status-' + production.status.toLowerCase()">
+              <i class="fas fa-circle"></i>
+              {{ production.status }}
+            </span>
+          </td>
+          <td class="actions">
+            <div class="action-buttons-group">
+              <button class="icon-btn view-btn" (click)="openViewProductionModal(production)" title="View Details">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="icon-btn edit-btn" (click)="openEditProductionModal(production)" title="Edit Production">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="icon-btn delete-btn" (click)="openDeleteConfirmModal(production)" title="Delete Production">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container">
+      <div class="pagination-info">
+        Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, productions.length) }} of {{ productions.length }} entries
+      </div>
+      <div class="pagination-controls">
+        <button class="pagination-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button *ngFor="let page of pageNumbers" 
+                class="pagination-btn" 
+                [class.active]="page === currentPage"
+                (click)="goToPage(page)">
+          {{ page }}
+        </button>
+        <button class="pagination-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Modals -->
+<app-production-form
+  (productionAdded)="onProductionAdded($event)"
+  (productionUpdated)="onProductionUpdated($event)"
+  (modalClosed)="onModalClosed()">
+</app-production-form>
+
+<app-production-detail
+  (modalClosed)="onModalClosed()">
+</app-production-detail>
+
+<app-delete-production
+  (productionDeleted)="onProductionDeleted($event)"
+  (modalClosed)="onModalClosed()">
+</app-delete-production>
