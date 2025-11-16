@@ -1,0 +1,17 @@
+<div class="inventory-page">
+  <app-inventory-dashboard></app-inventory-dashboard>
+
+  <div class="search-actions">
+    <input placeholder="Search inventory by name, category, or ID..." class="search-input" />
+    <button class="btn add">+ Add to Inventory</button>
+    <button class="btn export">Export</button>
+  </div>
+
+  <div class="tabs">
+    <button [class.active]="activeTab==='farmer'" (click)="switchTab('farmer')">Farmer Products</button>
+    <button [class.active]="activeTab==='input'" (click)="switchTab('input')">Input Supplies</button>
+    <button [class.active]="activeTab==='livestock'" (click)="switchTab('livestock')">Livestock</button>
+  </div>
+
+  <app-inventory-list [items]="filteredItems()"></app-inventory-list>
+</div>
