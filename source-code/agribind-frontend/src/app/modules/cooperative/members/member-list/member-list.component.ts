@@ -6,7 +6,7 @@ import { EditMemberFormComponent } from '../edit-member-form/edit-member-form.co
 import { MemberDetailComponent } from '../member-detail/member-detail.component';
 import { DeleteMemberComponent } from '../delete-member/delete-member.component';
 import { CooperativeSidebarComponent } from '../../../../../shared/cooperative-sidebar/cooperative-sidebar.component';
-
+import { UserService, User, PageResponse } from '../../../../core/services/user.service';
 
 interface Member {
   id: string;
@@ -16,8 +16,6 @@ interface Member {
   region: string;
   primaryCrop: string;
   status: string;
-  firstName?: string;
-  lastName?: string;
   email?: string;
   joinDate?: string;
   farmSize?: string;
@@ -44,12 +42,12 @@ interface Member {
   encapsulation: ViewEncapsulation.None
 })
 export class MemberListComponent implements OnInit {
-  @ViewChild(MemberFormComponent, { static: false }) memberFormComponent!: MemberFormComponent;
-  @ViewChild(EditMemberFormComponent, { static: false }) editMemberFormComponent!: EditMemberFormComponent;
-  @ViewChild(MemberDetailComponent, { static: false }) memberDetailComponent!: MemberDetailComponent;
-  @ViewChild(DeleteMemberComponent, { static: false }) deleteMemberComponent!: DeleteMemberComponent;
+  @ViewChild(MemberFormComponent) memberFormComponent!: MemberFormComponent;
+  @ViewChild(EditMemberFormComponent) editMemberFormComponent!: EditMemberFormComponent;
+  @ViewChild(MemberDetailComponent) memberDetailComponent!: MemberDetailComponent;
+  @ViewChild(DeleteMemberComponent) deleteMemberComponent!: DeleteMemberComponent;
 
-  // User info for header
+  // User info
   user = { name: 'Emmanuel Njoya', role: 'Manager', initials: 'EN' };
 
   // Search and filters
@@ -62,15 +60,15 @@ export class MemberListComponent implements OnInit {
   statusOptions = ['All Status', 'Active', 'Inactive', 'Pending'];
   regionOptions = [
     'All Regions',
-    'North West',
-    'South West',
-    'Littoral',
-    'Centre',
-    'North',
-    'West',
-    'Far North',
-    'Adamawa',
-    'South'
+    'NORD_OUEST',
+    'SUD_OUEST',
+    'LITTORAL',
+    'CENTRE',
+    'NORD',
+    'OUEST',
+    'EXTREME_NORD',
+    'ADAMAOUA',
+    'SUD'
   ];
   cropOptions = [
     'All Crops',
@@ -84,150 +82,201 @@ export class MemberListComponent implements OnInit {
     'Rice'
   ];
 
-  // Pagination
-  currentPage = 1;
-  pageSize = 10;
+  // Data
+  members: Member[] = [];
+  loading = false;
+  error = '';
 
-  members: Member[] = [
-    {
-      id: 'M001',
-      name: 'Kwame Osei',
-      phone: '+237 84234597',
-      type: 'Farmer',
-      region: 'North West',
-      primaryCrop: 'Cocoa',
-      status: 'Active'
-    },
-    {
-      id: 'M002',
-      name: 'Anna Boaleng',
-      phone: '+237 78438887',
-      type: 'Farmer',
-      region: 'South West',
-      primaryCrop: 'Coffee',
-      status: 'Active'
-    },
-    {
-      id: 'M003',
-      name: 'Yann Mensah',
-      phone: '+237 84284756',
-      type: 'Farmer',
-      region: 'Littoral',
-      primaryCrop: 'Cocoa',
-      status: 'Inactive'
-    },
-    {
-      id: 'M004',
-      name: 'Akosua Darko',
-      phone: '+237 55609283',
-      type: 'Cooperative',
-      region: 'North West',
-      primaryCrop: 'Cotton',
-      status: 'Active'
-    },
-    {
-      id: 'M005',
-      name: 'Kofi Asante',
-      phone: '+237 67890123',
-      type: 'Farmer',
-      region: 'Centre',
-      primaryCrop: 'Maize',
-      status: 'Active'
-    },
-    {
-      id: 'M006',
-      name: 'Abena Owusu',
-      phone: '+237 78901234',
-      type: 'Farmer',
-      region: 'West',
-      primaryCrop: 'Palm Oil',
-      status: 'Pending'
-    }
-  ];
+  // Pagination
+  currentPage = 0;
+  pageSize = 10;
+  totalElements = 0;
+  totalPages = 0;
+
+  // Statistics
+  totalMembers = 0;
+  farmersCount = 0;
+  cooperativesCount = 0;
+  activeMembers = 0;
+
+  constructor(private userService: UserService) {}
 
   ngOnInit(): void {
-    console.log('MemberListComponent loaded with', this.members.length, 'members');
+    this.loadMembers();
+    this.loadStatistics();
+  }
+
+  loadMembers(): void {
+    this.loading = true;
+    this.error = '';
+
+    const filters = this.buildFilters();
+
+    this.userService.getUsers(this.currentPage, this.pageSize, filters).subscribe({
+      next: (response: PageResponse<User>) => {
+        this.members = this.mapUsersToMembers(response.content);
+        this.totalElements = response.totalElements;
+        this.totalPages = response.totalPages;
+        this.currentPage = response.currentPage;
+        this.loading = false;
+        console.log('Loaded members from backend:', this.members.length);
+      },
+      error: (error) => {
+        console.error('Error loading members:', error);
+        this.error = 'Failed to load members. Please try again.';
+        this.loading = false;
+      }
+    });
+  }
+
+  loadStatistics(): void {
+    // Load total members
+    this.userService.getUsers(0, 1, {}).subscribe({
+      next: (response) => {
+        this.totalMembers = response.totalElements;
+      }
+    });
+
+    // Load farmers count
+    this.userService.getFarmers(0, 1).subscribe({
+      next: (response) => {
+        this.farmersCount = response.totalElements;
+      }
+    });
+
+    // Load cooperatives count
+    this.userService.getCooperatives(0, 1).subscribe({
+      next: (response) => {
+        this.cooperativesCount = response.totalElements;
+      }
+    });
+
+    // Load active members count
+    this.userService.getUsers(0, 1, { status: 'ACTIVE' }).subscribe({
+      next: (response) => {
+        this.activeMembers = response.totalElements;
+      }
+    });
+  }
+
+  buildFilters(): any {
+    const filters: any = {};
+
+    if (this.searchQuery) {
+      filters.searchTerm = this.searchQuery;
+    }
+
+    if (this.selectedStatus !== 'All Status') {
+      filters.status = this.selectedStatus.toUpperCase();
+    }
+
+    if (this.selectedRegion !== 'All Regions') {
+      filters.region = this.selectedRegion;
+    }
+
+    if (this.selectedCrop !== 'All Crops') {
+      filters.primaryCrop = this.selectedCrop;
+    }
+
+    return filters;
+  }
+
+  mapUsersToMembers(users: User[]): Member[] {
+    return users.map(user => ({
+      id: user.userId || user.id || '',
+      name: user.name,
+      phone: user.phoneNumber,
+      type: user.type,
+      region: user.region || '',
+      primaryCrop: this.getPrimaryCrop(user),
+      status: user.status || 'Active',
+      email: user.email,
+      farmSize: user.landArea ? `${user.landArea} ha` : undefined,
+      address: this.buildAddress(user),
+      farmLocation: user.village || user.district || undefined
+    }));
+  }
+
+  getPrimaryCrop(user: User): string {
+    if (user.cropTypes && user.cropTypes.length > 0) {
+      return user.cropTypes[0];
+    }
+    return 'N/A';
+  }
+
+  buildAddress(user: User): string {
+    const parts = [user.village, user.district, user.department, user.region]
+      .filter(Boolean);
+    return parts.join(', ');
   }
 
   // Computed properties for statistics
   getTotalMembers(): number {
-    return this.members.length;
+    return this.totalMembers;
   }
 
   getFarmersCount(): number {
-    return this.members.filter(member => member.type === 'Farmer').length;
+    return this.farmersCount;
   }
 
   getCooperativesCount(): number {
-    return this.members.filter(member => member.type === 'Cooperative').length;
+    return this.cooperativesCount;
   }
 
   getActiveMembers(): number {
-    return this.members.filter(member => member.status === 'Active').length;
+    return this.activeMembers;
   }
 
   getFarmersPercentage(): string {
-    const percentage = (this.getFarmersCount() / this.getTotalMembers()) * 100;
+    const percentage = (this.farmersCount / this.totalMembers) * 100;
     return isNaN(percentage) ? '0' : percentage.toFixed(1);
   }
 
   getCooperativesPercentage(): string {
-    const percentage = (this.getCooperativesCount() / this.getTotalMembers()) * 100;
+    const percentage = (this.cooperativesCount / this.totalMembers) * 100;
     return isNaN(percentage) ? '0' : percentage.toFixed(1);
   }
 
   getActivePercentage(): string {
-    const percentage = (this.getActiveMembers() / this.getTotalMembers()) * 100;
+    const percentage = (this.activeMembers / this.totalMembers) * 100;
     return isNaN(percentage) ? '0' : percentage.toFixed(1);
   }
 
-  // Filtering logic
-  get filteredMembers(): Member[] {
-    return this.members.filter(member => {
-      const searchLower = this.searchQuery.toLowerCase();
-      const matchSearch =
-        !this.searchQuery ||
-        member.id.toLowerCase().includes(searchLower) ||
-        member.name.toLowerCase().includes(searchLower) ||
-        member.type.toLowerCase().includes(searchLower);
-
-      const matchStatus =
-        this.selectedStatus === 'All Status' || member.status === this.selectedStatus;
-
-      const matchRegion =
-        this.selectedRegion === 'All Regions' || member.region === this.selectedRegion;
-
-      const matchCrop =
-        this.selectedCrop === 'All Crops' || member.primaryCrop === this.selectedCrop;
-
-      return matchSearch && matchStatus && matchRegion && matchCrop;
-    });
+  // Filtering triggers
+  onSearchChange(): void {
+    this.currentPage = 0;
+    this.loadMembers();
   }
 
-  get totalPages(): number {
-    return Math.ceil(this.filteredMembers.length / this.pageSize) || 1;
+  onFilterChange(): void {
+    this.currentPage = 0;
+    this.loadMembers();
+  }
+
+  get filteredMembers(): Member[] {
+    return this.members; // Backend handles filtering now
   }
 
   get paginatedMembers(): Member[] {
-    const startIndex = (this.currentPage - 1) * this.pageSize;
-    const endIndex = startIndex + this.pageSize;
-    return this.filteredMembers.slice(startIndex, endIndex);
+    return this.members; // Backend handles pagination now
   }
 
-  // Pagination methods
+  // Pagination
   nextPage(): void {
-    if (this.currentPage < this.totalPages) {
+    if (this.currentPage < this.totalPages - 1) {
       this.currentPage++;
+      this.loadMembers();
     }
   }
 
   previousPage(): void {
-    if (this.currentPage > 1) {
+    if (this.currentPage > 0) {
       this.currentPage--;
+      this.loadMembers();
     }
   }
 
-  // Helper methods for styling
+  // Styling helpers
   getTypeClass(type: string): string {
     return type.toLowerCase() === 'farmer' ? 'type-farmer' : 'type-cooperative';
   }
@@ -240,125 +289,124 @@ export class MemberListComponent implements OnInit {
   openAddMemberModal(): void {
     if (this.memberFormComponent) {
       this.memberFormComponent.openModal();
-    } else {
-      console.error('MemberFormComponent not found!');
     }
   }
 
   openViewMemberModal(member: Member): void {
-    console.log('Opening view modal for member:', member);
     if (this.memberDetailComponent) {
       this.memberDetailComponent.openModal(member);
-    } else {
-      console.error('MemberDetailComponent not found!');
     }
   }
 
   openEditMemberModal(member: Member): void {
     if (this.editMemberFormComponent) {
       this.editMemberFormComponent.openModal(member);
-    } else {
-      console.error('EditMemberFormComponent not found!');
     }
   }
 
   openDeleteConfirmModal(member: Member): void {
-    console.log('Opening delete confirmation for member:', member);
     if (this.deleteMemberComponent) {
       this.deleteMemberComponent.openModal(member);
-    } else {
-      console.error('DeleteMemberComponent not found!');
     }
   }
 
   // Export functionality
   onExport(): void {
-    alert('Export functionality would be implemented here');
-    // Similar to production page export logic
+    const filters = this.buildFilters();
+
+    this.userService.exportUsers('EXCEL', filters).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `members_export_${new Date().toISOString()}.xlsx`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (error) => {
+        console.error('Export failed:', error);
+        alert('Export failed. Please try again.');
+      }
+    });
   }
 
   // Event handlers
   onMemberAdded(newMember: any): void {
-    console.log('New member received:', newMember);
+    console.log('Adding new member:', newMember);
 
-    const nextId = this.getNextMemberId();
-    const convertedMember: Member = {
-      id: nextId,
+    const user: User = {
+      type: newMember.Type as 'FARMER' | 'COOPERATIVE' | 'GOVERNMENT',
       name: newMember.Name,
-      phone: newMember.contact,
-      type: newMember.Type,
+      phoneNumber: newMember.contact,
+      email: newMember.email,
       region: newMember.location,
-      primaryCrop: newMember.primaryCrop,
-      status: newMember.status,
-      email: newMember.email || '',
-      joinDate: newMember.joinDate || new Date().toISOString().split('T')[0],
-      farmSize: newMember.farmSize || '',
-      address: newMember.address || '',
-      farmLocation: newMember.farmLocation || '',
-      lastProduction: newMember.lastProduction || '',
-      creditStatus: newMember.creditStatus || ''
+      department: newMember.address,
+      village: newMember.farmLocation,
+      preferredLanguage: 'en',
+      agriculturalType: 'MIXED',
+      cropTypes: [newMember.primaryCrop],
+      landArea: parseFloat(newMember.farmSize) || 0
     };
 
-    this.members.push(convertedMember);
-    this.updateStats();
-    console.log('Total members now:', this.members.length);
+    this.userService.createUser(user).subscribe({
+      next: (response) => {
+        console.log('Member created successfully:', response);
+        this.loadMembers();
+        this.loadStatistics();
+        alert('Member added successfully!');
+      },
+      error: (error) => {
+        console.error('Error creating member:', error);
+        alert('Failed to add member. Please try again.');
+      }
+    });
   }
 
   onMemberUpdated(updatedMember: Member): void {
-    console.log('Member updated:', updatedMember);
+    console.log('Updating member:', updatedMember);
 
-    const index = this.members.findIndex(member => member.id === updatedMember.id);
-    if (index !== -1) {
-      this.members[index] = updatedMember;
-      console.log('Member successfully updated');
-    } else {
-      console.error('Member not found for update');
-    }
+    const updates: Partial<User> = {
+      name: updatedMember.name,
+      phoneNumber: updatedMember.phone,
+      email: updatedMember.email,
+      status: updatedMember.status
+    };
+
+    this.userService.updateUser(updatedMember.id, updates).subscribe({
+      next: (response) => {
+        console.log('Member updated successfully:', response);
+        this.loadMembers();
+        alert('Member updated successfully!');
+      },
+      error: (error) => {
+        console.error('Error updating member:', error);
+        alert('Failed to update member. Please try again.');
+      }
+    });
   }
 
   onMemberDeleted(deletedMember: Member): void {
-    console.log('Member deleted:', deletedMember);
-    this.deleteMember(deletedMember);
+    console.log('Deleting member:', deletedMember);
+
+    this.userService.deleteUser(deletedMember.id).subscribe({
+      next: () => {
+        console.log('Member deleted successfully');
+        this.loadMembers();
+        this.loadStatistics();
+        alert(`Member ${deletedMember.name} has been deleted successfully.`);
+      },
+      error: (error) => {
+        console.error('Error deleting member:', error);
+        alert('Failed to delete member. Please try again.');
+      }
+    });
   }
 
   onModalClosed(): void {
     console.log('Modal closed');
   }
 
-  // Private helper methods
-  private getNextMemberId(): string {
-    if (this.members.length === 0) {
-      return 'M001';
-    }
-
-    const existingIds = this.members.map(member => {
-      const numericPart = member.id.replace('M', '');
-      return parseInt(numericPart, 10);
-    });
-
-    const maxId = Math.max(...existingIds);
-    const nextId = maxId + 1;
-    return 'M' + nextId.toString().padStart(3, '0');
-  }
-
-  private deleteMember(member: Member): void {
-    const index = this.members.findIndex(m => m.id === member.id);
-    if (index !== -1) {
-      this.members.splice(index, 1);
-      console.log('Member deleted successfully:', member.name);
-      this.updateStats();
-
-      // Show success message
-      alert(`Member ${member.name} has been deleted successfully.`);
-    }
-  }
-
-  private updateStats(): void {
-    console.log('Stats updated with new member');
-  }
-
   onSidebarClose(): void {
-    // Add logic to hide sidebar, e.g., toggle a class or emit further
     console.log('Sidebar closed');
   }
 }

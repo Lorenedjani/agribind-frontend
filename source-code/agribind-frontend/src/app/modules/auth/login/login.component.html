@@ -1,1 +1,44 @@
-<p>login works!</p>
+<div class="login-container">
+  <div class="login-card">
+    
+    <div class="login-header">
+      <h1>Agribind</h1>
+      <p>Plateforme Coopérative Agricole</p>
+    </div>
+    
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input 
+          type="email" 
+          id="email" 
+          formControlName="email" 
+          placeholder="Entrez votre email"
+          class="form-control"
+        >
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <input 
+          type="password" 
+          id="password" 
+          formControlName="password" 
+          placeholder="Entrez votre mot de passe"
+          class="form-control"
+        >
+      </div>
+      
+      <button type="submit" [disabled]="loginForm.invalid || isLoading" class="btn-login">
+        <span *ngIf="isLoading" class="loading-content">
+          <i class="fas fa-spinner fa-spin"></i> Connexion...
+        </span>
+        <span *ngIf="!isLoading">Se connecter</span>
+      </button>
+      
+      <div *ngIf="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+    </form>
+  </div>
+</div>

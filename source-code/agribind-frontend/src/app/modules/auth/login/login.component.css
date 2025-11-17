@@ -1,0 +1,111 @@
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2A6D38 0%, #4CAF50 100%);
+  padding: 20px;
+}
+
+.login-card {
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.login-header h1 {
+  color: #2A6D38;
+  margin-bottom: 10px;
+  font-size: 2.5rem;
+}
+
+.login-header p {
+  color: #666;
+  margin-bottom: 0;
+}
+
+.login-form {
+  margin-bottom: 0;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #333;
+  font-weight: 500;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #2A6D38;
+}
+
+.btn-login {
+  width: 100%;
+  padding: 12px;
+  background: #2A6D38;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-login:hover:not(:disabled) {
+  background: #4CAF50;
+}
+
+.btn-login:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #e53e3e;
+  text-align: center;
+  margin-top: 15px;
+  padding: 10px;
+  background: #fed7d7;
+  border-radius: 6px;
+}
+
+.loading-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.loading-content i {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
