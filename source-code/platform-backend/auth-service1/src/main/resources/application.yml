@@ -5,19 +5,12 @@ spring:
   application:
     name: auth-service
 
-  # Disable Feign Client (temporarily)
-  cloud:
-    openfeign:
-      enabled: false
-
-  # Database Configuration
   datasource:
     url: jdbc:mysql://localhost:3307/auth_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
     username: root
     password: ISI3Eng!2025
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-  # JPA Configuration
   jpa:
     hibernate:
       ddl-auto: update
@@ -27,35 +20,46 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
 
-  # RabbitMQ Configuration (disabled for now)
-  rabbitmq:
-    enabled: false
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
 
 # JWT Configuration
 jwt:
-  secret: "agribind-super-secure-jwt-secret-key-2025-minimum-32-chars"
+  secret: agribind-super-secure-jwt-secret-key-2025-minimum-32-chars
   access-token-expiration-ms: 900000    # 15 minutes
   refresh-token-expiration-ms: 2592000000  # 30 days
 
-# Password Reset Configuration
+# Password Reset
 password-reset:
   token-expiration-minutes: 30
 
-# Eureka Discovery Client (disabled for now)
-eureka:
-  client:
-    enabled: false
-
-# External Services Configuration (for reference)
+# External Services
 services:
-  user-management: http://localhost:8082
-  notification: http://localhost:8083
+  user-management: http://user-management-service
+  notification: http://notification-service
 
-# Logging Configuration
 logging:
   level:
     cm.agribind.auth: INFO
     org.springframework.security: WARN
-    org.hibernate.SQL: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

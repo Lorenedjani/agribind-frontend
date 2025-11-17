@@ -1,0 +1,61 @@
+<div class="inventory-table-container">
+  <table class="inventory-table">
+    <thead>
+      <tr>
+        <th class="th-id">ID</th>
+        <th class="th-name">Item Name</th>
+        <th class="th-category">Category</th>
+        <th class="th-quantity">Quantity</th>
+        <th class="th-value">Value (XAF)</th>
+        <th class="th-location">Location</th>
+        <th class="th-status">Status</th>
+        <th class="th-trend">Trend</th>
+        <th class="th-actions">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let item of items" class="table-row">
+        <td class="td-id">
+          <span class="item-icon">📦</span>
+          {{ item.id }}
+        </td>
+        <td class="td-name">
+          <div class="item-name-cell">{{ item.name }}</div>
+        </td>
+        <td class="td-category">{{ item.category }}</td>
+        <td class="td-quantity">
+          <div class="quantity-cell">
+            <div class="qty-main">{{ item.quantityLabel }}</div>
+            <div class="qty-min">{{ item.minLabel }}</div>
+          </div>
+        </td>
+        <td class="td-value">{{ item.valueXaf }}</td>
+        <td class="td-location">{{ item.location }}</td>
+        <td class="td-status">
+          <span [ngClass]="{
+            'status-badge': true,
+            'status-in-stock': item.status === 'In Stock',
+            'status-low-stock': item.status === 'Low Stock',
+            'status-critical': item.status === 'Critical'
+          }">
+            {{ item.status }}
+          </span>
+        </td>
+        <td class="td-trend">
+          <span [ngClass]="{
+            'trend-icon': true,
+            'trend-up': item.trend === 'up',
+            'trend-down': item.trend === 'down',
+            'trend-flat': item.trend === 'flat'
+          }">
+            {{ item.trend === 'up' ? '↗' : item.trend === 'down' ? '↘' : '→' }}
+          </span>
+        </td>
+        <td class="td-actions">
+          <button class="action-btn view" title="View">👁</button>
+          <button class="action-btn edit" title="Edit">✏️</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

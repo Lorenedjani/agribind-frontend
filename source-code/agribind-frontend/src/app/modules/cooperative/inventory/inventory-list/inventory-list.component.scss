@@ -1,0 +1,132 @@
+.inventory-table-container {
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.inventory-table thead {
+  background: #f8f9fa;
+  border-bottom: 2px solid #e8e8e8;
+}
+
+.inventory-table th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #616161;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.inventory-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.2s;
+}
+
+.inventory-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.inventory-table td {
+  padding: 16px;
+  font-size: 14px;
+  color: #333;
+}
+
+.td-id {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.item-icon {
+  font-size: 18px;
+}
+
+.item-name-cell {
+  font-weight: 500;
+}
+
+.quantity-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qty-main {
+  font-weight: 500;
+}
+
+.qty-min {
+  font-size: 12px;
+  color: #757575;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-in-stock {
+  background: #e8f5e9;
+  color: #2d7a3e;
+}
+
+.status-low-stock {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.status-critical {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.trend-icon {
+  font-size: 18px;
+}
+
+.trend-up {
+  color: #2d7a3e;
+}
+
+.trend-down {
+  color: #c62828;
+}
+
+.trend-flat {
+  color: #757575;
+}
+
+.td-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  background: transparent;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: #f5f5f5;
+  border-color: #bdbdbd;
+}

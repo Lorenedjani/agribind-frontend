@@ -1,0 +1,143 @@
+<div class="modal-overlay" *ngIf="isModalOpen && member">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Member Details</h2>
+      <button class="close-btn" (click)="closeModal()">✖</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Member Header -->
+      <div class="member-header">
+        <div class="member-avatar">
+          <span class="item-icon"><i class="fas fa-user"></i></span>
+        </div>
+        <div class="member-basic-info">
+          <h3 class="member-name">{{ member.name }}</h3>
+          <div class="member-id">ID: {{ member.id }}</div>
+          <span class="status-badge" [class]="getStatusClass(member.status)">
+            {{ member.status }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Main Details Grid -->
+      <div class="details-grid">
+        <!-- Contact Information -->
+        <div class="detail-section">
+          <h4 class="section-title">📞 Contact Information</h4>
+          <div class="detail-item">
+            <span class="detail-label">Phone:</span>
+            <span class="detail-value">{{ member.phone }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Email:</span>
+            <span class="detail-value">{{ member.email || 'Not provided' }}</span>
+          </div>
+          <div class="detail-item full-width" *ngIf="member.address">
+            <span class="detail-label">Address:</span>
+            <span class="detail-value">{{ member.address }}</span>
+          </div>
+        </div>
+
+        <!-- Member Information -->
+        <div class="detail-section">
+          <h4 class="section-title">👤 Member Information</h4>
+          <div class="detail-item">
+            <span class="detail-label">Type:</span>
+            <span class="detail-value">{{ member.type }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Region:</span>
+            <span class="detail-value">{{ member.region }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Join Date:</span>
+            <span class="detail-value">{{ member.joinDate || 'Not specified' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Status:</span>
+            <span class="detail-value status-value" [class]="getStatusClass(member.status)">
+              {{ member.status }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Farming Information -->
+        <div class="detail-section">
+          <h4 class="section-title">🌱 Farming Information</h4>
+          <div class="detail-item">
+            <span class="detail-label">Primary Crop:</span>
+            <span class="detail-value">{{ member.primaryCrop }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Farm Size:</span>
+            <span class="detail-value">{{ member.farmSize || 'Not specified' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Farm Location:</span>
+            <span class="detail-value">{{ member.farmLocation || 'Not specified' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Last Production:</span>
+            <span class="detail-value">{{ member.lastProduction || 'Not recorded' }}</span>
+          </div>
+        </div>
+
+        <!-- Financial Information -->
+        <div class="detail-section">
+          <h4 class="section-title">💰 Financial Information</h4>
+          <div class="detail-item">
+            <span class="detail-label">Credit Status:</span>
+            <span class="detail-value credit-status" [class]="getCreditStatusClass(member.creditStatus)">
+              {{ member.creditStatus || 'Not specified' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Stats Section -->
+      <div class="quick-stats" *ngIf="hasAdditionalInfo()">
+        <h4 class="section-title">📊 Quick Overview</h4>
+        <div class="stats-grid">
+          <div class="stat-item" *ngIf="member.farmSize">
+            <div class="stat-icon">🌾</div>
+            <div class="stat-info">
+              <div class="stat-value">{{ member.farmSize }}</div>
+              <div class="stat-label">Farm Size</div>
+            </div>
+          </div>
+
+          <div class="stat-item" *ngIf="member.farmLocation">
+            <div class="stat-icon">📍</div>
+            <div class="stat-info">
+              <div class="stat-value">{{ member.farmLocation }}</div>
+              <div class="stat-label">Farm Location</div>
+            </div>
+          </div>
+
+          <div class="stat-item" *ngIf="member.lastProduction">
+            <div class="stat-icon">📦</div>
+            <div class="stat-info">
+              <div class="stat-value">{{ member.lastProduction }}</div>
+              <div class="stat-label">Last Production</div>
+            </div>
+          </div>
+
+          <div class="stat-item" *ngIf="member.creditStatus">
+            <div class="stat-icon">💳</div>
+            <div class="stat-info">
+              <div class="stat-value">{{ member.creditStatus }}</div>
+              <div class="stat-label">Credit Status</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn btn-secondary" (click)="closeModal()">Close</button>
+        <button class="btn btn-primary">View Member</button>
+        <button class="btn btn-info" *ngIf="member.creditStatus">View Credit History</button>
+      </div>
+    </div>
+  </div>
+</div>

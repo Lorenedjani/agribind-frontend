@@ -1,0 +1,221 @@
+<div class="wrapper">
+  <app-cooperative-sidebar></app-cooperative-sidebar>
+
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <div class="page-title">
+      <h3>Members</h3>
+    </div>
+
+    <button *ngIf="searchQuery" class="btn-clear" (click)="searchQuery = ''">×</button>
+
+    <div class="top-bar-actions">
+      <button class="notification-btn" title="Notifications">🔔</button>
+
+      <div class="user-info" title="{{ user.name }}">
+        <div class="avatar">{{ user.initials }}</div>
+        <div class="user-details">
+          <span class="user-name">{{ user.name }}</span>
+          <small>{{ user.role }}</small>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- Cards Overview -->
+    <section class="cards-overview">
+      <div class="card">
+        <div class="card-content">
+          <h2>{{ getTotalMembers() }}</h2>
+          <p class="green-text">+12 this month</p>
+          <p class="card-title">Total Members</p>
+        </div>
+        <div class="icon-box green">
+          <i class="fas fa-users"></i>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-content">
+          <h2>{{ getFarmersCount() }}</h2>
+          <p class="green-text">{{ getFarmersPercentage() }}% of members</p>
+          <p class="card-title">Farmers</p>
+        </div>
+        <div class="icon-box green">
+          <i class="fas fa-user-tie"></i>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-content">
+          <h2>{{ getCooperativesCount() }}</h2>
+          <p class="yellow-text">{{ getCooperativesPercentage() }}% of members</p>
+          <p class="card-title">Cooperatives</p>
+        </div>
+        <div class="icon-box yellow">
+          <i class="fas fa-building"></i>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-content">
+          <h2>{{ getActiveMembers() }}</h2>
+          <p class="green-text">{{ getActivePercentage() }}% active rate</p>
+          <p class="card-title">Active Members</p>
+        </div>
+        <div class="icon-box green">
+          <i class="fas fa-check-circle"></i>
+        </div>
+      </div>
+    </section>
+
+    <!-- Top Filters: Search + Buttons -->
+    <section class="top-filters">
+      <div class="search-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search members by name, ID, or type..."
+          [(ngModel)]="searchQuery"
+        />
+      </div>
+      <div class="button-group">
+        <button class="btn btn-primary" (click)="openAddMemberModal()">
+          <i class="fas fa-plus"></i>
+          <span>Add Member</span>
+        </button>
+        <button class="btn btn-outline" (click)="onExport()">
+          <i class="fas fa-download"></i>
+          <span>Export</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Dropdown Filters -->
+    <section class="filters">
+      <div class="filter-group">
+        <label for="statusSelect">
+          <i class="fas fa-toggle-on"></i> Status
+        </label>
+        <select id="statusSelect" [(ngModel)]="selectedStatus" class="filter-select" aria-label="Filter by Status">
+          <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="regionSelect">
+          <i class="fas fa-map-marker-alt"></i> Region
+        </label>
+        <select id="regionSelect" [(ngModel)]="selectedRegion" class="filter-select" aria-label="Filter by Region">
+          <option *ngFor="let region of regionOptions" [value]="region">{{ region }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="cropSelect">
+          <i class="fas fa-leaf"></i> Primary Crop
+        </label>
+        <select id="cropSelect" [(ngModel)]="selectedCrop" class="filter-select" aria-label="Filter by Primary Crop">
+          <option *ngFor="let crop of cropOptions" [value]="crop">{{ crop }}</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Members Table -->
+    <section class="table-section">
+      <table>
+        <thead>
+          <tr>
+            <th><i class="fas fa-hashtag"></i> Member ID</th>
+            <th><i class="fas fa-user"></i> Name</th>
+            <th><i class="fas fa-phone"></i> Contact</th>
+            <th><i class="fas fa-tag"></i> Type</th>
+            <th><i class="fas fa-map-pin"></i> Location</th>
+            <th><i class="fas fa-seedling"></i> Primary Crop</th>
+            <th><i class="fas fa-circle"></i> Status</th>
+            <th><i class="fas fa-cog"></i> Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let member of paginatedMembers">
+            <td>
+              <span class="id-badge">{{ member.id }}</span>
+            </td>
+            <td>
+              <div class="name-cell">
+                <div class="member-avatar">{{ member.name.charAt(0) }}</div>
+                <span>{{ member.name }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="contact-cell">
+                <i class="fas fa-phone-alt phone-icon"></i>
+                <span>{{ member.phone }}</span>
+              </div>
+            </td>
+            <td><span class="badge" [ngClass]="getTypeClass(member.type)">{{ member.type }}</span></td>
+            <td>
+              <div class="location-cell">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>{{ member.region }}</span>
+              </div>
+            </td>
+            <td><span class="crop-badge">{{ member.primaryCrop }}</span></td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(member.status)">
+                <i class="fas fa-circle"></i>
+                {{ member.status }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons-group">
+                <button class="icon-btn view-btn" (click)="openViewMemberModal(member)" title="View Details">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="icon-btn qr-btn" title="QR Code">
+                  <i class="fas fa-qrcode"></i>
+                </button>
+                <button class="icon-btn edit-btn" (click)="openEditMemberModal(member)" title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="icon-btn delete-btn" (click)="openDeleteConfirmModal(member)" title="Delete">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredMembers.length === 0">
+            <td colspan="8" class="no-data">No members match the filters.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination Controls -->
+      <div class="pagination">
+        <button (click)="previousPage()" [disabled]="currentPage === 1">← Prev</button>
+        <span>Page {{ currentPage }} of {{ totalPages }}</span>
+        <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next →</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<app-member-form
+  (memberAdded)="onMemberAdded($event)"
+  (modalClosed)="onModalClosed()">
+</app-member-form>
+
+<app-edit-member-form
+  (memberUpdated)="onMemberUpdated($event)"
+  (modalClosed)="onModalClosed()">
+</app-edit-member-form>
+
+<app-member-detail
+  (modalClosed)="onModalClosed()">
+</app-member-detail>
+
+<app-delete-member
+  (memberDeleted)="onMemberDeleted($event)"
+  (modalClosed)="onModalClosed()">
+</app-delete-member>

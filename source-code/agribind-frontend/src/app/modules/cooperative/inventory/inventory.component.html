@@ -1,0 +1,160 @@
+<div class="layout">
+  <app-cooperative-sidebar></app-cooperative-sidebar>
+
+  <div class="content-area">
+    <!-- TOP BAR -->
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <h1 class="page-title">Inventory</h1>
+      </div>
+    </header>
+
+    <div class="inventory-container">
+      <!-- DASHBOARD STATS -->
+      <div class="dashboard-stats">
+        <div class="stat-card">
+          <div class="stat-title">Total Inventory Value</div>
+          <div class="stat-value">{{ formatValue(inventoryStats.totalValue) }}</div>
+          <div class="stat-change positive">+{{ inventoryStats.valueChange }}% vs last month</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-title">Farmer Products Stock</div>
+          <div class="stat-value">{{ inventoryStats.farmerProducts }} MT</div>
+          <div class="stat-change positive">+{{ inventoryStats.productsChange }}% cocoa, coffee, etc.</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-title">Input Supplies</div>
+          <div class="stat-value">{{ inventoryStats.inputSupplies }} items</div>
+          <div class="stat-detail">{{ inventoryStats.activeItems }} active seeds, fertilizers, tools</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-title">Critical Stock Items</div>
+          <div class="stat-value critical">{{ inventoryStats.criticalStock }}</div>
+          <div class="stat-detail danger">Need reorder below minimum</div>
+        </div>
+      </div>
+
+      <!-- SEARCH AND FILTERS -->
+      <div class="search-filter-section">
+        <div class="search-bar">
+          <input
+            type="text"
+            placeholder="Search inventory by name, category, or ID..."
+            class="search-input"
+            [(ngModel)]="searchQuery"
+            (input)="applyFilters()"
+          />
+          <button class="search-btn">🔍</button>
+          <button class="clear-search" *ngIf="searchQuery" (click)="clearSearch()">✖</button>
+        </div>
+
+        <div class="filter-section">
+          <div class="filter-item">
+            <label class="filter-label">Category</label>
+            <select [(ngModel)]="selectedCategory" (change)="applyFilters()">
+              <option *ngFor="let cat of categoryList" [value]="cat">{{ cat }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="tabs">
+        <button
+          [class.active]="activeTab === 'farmer'"
+          (click)="switchTab('farmer')">
+          Farmer Products
+        </button>
+        <button
+          [class.active]="activeTab === 'input'"
+          (click)="switchTab('input')">
+          Input Supplies
+        </button>
+        <button
+          [class.active]="activeTab === 'livestock'"
+          (click)="switchTab('livestock')">
+          Livestock
+        </button>
+      </div>
+
+      <!-- TABLE SECTION -->
+      <div class="table-section">
+        <div class="table-container">
+          <table class="inventory-table">
+            <thead>
+              <tr>
+                <th class="th-id">ID</th>
+                <th class="th-name">Item Name</th>
+                <th class="th-category">Category</th>
+                <th class="th-quantity">Quantity</th>
+                <th class="th-value">Value (XAF)</th>
+                <th class="th-location">Location</th>
+                <th class="th-status">Status</th>
+                <th class="th-trend">Trend</th>
+                <th class="th-actions">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr *ngFor="let item of paginatedItems" class="table-row">
+                <td class="td-id">{{ item.id }}</td>
+                <td class="td-name">{{ item.name }}</td>
+                <td class="td-category">{{ item.category }}</td>
+                <td class="td-quantity">
+                  {{ formatQuantity(item) }}
+                  <span class="min-quantity">{{ formatMinQuantity(item) }}</span>
+                </td>
+                <td class="td-value">{{ formatValue(item.value) }}</td>
+                <td class="td-location">{{ item.location }}</td>
+                <td class="td-status">
+                  <span [class]="getStatusClass(item.status)">{{ item.status }}</span>
+                </td>
+                <td class="td-trend">
+                  <span class="trend-icon">{{ getTrendIcon(item.trend) }}</span>
+                </td>
+                <td class="td-actions">
+                  <button class="icon-btn edit-btn">✎</button>
+                  <button class="icon-btn delete-btn">🗑</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PAGINATION -->
+        <div class="pagination-container">
+          <div class="pagination-info">
+            Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, filteredItems.length) }} of {{ filteredItems.length }} entries
+          </div>
+          <div class="pagination-controls">
+            <button
+              class="page-btn"
+              [disabled]="currentPage === 1"
+              (click)="goToPage(currentPage - 1)">
+              ‹
+            </button>
+
+            <button
+              *ngFor="let page of getPageNumbers()"
+              class="page-btn"
+              [class.active]="page === currentPage"
+              [class.ellipsis]="page === -1"
+              (click)="page !== -1 && goToPage(page)">
+              {{ page === -1 ? '...' : page }}
+            </button>
+
+            <button
+              class="page-btn"
+              [disabled]="currentPage === totalPages"
+              (click)="goToPage(currentPage + 1)">
+              ›
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

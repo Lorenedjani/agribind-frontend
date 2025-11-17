@@ -1,68 +1,26 @@
+server:
+  port: 8083
+
 spring:
   application:
     name: notification-service
   profiles:
-    active: dev
+    active: prod
 
-server:
-  port: 8081
-
-# Default values for all environments
-app:
-  kafka:
-    topic: notifications
-  rabbitmq:
-    exchange: notification-exchange
-    queue: notification-queue
-    routing-key: notification.routing.key
-
----
-# Development profile - no external services
-spring:
-  config:
-    activate:
-      on-profile: dev
-  kafka:
-    enabled: true
-    bootstrap-servers: localhost:9092
-  rabbitmq:
-    enabled: true
-    host: localhost
-    port: 5672
-    connection-timeout: 5s
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
-      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
-
-eureka:
-  client:
-    enabled: false
-    fetch-registry: false
-    register-with-eureka: false
-
-logging:
-  level:
-    org.springframework.kafka: OFF
-    org.springframework.amqp: OFF
-
----
-# Production profile - with all services
-spring:
-  config:
-    activate:
-      on-profile: prod
   kafka:
     enabled: true
     bootstrap-servers: localhost:9092
     consumer:
       group-id: notification-group
       auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.JsonSerializer
-    properties:
-      spring.json.add.type.headers: false
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
   rabbitmq:
     enabled: true
     host: localhost
@@ -73,7 +31,51 @@ spring:
 eureka:
   client:
     enabled: true
-    fetch-registry: true
-    register-with-eureka: true
     service-url:
       defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+# Kafka Topics
+app:
+  kafka:
+    topic: notifications
+  rabbitmq:
+    exchange: notification-exchange
+    queue: notification-queue
+    routing-key: notification.routing.key
+
+# SMS Configuration (Twilio)
+twilio:
+  account-sid: ${TWILIO_ACCOUNT_SID:your-account-sid}
+  auth-token: ${TWILIO_AUTH_TOKEN:your-auth-token}
+  phone-number: ${TWILIO_PHONE_NUMBER:+237000000000}
+
+# Email Configuration
+spring.mail:
+  host: smtp.gmail.com
+  port: 587
+  username: ${EMAIL_USERNAME:your-email@gmail.com}
+  password: ${EMAIL_PASSWORD:your-app-password}
+  properties:
+    mail:
+      smtp:
+        auth: true
+        starttls:
+          enable: true
+
+logging:
+  level:
+    com.agribind.notification_service: INFO
+    org.springframework.kafka: INFO
+  file:
+    name: logs/notification-service.log
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

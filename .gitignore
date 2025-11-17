@@ -33,3 +33,6 @@ Thumbs.db
 # Environment files
 # /agribind-web/src/environments/environment.ts
 # /agribind-web/src/environments/environment.prod.ts
+"target/" 
+"*.jar" 
+"*.war" 
