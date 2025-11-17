@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface FarmerRepository extends JpaRepository<Farmer, Long>, JpaSpecificationExecutor<Farmer> {
@@ -42,6 +43,6 @@ public interface FarmerRepository extends JpaRepository<Farmer, Long>, JpaSpecif
 
     @Query("SELECT f.address.region, COUNT(f) FROM Farmer f GROUP BY f.address.region")
     List<Object[]> countFarmersByRegion();
-
+    Optional<Farmer> findByUserId(String userId);
     Page<Farmer> findByCooperativeId(Long cooperativeId, Pageable pageable);
 }
