@@ -1,5 +1,6 @@
 package cm.agribind.usermanagement;
 
+import cm.agribind.usermanagement.service.command.UserCommandService;
 import cm.agribind.usermanagement.util.FileStorageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -19,9 +20,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class UserManagementServiceApplication implements CommandLineRunner {
 
     private final FileStorageUtil fileStorageUtil;
+    private final UserCommandService userCommandService;
 
-    public UserManagementServiceApplication(FileStorageUtil fileStorageUtil) {
+    public UserManagementServiceApplication(FileStorageUtil fileStorageUtil,
+                                            UserCommandService userCommandService) {
         this.fileStorageUtil = fileStorageUtil;
+        this.userCommandService = userCommandService;
     }
 
     public static void main(String[] args) {
