@@ -2,6 +2,7 @@ package cm.agribind.usermanagement.entity;
 
 import cm.agribind.usermanagement.enums.UserStatus;
 import cm.agribind.usermanagement.enums.UserType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -47,4 +48,18 @@ public class User extends BaseEntity {
 
     @Column(length = 1000)
     private String notes;
+
+    // Add password hash field (stored securely)
+    @Column(name = "password_hash", length = 100)
+    @JsonIgnore  // Never serialize in normal API responses
+    private String passwordHash;
+
+    @Column(name = "account_locked")
+    private Boolean accountLocked = false;
+
+    @Column(name = "failed_login_attempts")
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "first_login")
+    private Boolean firstLogin = true;
 }

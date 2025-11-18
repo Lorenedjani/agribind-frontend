@@ -1,12 +1,12 @@
 package cm.agribind.usermanagement.service.command.impl;
 
+import ch.qos.logback.core.encoder.EchoEncoder;
 import cm.agribind.usermanagement.dto.command.CreateUserCommand;
 import cm.agribind.usermanagement.dto.command.UpdateUserCommand;
 import cm.agribind.usermanagement.dto.event.*;
 import cm.agribind.usermanagement.dto.response.UserResponse;
 import cm.agribind.usermanagement.entity.*;
-import cm.agribind.usermanagement.enums.UserStatus;
-import cm.agribind.usermanagement.enums.UserType;
+import cm.agribind.usermanagement.enums.*;
 import cm.agribind.usermanagement.exception.UserNotFoundException;
 import cm.agribind.usermanagement.integration.event.UserEventPublisher;
 import cm.agribind.usermanagement.mapper.UserMapper;
@@ -19,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Year;
+import java.util.Arrays;
 import java.util.UUID;
 
 /**
@@ -47,33 +49,34 @@ public class SimplifiedUserCommandServiceImpl implements UserCommandService {
                 throw new IllegalArgumentException("Phone number already exists: " + command.getPhoneNumber());
             }
 
-            // 2. Create user entity based on type
+            // Create user entity based on type
             User user = createUserByType(command);
 
-            // 3. Generate user ID and registration number
+            // Generate user ID and registration number
             String userId = generateUserId(command.getType());
             user.setUserId(userId);
             user.setRegistrationNumber(generateRegistrationNumber());
 
-            // 4. Create profile
+            // ✅ NEW: Generate and set default password
+            String defaultPassword = generateDefaultPassword(command.getType());
+            EchoEncoder<String> passwordEncoder = new EchoEncoder<>();
+            String passwordHash = Arrays.toString(passwordEncoder.encode(defaultPassword));
+            user.setPasswordHash(passwordHash);
+            user.setFirstLogin(true);
+
+            // Log the password (only in development!)
+            log.info("Generated password for {}: {}", userId, defaultPassword);
+
+            // Create profile
             Profile profile = new Profile();
             profile.setPreferredLanguage(command.getPreferredLanguage());
             user.setProfile(profile);
 
-            // 5. Generate QR code data
-            String qrData = qrCodeService.generateRegistrationData(user);
-            user.setQrCodeData(qrData);
-
-            // 6. Save user
+            // Save user
             User savedUser = userRepository.save(user);
-            log.info("User created successfully: {}", savedUser.getUserId());
 
-            // 7. Publish user created event (async - won't fail creation)
-            try {
-                publishUserCreatedEvent(savedUser);
-            } catch (Exception e) {
-                log.warn("Failed to publish user created event, but user was created: {}", e.getMessage());
-            }
+            // TODO: Send password via SMS to user
+            sendPasswordSMS(savedUser, defaultPassword);
 
             return userMapper.toResponse(savedUser);
 
@@ -81,6 +84,22 @@ public class SimplifiedUserCommandServiceImpl implements UserCommandService {
             log.error("Failed to create user: {}", e.getMessage(), e);
             throw new RuntimeException("User creation failed: " + e.getMessage(), e);
         }
+    }
+
+    private String generateDefaultPassword(UserType type) {
+        // Generate passwords like: Coop2025@Agribind, Farmer2025@Agribind
+        String prefix = switch (type) {
+            case COOPERATIVE -> "Coop";
+            case FARMER -> "Farmer";
+            case GOVERNMENT -> "Gov";
+        };
+        int year = Year.now().getValue();
+        return prefix + year + "@Agribind";
+    }
+
+    private void sendPasswordSMS(User user, String password) {
+        // TODO: Integrate with notification service
+        log.info("Send SMS to {}: Your password is {}", user.getPhoneNumber(), password);
     }
 
     @Override
@@ -233,7 +252,7 @@ public class SimplifiedUserCommandServiceImpl implements UserCommandService {
 
         if (command.getAgriculturalType() != null) {
             farmer.setAgriculturalType(
-                    cm.agribind.usermanagement.enums.AgriculturalType.valueOf(
+                    AgriculturalType.valueOf(
                             command.getAgriculturalType().toUpperCase()
                     )
             );
@@ -253,7 +272,7 @@ public class SimplifiedUserCommandServiceImpl implements UserCommandService {
 
         if (command.getCooperativeType() != null) {
             cooperative.setCooperativeType(
-                    cm.agribind.usermanagement.enums.CooperativeType.valueOf(
+                    CooperativeType.valueOf(
                             command.getCooperativeType().toUpperCase()
                     )
             );
@@ -276,7 +295,7 @@ public class SimplifiedUserCommandServiceImpl implements UserCommandService {
 
         if (command.getGovernmentRole() != null) {
             government.setRole(
-                    cm.agribind.usermanagement.enums.GovernmentRole.valueOf(
+                    GovernmentRole.valueOf(
                             command.getGovernmentRole().toUpperCase()
                     )
             );

@@ -1,8 +1,17 @@
+// src/app/modules/cooperative/production/production.component.ts
+// DELETE ALL CONTENT AND REPLACE WITH THIS
+
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CooperativeSidebarComponent } from "../../../../shared/cooperative-sidebar/cooperative-sidebar.component";
-import { ProductionService, ProductionRecord, ProductionDashboardMetrics, CreateProductionRequest } from '../../../services/production.service';
+import {
+  ProductionService,
+  ProductionRecord,
+  ProductionDashboardMetrics,
+  CreateProductionRequest,
+  PageResponse
+} from '../../../core/services/production.service';
 
 @Component({
   selector: 'app-production',
@@ -36,8 +45,8 @@ export class ProductionComponent implements OnInit {
 
   // Production data
   productionRecords: ProductionRecord[] = [];
-  filteredProduction: ProductionRecord[] = [];
-  paginatedProduction: ProductionRecord[] = [];
+  filteredProduction: any[] = [];
+  paginatedProduction: any[] = [];
 
   // Pagination
   currentPage = 1;
@@ -77,7 +86,7 @@ export class ProductionComponent implements OnInit {
 
   loadDashboardMetrics(): void {
     this.productionService.getDashboardMetrics().subscribe({
-      next: (metrics) => {
+      next: (metrics: ProductionDashboardMetrics) => {
         this.metrics = metrics;
         this.totalProduction = metrics.totalProduction;
         this.totalProductionPercent = metrics.totalProductionPercent;
@@ -88,7 +97,7 @@ export class ProductionComponent implements OnInit {
         this.thisMonthDeliveries = metrics.thisMonthDeliveries;
         this.thisMonthChange = metrics.thisMonthChange;
       },
-      error: (error) => console.error('Error loading metrics:', error)
+      error: (error: any) => console.error('Error loading metrics:', error)
     });
   }
 
@@ -109,40 +118,40 @@ export class ProductionComponent implements OnInit {
     }
 
     this.productionService.getProductions(params).subscribe({
-      next: (response) => {
-        this.productionRecords = response.content.map(record => this.transformRecord(record));
-        this.filteredProduction = this.productionRecords;
+      next: (response: PageResponse<ProductionRecord>) => {
+        this.productionRecords = response.content;
+        this.filteredProduction = response.content.map((record: ProductionRecord) => this.transformRecord(record));
         this.totalPages = response.totalPages;
         this.updatePaginatedData();
       },
-      error: (error) => console.error('Error loading productions:', error)
+      error: (error: any) => console.error('Error loading productions:', error)
     });
   }
 
   loadCropTypes(): void {
     this.productionService.getAvailableCropTypes().subscribe({
-      next: (crops) => {
+      next: (crops: string[]) => {
         this.cropTypes = ['All Crops', ...crops];
       },
-      error: (error) => console.error('Error loading crop types:', error)
+      error: (error: any) => console.error('Error loading crop types:', error)
     });
   }
 
   loadQualityGrades(): void {
     this.productionService.getQualityGrades().subscribe({
-      next: (grades) => {
+      next: (grades: string[]) => {
         this.qualityGrades = ['All Grades', ...grades];
       },
-      error: (error) => console.error('Error loading grades:', error)
+      error: (error: any) => console.error('Error loading grades:', error)
     });
   }
 
   loadWarehouses(): void {
     this.productionService.getWarehouses().subscribe({
-      next: (warehouses) => {
+      next: (warehouses: string[]) => {
         this.warehouses = warehouses;
       },
-      error: (error) => console.error('Error loading warehouses:', error)
+      error: (error: any) => console.error('Error loading warehouses:', error)
     });
   }
 
@@ -218,14 +227,14 @@ export class ProductionComponent implements OnInit {
     };
 
     this.productionService.createProduction(request).subscribe({
-      next: (response) => {
+      next: (response: ProductionRecord) => {
         console.log('Production recorded:', response);
         this.closeRecordModal();
         this.loadProductions();
         this.loadDashboardMetrics();
         alert('Production recorded successfully!');
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error recording production:', error);
         alert('Failed to record production. Please try again.');
       }

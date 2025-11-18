@@ -1,32 +1,42 @@
-// MockUserManagementClient.java
 package cm.agribind.auth.integration;
 
-import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
- // ← This makes Spring use this mock instead of the Feign client
+@Profile("test")  // Only active when profile=test
 public class MockUserManagementClient implements UserManagementClient {
+
+    private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
+
+    // Pre-hashed password for "password123"
+    // Generated with: new BCryptPasswordEncoder(12).encode("password123")
+    private static final String HASHED_PASSWORD = "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYIq0z8aU9K";
 
     @Override
     public UserDto getUserByUsername(String username) {
-        // Create a mock user with hashed password for "password123"
-        String hashedPassword = "$2a$12$KcA8AzH.6c1q6Q7q6Q7q6OQ7q6Q7q6Q7q6Q7q6Q7q6Q7q6Q7q6Q7q6";
-
+        // Support multiple test users
         return UserDto.builder()
-                .userId("mock-user-123")
+                .userId("TEST-USER-001")
                 .username(username)
-                .email(username + "@agribind.com")
-                .passwordHash(hashedPassword)
-                .role("FARMER")
-                .cooperativeId("coop-001")
-                .preferredLanguage("EN")
+                .email(username.contains("@") ? username : username + "@agribind.cm")
+                .phoneNumber("+237670123456")
+                .passwordHash(HASHED_PASSWORD)
+                .role(determineRole(username))
+                .cooperativeId("COOP-001")
+                .preferredLanguage("fr")
                 .firstLogin(false)
                 .accountLocked(false)
                 .accountEnabled(true)
                 .failedLoginAttempts(0)
+                .registrationNumber("REG-" + username.toUpperCase())
                 .build();
+    }
+
+    @Override
+    public UserDto getUserByPhone(String phoneNumber) {
+        return null;
     }
 
     @Override
@@ -52,5 +62,21 @@ public class MockUserManagementClient implements UserManagementClient {
     @Override
     public void updateLanguage(String userId, LanguageUpdateRequest request) {
         System.out.println("Mock: Language updated to " + request.getLanguage() + " for user " + userId);
+    }
+
+    private String determineRole(String username) {
+        if (username.toLowerCase().contains("farmer")) {
+            return "FARMER";
+        } else if (username.toLowerCase().contains("coop")) {
+            return "COOPERATIVE";
+        } else if (username.toLowerCase().contains("gov")) {
+            return "GOVERNMENT";
+        }
+        return "FARMER"; // Default role
+    }
+
+    // Method to verify password (for testing)
+    public static boolean verifyPassword(String rawPassword) {
+        return encoder.matches(rawPassword, HASHED_PASSWORD);
     }
 }

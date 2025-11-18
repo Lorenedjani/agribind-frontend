@@ -1,9 +1,10 @@
+// src/app/modules/cooperative/inventory/inventory.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { InventoryService } from './inventory.service';
-import { InventoryDashboardComponent } from './inventory-dashboard/inventory-dashboard.component';
+// Removed InventoryDashboardComponent import since it's not used in the template
 import { CooperativeSidebarComponent } from '../../../../shared/cooperative-sidebar/cooperative-sidebar.component';
 
 // Complete interface that matches your screenshot data
@@ -28,7 +29,7 @@ interface InventoryItem {
   imports: [
     CommonModule,
     FormsModule,
-    InventoryDashboardComponent,
+    // Removed InventoryDashboardComponent from imports
     CooperativeSidebarComponent
   ],
   templateUrl: './inventory.component.html',
@@ -58,7 +59,7 @@ export class InventoryComponent implements OnInit {
   // Pagination
   currentPage = 1;
   itemsPerPage = 5;
-Math: any;
+  Math = Math;
 
   constructor(private svc: InventoryService) {}
 

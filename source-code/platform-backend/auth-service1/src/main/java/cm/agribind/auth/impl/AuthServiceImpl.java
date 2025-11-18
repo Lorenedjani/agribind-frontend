@@ -41,9 +41,10 @@ public class AuthServiceImpl implements AuthService {
         // Fetch user from user management service
         UserDto user;
         try {
+            // Try to find by username (could be email or phone)
             user = userManagementClient.getUserByUsername(request.getUsername());
         } catch (Exception e) {
-            log.error("User not found: {}", request.getUsername());
+            log.error("User not found: {}", request.getUsername(), e);
             throw new UserNotFoundException("Invalid username or password");
         }
 
@@ -51,6 +52,11 @@ public class AuthServiceImpl implements AuthService {
         validateAccountStatus(user);
 
         // Verify password
+        if (user.getPasswordHash() == null || user.getPasswordHash().isEmpty()) {
+            log.error("User has no password hash: {}", user.getUserId());
+            throw new BadCredentialsException("Account not properly configured");
+        }
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             log.warn("Invalid password for user: {}", request.getUsername());
             throw new BadCredentialsException("Invalid username or password");
@@ -467,4 +473,6 @@ public class AuthServiceImpl implements AuthService {
         log.info("Revoking device {} for user: {}", deviceId, userId);
         refreshTokenRepository.revokeByUserIdAndDeviceId(userId, deviceId);
     }
+
+
 }

@@ -22,7 +22,7 @@ public interface UserMapper {
     @Mapping(target = "status", constant = "ACTIVE")
     @Mapping(target = "address", source = ".", qualifiedByName = "toAddress")
     User toEntity(CreateUserCommand command);
-
+    @Mapping(target = "passwordHash", source = "passwordHash")
     @Mapping(target = "fullAddress", source = "address", qualifiedByName = "toFullAddress")
     @Mapping(target = "profilePictureUrl", source = "profile.profilePicturePath")
     UserResponse toResponse(User user);

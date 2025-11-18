@@ -2,31 +2,31 @@ package cm.agribind.auth.integration;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import java.util.Map;
 
-// UserManagementClient.java
-//@FeignClient(name = "user-management-service", url = "${services.user-management}")
+// ✅ FIXED: Proper Feign client that calls real User Management Service
+@FeignClient(
+        name = "user-management-service",
+        url = "${services.user-management:http://localhost:8082}"
+)
 public interface UserManagementClient {
 
-    @GetMapping("/username/{username}")
-    UserDto getUserByUsername(@PathVariable String username);
+    @GetMapping("/api/v1/users/username/{username}")
+    UserDto getUserByUsername(@PathVariable("username") String username);
 
-    @GetMapping("/registration/{registrationNumber}")
-    UserDto getUserByRegistrationNumber(@PathVariable String registrationNumber);
+    UserDto getUserByPhone(String phoneNumber);
 
-    @GetMapping("/{userId}")
-    UserDto getUserById(@PathVariable String userId);
+    @GetMapping("/api/v1/users/registration/{registrationNumber}")
+    UserDto getUserByRegistrationNumber(@PathVariable("registrationNumber") String registrationNumber);
 
-    @PutMapping("/{userId}/password")
-    void updatePassword(@PathVariable String userId, @RequestBody PasswordUpdateRequest request);
+    @GetMapping("/api/v1/users/{userId}")
+    UserDto getUserById(@PathVariable("userId") String userId);
 
-    @PutMapping("/{userId}/first-login")
-    void markFirstLoginComplete(@PathVariable String userId);
+    @PutMapping("/api/v1/users/{userId}/password")
+    void updatePassword(@PathVariable("userId") String userId, @RequestBody PasswordUpdateRequest request);
 
-    @PutMapping("/{userId}/language")
-    void updateLanguage(@PathVariable String userId, @RequestBody LanguageUpdateRequest request);
+    @PutMapping("/api/v1/users/{userId}/first-login")
+    void markFirstLoginComplete(@PathVariable("userId") String userId);
+
+    @PutMapping("/api/v1/users/{userId}/language")
+    void updateLanguage(@PathVariable("userId") String userId, @RequestBody LanguageUpdateRequest request);
 }

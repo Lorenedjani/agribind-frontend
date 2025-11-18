@@ -1,14 +1,14 @@
+// src/app/modules/cooperative/dashboard/cooperative-dashboard/cooperative-dashboard.component.ts
 import { Component, OnInit, HostListener } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import {NgOptimizedImage} from '@angular/common';
 
 @Component({
   selector: 'app-cooperative-dashboard',
   templateUrl: './cooperative-dashboard.component.html',
   styleUrls: ['./cooperative-dashboard.component.scss'],
   standalone: true,
-  imports: [RouterOutlet, NgOptimizedImage]
+  imports: [RouterOutlet]  // REMOVED NgOptimizedImage
 })
 export class CooperativeDashboardComponent implements OnInit {
   pageTitle = 'Members';

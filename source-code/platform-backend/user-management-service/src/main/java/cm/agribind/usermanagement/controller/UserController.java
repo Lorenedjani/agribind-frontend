@@ -6,9 +6,13 @@ import cm.agribind.usermanagement.dto.pagination.PageResponse;
 import cm.agribind.usermanagement.dto.query.UserFilterQuery;
 import cm.agribind.usermanagement.dto.query.UserQuery;
 import cm.agribind.usermanagement.dto.response.UserResponse;
+import cm.agribind.usermanagement.entity.User;
 import cm.agribind.usermanagement.enums.Region;
 import cm.agribind.usermanagement.enums.UserStatus;
 import cm.agribind.usermanagement.enums.UserType;
+import cm.agribind.usermanagement.repository.UserRepository;
+import cm.agribind.usermanagement.mapper.UserMapper;
+import cm.agribind.usermanagement.exception.UserNotFoundException;
 import cm.agribind.usermanagement.service.command.UserCommandService;
 import cm.agribind.usermanagement.service.query.UserQueryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,6 +36,8 @@ public class UserController {
 
     private final UserCommandService userCommandService;
     private final UserQueryService userQueryService;
+    private UserRepository userRepository;
+    private UserMapper userMapper;
 
     @PostMapping
     @Operation(summary = "Create a new user", description = "Create a new user (farmer, cooperative, or government official)")
@@ -187,6 +193,35 @@ public class UserController {
         } catch (Exception e) {
             log.error("Failed to upload profile picture", e);
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/username/{username}")
+    @Operation(summary = "Get user by username",
+            description = "Get user by email or phone number (for authentication)")
+    public ResponseEntity<UserResponse> getUserByUsername(@PathVariable String username) {
+        log.info("Fetching user by username: {}", username);
+
+        UserResponse response;
+
+        // Try email first if it contains @
+        if (username.contains("@")) {
+            try {
+                User user = userRepository.findByEmail(username)
+                        .orElseThrow(() -> new UserNotFoundException("User not found"));
+                response = userMapper.toResponse(user);
+                return ResponseEntity.ok(response);
+            } catch (UserNotFoundException e) {
+                // Fall through to try phone number
+            }
+        }
+
+        // Try phone number
+        try {
+            response = userQueryService.getUserByPhone(username);
+            return ResponseEntity.ok(response);
+        } catch (UserNotFoundException e) {
+            throw new UserNotFoundException("User not found with username: " + username);
         }
     }
 }

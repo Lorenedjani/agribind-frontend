@@ -189,4 +189,14 @@ public class UserQueryServiceImpl implements UserQueryService {
 
         return spec;
     }
+
+    @Override
+    public UserResponse getUserByEmail(String email) {
+        log.debug("Fetching user by email: {}", email);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
+
+        return userMapper.toResponse(user);
+    }
 }

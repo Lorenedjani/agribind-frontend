@@ -46,4 +46,13 @@ public class UserResponse {
     private FarmerResponse farmerDetails;
     private CooperativeResponse cooperativeDetails;
     private GovernmentResponse governmentDetails;
+
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    private String passwordHash;
+
+    // Account status fields for auth
+    private Boolean accountLocked = false;
+    private Boolean accountEnabled = true;
+    private Integer failedLoginAttempts = 0;
+    private Boolean firstLogin = false;
 }

@@ -67,8 +67,8 @@
     <section class="top-filters">
       <div class="search-wrapper">
         <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"
-          stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-          viewBox="0 0 24 24">
+             stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             viewBox="0 0 24 24">
           <circle cx="11" cy="11" r="7" />
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
@@ -105,33 +105,33 @@
     <section class="table-section">
       <table>
         <thead>
-          <tr>
-            <th>Production ID</th>
-            <th>Date</th>
-            <th>Farmer</th>
-            <th>Crop</th>
-            <th>Quantity</th>
-            <th>Grade</th>
-            <th>Warehouse</th>
-            <th>Value (XAF)</th>
-            <th>Status</th>
-          </tr>
+        <tr>
+          <th>Production ID</th>
+          <th>Date</th>
+          <th>Farmer</th>
+          <th>Crop</th>
+          <th>Quantity</th>
+          <th>Grade</th>
+          <th>Warehouse</th>
+          <th>Value (XAF)</th>
+          <th>Status</th>
+        </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let record of paginatedProduction">
-            <td>{{ record.id }}</td>
-            <td>{{ record.date }}</td>
-            <td>{{ record.farmer }}</td>
-            <td>{{ record.crop }}</td>
-            <td>{{ record.quantity }}</td>
-            <td><span class="badge" [ngClass]="record.gradeClass">{{ record.grade }}</span></td>
-            <td>{{ record.warehouse }}</td>
-            <td>{{ record.value }}</td>
-            <td><span class="status-badge" [ngClass]="record.statusClass">{{ record.status }}</span></td>
-          </tr>
-          <tr *ngIf="filteredProduction.length === 0">
-            <td colspan="9" class="no-data">No data matches the filters.</td>
-          </tr>
+        <tr *ngFor="let record of paginatedProduction">
+          <td>{{ record.id }}</td>
+          <td>{{ record.date }}</td>
+          <td>{{ record.farmer }}</td>
+          <td>{{ record.crop }}</td>
+          <td>{{ record.quantity }}</td>
+          <td><span class="badge" [ngClass]="record.gradeClass">{{ record.grade }}</span></td>
+          <td>{{ record.warehouse }}</td>
+          <td>{{ record.value }}</td>
+          <td><span class="status-badge" [ngClass]="record.statusClass">{{ record.status }}</span></td>
+        </tr>
+        <tr *ngIf="filteredProduction.length === 0">
+          <td colspan="9" class="no-data">No data matches the filters.</td>
+        </tr>
         </tbody>
       </table>
 
@@ -157,7 +157,7 @@
           <div class="form-row">
             <div class="form-group full-width">
               <label for="farmerSelect">Farmer *</label>
-              <select id="farmerSelect" [(ngModel)]="newProduction.farmer" name="farmer" required class="form-input">
+              <select id="farmerSelect" [(ngModel)]="newProduction.farmerId" name="farmerId" required class="form-input">
                 <option value="" disabled>Select a farmer</option>
                 <option *ngFor="let farmer of farmers" [value]="farmer">{{ farmer }}</option>
               </select>
@@ -167,13 +167,13 @@
           <div class="form-row">
             <div class="form-group">
               <label for="cropInput">Crop Type *</label>
-              <select id="cropInput" [(ngModel)]="newProduction.crop" name="crop" required class="form-input">
-                <option value="Cocoa">Cocoa</option>
-                <option value="Coffee">Coffee</option>
-                <option value="Maize">Maize</option>
-                <option value="Palm Oil">Palm Oil</option>
-                <option value="Cotton">Cotton</option>
-                <option value="Cassava">Cassava</option>
+              <select id="cropInput" [(ngModel)]="newProduction.cropType" name="cropType" required class="form-input">
+                <option value="COCOA">Cocoa</option>
+                <option value="COFFEE">Coffee</option>
+                <option value="MAIZE">Maize</option>
+                <option value="PALM_OIL">Palm Oil</option>
+                <option value="COTTON">Cotton</option>
+                <option value="CASSAVA">Cassava</option>
               </select>
             </div>
 
@@ -196,10 +196,10 @@
           <div class="form-row">
             <div class="form-group">
               <label for="gradeInput">Quality Grade *</label>
-              <select id="gradeInput" [(ngModel)]="newProduction.grade" name="grade" required class="form-input">
-                <option value="Grade A">Grade A</option>
-                <option value="Grade B">Grade B</option>
-                <option value="Grade C">Grade C</option>
+              <select id="gradeInput" [(ngModel)]="newProduction.qualityGrade" name="qualityGrade" required class="form-input">
+                <option value="GRADE_A">Grade A</option>
+                <option value="GRADE_B">Grade B</option>
+                <option value="GRADE_C">Grade C</option>
               </select>
             </div>
 
@@ -217,8 +217,8 @@
               <input
                 type="date"
                 id="dateInput"
-                [(ngModel)]="newProduction.date"
-                name="date"
+                [(ngModel)]="newProduction.deliveryDate"
+                name="deliveryDate"
                 required
                 class="form-input"
               />

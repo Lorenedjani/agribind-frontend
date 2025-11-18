@@ -1,29 +1,40 @@
 import { Routes } from '@angular/router';
-import { ProductionComponent } from './modules/cooperative/production/production.component';
-import { MemberListComponent } from './modules/cooperative/members/member-list/member-list.component';
-import { InventoryComponent } from './modules/cooperative/inventory/inventory.component';
-import { MembersComponent } from './modules/cooperative/members/member.component';
 
 export const routes: Routes = [
   {
-    path: 'production',
-    component: ProductionComponent
+    path: 'login',
+    loadComponent: () => import('./modules/auth/components/login/login.component').then(c => c.LoginComponent)
   },
   {
-    path: 'members',
-    component: MemberListComponent
-  },
-  {
-    path: 'inventory',
-    component: InventoryComponent
+    path: 'cooperative',
+    loadComponent: () => import('./modules/cooperative/dashboard/cooperative-dashboard/cooperative-dashboard.component').then(c => c.CooperativeDashboardComponent),
+    children: [
+      {
+        path: 'members',
+        loadComponent: () => import('./modules/cooperative/members/member-list/member-list.component').then(c => c.MemberListComponent)
+      },
+      {
+        path: 'production',
+        loadComponent: () => import('./modules/cooperative/production/production.component').then(c => c.ProductionComponent)
+      },
+      {
+        path: 'inventory',
+        loadComponent: () => import('./modules/cooperative/inventory/inventory.component').then(c => c.InventoryComponent)
+      },
+      {
+        path: '',
+        redirectTo: 'members',
+        pathMatch: 'full'
+      }
+    ]
   },
   {
     path: '',
-    redirectTo: '/production',
+    redirectTo: '/login',
     pathMatch: 'full'
   },
   {
     path: '**',
-    redirectTo: '/production'
+    redirectTo: '/login'
   }
 ];

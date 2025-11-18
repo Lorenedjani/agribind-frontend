@@ -20,4 +20,6 @@ public interface UserQueryService {
     List<UserResponse> getUsersByRegion(String region);
     boolean existsByPhoneNumber(String phoneNumber);
     boolean existsByEmail(String email);
+
+    UserResponse getUserByEmail(String email);
 }
