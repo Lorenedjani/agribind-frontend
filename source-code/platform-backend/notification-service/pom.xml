@@ -23,8 +23,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-cloud.version>2023.0.2</spring-cloud.version>
-
+        <spring-cloud.version>2023.0.2</spring-cloud.version>
     </properties>
 
     <dependencies>
@@ -51,17 +50,24 @@
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
 
-		 <dependency>
-      		<groupId>io.micrometer</groupId>
-      		<artifactId>micrometer-tracing-bridge-brave</artifactId>
-    	</dependency>
+        <!-- Twilio SMS Service -->
+        <dependency>
+            <groupId>com.twilio.sdk</groupId>
+            <artifactId>twilio</artifactId>
+            <version>9.14.0</version>
+        </dependency>
 
-    	<dependency>
-      		<groupId>io.zipkin.reporter2</groupId>
-      		<artifactId>zipkin-reporter-brave</artifactId>
-    	</dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-brave</artifactId>
+        </dependency>
 
-    	<dependency>
+        <dependency>
+            <groupId>io.zipkin.reporter2</groupId>
+            <artifactId>zipkin-reporter-brave</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
@@ -72,18 +78,23 @@
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
 
- 		<!-- Other dependencies -->
+        <!-- Other dependencies -->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.33</version>
-		</dependency>
+        </dependency>
 
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
         </dependency>
 
         <!-- Testing -->
@@ -94,7 +105,7 @@
         </dependency>
     </dependencies>
 
-	 <dependencyManagement>
+    <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>org.springframework.cloud</groupId>

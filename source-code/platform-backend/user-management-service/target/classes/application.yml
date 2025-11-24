@@ -82,6 +82,15 @@ agribind:
     api-key: ${GOOGLE_MAPS_API_KEY:your-api-key}
     enabled: true
 
+  notifications:
+    enabled: true
+    send-sms: true
+    send-email: true
+    # Email for specific user types
+    email-for-cooperative: true
+    email-for-government: true
+    email-for-farmer: false  # SMS only for farmers by default
+
 logging:
   level:
     cm.agribind.usermanagement: INFO

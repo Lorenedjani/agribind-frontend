@@ -1,79 +1,80 @@
+server:
+  port: 8083
+
 spring:
   application:
     name: notification-service
   profiles:
-    active: dev
+    active: prod
 
-server:
-  port: 8081
-
-# Default values for all environments
-app:
+  # Disable Kafka for now
   kafka:
-    topic: notifications
-  rabbitmq:
-    exchange: notification-exchange
-    queue: notification-queue
-    routing-key: notification.routing.key
-
----
-# Development profile - no external services
-spring:
-  config:
-    activate:
-      on-profile: dev
-  kafka:
-    enabled: true
-    bootstrap-servers: localhost:9092
-  rabbitmq:
-    enabled: true
-    host: localhost
-    port: 5672
-    connection-timeout: 5s
+    enabled: false
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
-      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
 
-eureka:
-  client:
-    enabled: false
-    fetch-registry: false
-    register-with-eureka: false
-
-logging:
-  level:
-    org.springframework.kafka: OFF
-    org.springframework.amqp: OFF
-
----
-# Production profile - with all services
-spring:
-  config:
-    activate:
-      on-profile: prod
-  kafka:
-    enabled: true
-    bootstrap-servers: localhost:9092
-    consumer:
-      group-id: notification-group
-      auto-offset-reset: earliest
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.JsonSerializer
-    properties:
-      spring.json.add.type.headers: false
+  # RabbitMQ Configuration
   rabbitmq:
-    enabled: true
     host: localhost
     port: 5672
     username: guest
     password: guest
 
+  # Email Configuration
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL_USERNAME:your-email@gmail.com}
+    password: ${EMAIL_PASSWORD:your-app-password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+# Eureka Client Configuration
 eureka:
   client:
-    enabled: true
-    fetch-registry: true
-    register-with-eureka: true
     service-url:
       defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+# Application Configuration - ADD THESE RABBITMQ PROPERTIES
+app:
+  rabbitmq:
+    queue: notification-queue
+    exchange: notification-exchange
+    routing-key: notification.routing.key
+
+  sms:
+    cameroon:
+      country-code: "+237"
+      enabled: true
+
+# Twilio Configuration
+twilio:
+  account-sid: ${TWILIO_ACCOUNT_SID:test}
+  auth-token: ${TWILIO_AUTH_TOKEN:test}
+  phone-number: ${TWILIO_PHONE_NUMBER:+15005550006}
+
+# Actuator
+management:
+  health:
+    # Disable all component health checks
+    defaults:
+      enabled: false
+    # Enable only simple checks
+    diskspace:
+      enabled: true
+    ping:
+      enabled: true
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: health,info
