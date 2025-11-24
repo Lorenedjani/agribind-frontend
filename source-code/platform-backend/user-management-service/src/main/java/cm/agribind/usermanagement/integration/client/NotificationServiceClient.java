@@ -25,7 +25,7 @@ public class NotificationServiceClient {
     @Value("${services.notification-service.url:http://localhost:8083}")
     private String notificationServiceUrl;
 
-    @Value("${agribind.notifications.use-kafka:false}") // ✅ NEW: Control via config
+    @Value("${agribind.notifications.use-kafka:false}")
     private boolean useKafka;
 
     private static final String NOTIFICATION_TOPIC = "notifications";
@@ -85,12 +85,12 @@ public class NotificationServiceClient {
     }
 
     /**
-     * Send welcome credentials via SMS
+     * Send welcome credentials via SMS - UPDATED METHOD SIGNATURE
      */
-    public void sendWelcomeSMS(String phoneNumber, String name, String password, String userType) {
+    public void sendWelcomeSMS(String phoneNumber, String name, String username, String password, String userType) {
         SmsNotificationRequest request = new SmsNotificationRequest();
         request.setPhoneNumber(phoneNumber);
-        request.setMessage(buildWelcomeSmsMessage(name, phoneNumber, password, userType));
+        request.setMessage(buildWelcomeSmsMessage(name, username, password, userType));
         request.setType("WELCOME_CREDENTIALS");
         request.setPriority("HIGH");
         request.setTimestamp(LocalDateTime.now());
@@ -121,8 +121,7 @@ public class NotificationServiceClient {
 
     // ===== PRIVATE HELPER METHODS =====
 
-    private String buildWelcomeSmsMessage(String name, String username,
-                                          String password, String userType) {
+    private String buildWelcomeSmsMessage(String name, String username, String password, String userType) {
         String role = formatUserType(userType);
 
         return String.format(
@@ -138,8 +137,7 @@ public class NotificationServiceClient {
         );
     }
 
-    private String buildWelcomeEmailBody(String name, String username,
-                                         String password, String userType) {
+    private String buildWelcomeEmailBody(String name, String username, String password, String userType) {
         String role = formatUserType(userType);
 
         return String.format(

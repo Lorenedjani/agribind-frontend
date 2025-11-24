@@ -16,12 +16,15 @@ public class WelcomeNotificationService {
     public void sendWelcomeNotification(WelcomeNotificationRequest request) {
         log.info("Processing welcome notification for user: {}", request.getUserId());
 
+        // Determine the actual username (prefer email, fallback to phone number)
+        String actualUsername = determineUsername(request);
+
         // Send SMS if enabled
         if (request.isSendSms() && request.getPhoneNumber() != null) {
             try {
                 String smsMessage = buildWelcomeSmsMessage(
                         request.getName(),
-                        request.getPhoneNumber(),
+                        actualUsername, // Use actual username, not phone number
                         request.getTemporaryPassword(),
                         request.getUserType()
                 );
@@ -37,7 +40,7 @@ public class WelcomeNotificationService {
             try {
                 String emailBody = buildWelcomeEmailBody(
                         request.getName(),
-                        request.getPhoneNumber(),
+                        actualUsername, // Use actual username
                         request.getTemporaryPassword(),
                         request.getUserType()
                 );
@@ -50,6 +53,17 @@ public class WelcomeNotificationService {
             } catch (Exception e) {
                 log.error("Failed to send welcome email to: {}", request.getEmail(), e);
             }
+        }
+    }
+
+    private String determineUsername(WelcomeNotificationRequest request) {
+        // Priority: 1. Dedicated username, 2. Email, 3. Phone number
+        if (request.getUsername() != null && !request.getUsername().trim().isEmpty()) {
+            return request.getUsername();
+        } else if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
+            return request.getEmail();
+        } else {
+            return request.getPhoneNumber(); // Fallback to phone number
         }
     }
 

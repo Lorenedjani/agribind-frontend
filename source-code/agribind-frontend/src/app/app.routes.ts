@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: 'login',
-    loadComponent: () => import('./modules/auth/components/login/login.component').then(c => c.LoginComponent)
+    loadComponent: () => import('./modules/auth/login/login.component').then(c => c.LoginComponent)
   },
   {
     path: 'cooperative',

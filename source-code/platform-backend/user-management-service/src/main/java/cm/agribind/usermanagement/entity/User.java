@@ -62,4 +62,8 @@ public class User extends BaseEntity {
 
     @Column(name = "first_login")
     private Boolean firstLogin = true;
+
+    public String getFullName() {
+        return "name";
+    }
 }

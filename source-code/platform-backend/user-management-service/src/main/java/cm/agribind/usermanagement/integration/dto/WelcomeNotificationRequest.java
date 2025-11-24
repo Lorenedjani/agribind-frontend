@@ -11,6 +11,7 @@ public class WelcomeNotificationRequest {
     private String userId;
     private String userType;
     private String name;
+    private String username;
     private String phoneNumber;
     private String email;
     private String temporaryPassword;
