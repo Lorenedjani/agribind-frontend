@@ -1,6 +1,5 @@
 package cm.agribind.usermanagement.service.command.impl;
 
-import ch.qos.logback.core.encoder.EchoEncoder;
 import cm.agribind.usermanagement.dto.command.CreateUserCommand;
 import cm.agribind.usermanagement.dto.command.UpdateUserCommand;
 import cm.agribind.usermanagement.dto.event.*;
@@ -8,25 +7,23 @@ import cm.agribind.usermanagement.dto.response.UserResponse;
 import cm.agribind.usermanagement.entity.*;
 import cm.agribind.usermanagement.enums.*;
 import cm.agribind.usermanagement.exception.UserNotFoundException;
+import cm.agribind.usermanagement.integration.client.NotificationServiceClient;
+import cm.agribind.usermanagement.integration.dto.WelcomeNotificationRequest;
 import cm.agribind.usermanagement.integration.event.UserEventPublisher;
 import cm.agribind.usermanagement.mapper.UserMapper;
 import cm.agribind.usermanagement.repository.UserRepository;
+import cm.agribind.usermanagement.service.PasswordGenerationService;
 import cm.agribind.usermanagement.service.QRCodeService;
 import cm.agribind.usermanagement.service.command.UserCommandService;
 import cm.agribind.usermanagement.util.FileStorageUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Year;
-import java.util.Arrays;
 import java.util.UUID;
 
-/**
- * Simplified User Command Service - Removes optional dependencies
- * that might cause startup failures
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -38,6 +35,9 @@ public class SimplifiedUserCommandServiceImpl implements UserCommandService {
     private final UserEventPublisher userEventPublisher;
     private final QRCodeService qrCodeService;
     private final FileStorageUtil fileStorageUtil;
+    private final PasswordEncoder passwordEncoder;
+    private final PasswordGenerationService passwordGenerationService;
+    private final NotificationServiceClient notificationServiceClient;
 
     @Override
     public UserResponse createUser(CreateUserCommand command) {
@@ -49,34 +49,41 @@ public class SimplifiedUserCommandServiceImpl implements UserCommandService {
                 throw new IllegalArgumentException("Phone number already exists: " + command.getPhoneNumber());
             }
 
-            // Create user entity based on type
+            // 2. Validate email uniqueness (if provided)
+            if (command.getEmail() != null && !command.getEmail().trim().isEmpty()) {
+                if (userRepository.existsByEmail(command.getEmail())) {
+                    throw new IllegalArgumentException("Email already exists: " + command.getEmail());
+                }
+            }
+
+            // 3. Create user entity based on type
             User user = createUserByType(command);
 
-            // Generate user ID and registration number
+            // 4. Generate user ID and registration number
             String userId = generateUserId(command.getType());
             user.setUserId(userId);
             user.setRegistrationNumber(generateRegistrationNumber());
 
-            // ✅ NEW: Generate and set default password
-            String defaultPassword = generateDefaultPassword(command.getType());
-            EchoEncoder<String> passwordEncoder = new EchoEncoder<>();
-            String passwordHash = Arrays.toString(passwordEncoder.encode(defaultPassword));
+            // 5. Generate and set default password
+            String defaultPassword = passwordGenerationService.generateDefaultPassword();
+            String passwordHash = passwordEncoder.encode(defaultPassword);
             user.setPasswordHash(passwordHash);
             user.setFirstLogin(true);
 
-            // Log the password (only in development!)
-            log.info("Generated password for {}: {}", userId, defaultPassword);
-
-            // Create profile
+            // 6. Create profile
             Profile profile = new Profile();
             profile.setPreferredLanguage(command.getPreferredLanguage());
             user.setProfile(profile);
 
-            // Save user
+            // 7. Save user
             User savedUser = userRepository.save(user);
+            log.info("User created successfully: {} ({})", savedUser.getUserId(), savedUser.getType());
 
-            // TODO: Send password via SMS to user
-            sendPasswordSMS(savedUser, defaultPassword);
+            // 8. Send notifications based on user type
+            sendWelcomeNotifications(savedUser, defaultPassword, command);
+
+            // 9. Publish events
+            publishUserCreatedEvent(savedUser, defaultPassword);
 
             return userMapper.toResponse(savedUser);
 
@@ -86,20 +93,107 @@ public class SimplifiedUserCommandServiceImpl implements UserCommandService {
         }
     }
 
-    private String generateDefaultPassword(UserType type) {
-        // Generate passwords like: Coop2025@Agribind, Farmer2025@Agribind
-        String prefix = switch (type) {
-            case COOPERATIVE -> "Coop";
-            case FARMER -> "Farmer";
-            case GOVERNMENT -> "Gov";
-        };
-        int year = Year.now().getValue();
-        return prefix + year + "@Agribind";
+    /**
+     * Send welcome notifications with credentials
+     */
+    private void sendWelcomeNotifications(User user, String password, CreateUserCommand command) {
+        String userType = user.getType().name();
+
+        // Determine notification strategy based on user type
+        boolean shouldSendEmail = shouldSendEmailForUserType(user.getType());
+        boolean shouldSendSms = true; // Always send SMS
+
+        log.info("Sending welcome notifications for {} - SMS: {}, Email: {}",
+                user.getUserId(), shouldSendSms, shouldSendEmail);
+
+        try {
+            // Send SMS notification (always)
+            if (shouldSendSms) {
+                notificationServiceClient.sendWelcomeSMS(
+                        user.getPhoneNumber(),
+                        user.getName(),
+                        password,
+                        userType
+                );
+                log.info("✅ Welcome SMS sent to: {}", user.getPhoneNumber());
+            }
+
+            // Send Email notification (for COOPERATIVE and GOVERNMENT)
+            if (shouldSendEmail && user.getEmail() != null && !user.getEmail().trim().isEmpty()) {
+                notificationServiceClient.sendWelcomeEmail(
+                        user.getEmail(),
+                        user.getName(),
+                        user.getPhoneNumber(), // Username
+                        password,
+                        userType
+                );
+                log.info("✅ Welcome Email sent to: {}", user.getEmail());
+            } else if (shouldSendEmail && (user.getEmail() == null || user.getEmail().trim().isEmpty())) {
+                log.warn("⚠️ Email notification skipped - no email provided for {} ({})",
+                        user.getUserId(), userType);
+            }
+
+            // Send comprehensive welcome notification via Kafka
+            WelcomeNotificationRequest welcomeRequest = WelcomeNotificationRequest.builder()
+                    .userId(user.getUserId())
+                    .userType(userType)
+                    .name(user.getName())
+                    .phoneNumber(user.getPhoneNumber())
+                    .email(user.getEmail())
+                    .temporaryPassword(password)
+                    .preferredLanguage(user.getProfile() != null ?
+                            user.getProfile().getPreferredLanguage() : "fr")
+                    .sendSms(shouldSendSms)
+                    .sendEmail(shouldSendEmail)
+                    .priority("HIGH")
+                    .timestamp(java.time.LocalDateTime.now())
+                    .build();
+
+            notificationServiceClient.sendWelcomeNotification(welcomeRequest);
+
+        } catch (Exception e) {
+            log.error("❌ Failed to send welcome notifications for user: {}", user.getUserId(), e);
+            // Don't fail user creation if notifications fail
+            // Manual intervention may be required
+        }
     }
 
-    private void sendPasswordSMS(User user, String password) {
-        // TODO: Integrate with notification service
-        log.info("Send SMS to {}: Your password is {}", user.getPhoneNumber(), password);
+    /**
+     * Determine if email should be sent based on user type
+     */
+    private boolean shouldSendEmailForUserType(UserType userType) {
+        return switch (userType) {
+            case COOPERATIVE -> true;  // ✅ Send email to cooperative managers
+            case GOVERNMENT -> true;   // ✅ Send email to government officials
+            case FARMER -> false;      // ❌ Farmers: SMS only (email optional)
+        };
+    }
+
+    /**
+     * Publish user created event
+     */
+    private void publishUserCreatedEvent(User user, String temporaryPassword) {
+        try {
+            UserCreatedEvent event = new UserCreatedEvent(
+                    user.getUserId(),
+                    user.getType(),
+                    user.getName(),
+                    user.getPhoneNumber()
+            );
+            event.setEmail(user.getEmail());
+            event.setRegion(user.getAddress() != null ? user.getAddress().getRegion().name() : null);
+            event.setPreferredLanguage(
+                    user.getProfile() != null ? user.getProfile().getPreferredLanguage() : "fr"
+            );
+            event.setTemporaryPassword(temporaryPassword);
+            event.setRequiresPasswordChange(true);
+            event.setCreatedAt(user.getCreatedAt());
+
+            userEventPublisher.publishUserCreated(event);
+            log.info("✅ UserCreatedEvent published for: {}", user.getUserId());
+        } catch (Exception e) {
+            log.error("❌ Failed to publish UserCreatedEvent", e);
+        }
     }
 
     @Override
@@ -197,21 +291,6 @@ public class SimplifiedUserCommandServiceImpl implements UserCommandService {
 
         User updatedUser = userRepository.save(user);
         return userMapper.toResponse(updatedUser);
-    }
-
-    private void publishUserCreatedEvent(User user) {
-        UserCreatedEvent event = new UserCreatedEvent(
-                user.getUserId(),
-                user.getType(),
-                user.getName(),
-                user.getPhoneNumber()
-        );
-        event.setEmail(user.getEmail());
-        event.setRegion(user.getAddress() != null ? user.getAddress().getRegion().name() : null);
-        event.setPreferredLanguage(
-                user.getProfile() != null ? user.getProfile().getPreferredLanguage() : "fr"
-        );
-        userEventPublisher.publishUserCreated(event);
     }
 
     private void publishStatusChangeEvent(User user, UserStatus previousStatus, UserStatus newStatus) {

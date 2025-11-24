@@ -17,9 +17,11 @@ public class PasswordGenerationService {
     private static final String ALL_CHARS = UPPERCASE + LOWERCASE + DIGITS + SPECIAL;
     private static final SecureRandom RANDOM = new SecureRandom();
 
+    /**
+     * Generate default password: AG{YEAR}{6-RANDOM}
+     * Example: AG2025aB3$xY
+     */
     public String generateDefaultPassword() {
-        // Format: AG{YEAR}{6-RANDOM}
-        // Example: AG2025aB3$xY
         int year = Year.now().getValue();
         String randomPart = generateRandomString(6);
         return "AG" + year + randomPart;

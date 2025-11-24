@@ -23,6 +23,10 @@ services:
   user-management: http://localhost:8082
   notification: http://localhost:8083  # ✅ ADD THIS LINE
 
+# ✅ ADD MISSING PASSWORD RESET CONFIGURATION
+password-reset:
+  token-expiration-minutes: 30  # ✅ ADD THIS LINE - Token expires in 30 minutes
+
 # ✅ Enable Feign logging
 feign:
   client:

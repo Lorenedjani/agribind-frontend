@@ -13,7 +13,9 @@ public interface UserManagementClient {
     @GetMapping("/api/v1/users/username/{username}")
     UserDto getUserByUsername(@PathVariable("username") String username);
 
-    UserDto getUserByPhone(String phoneNumber);
+    // ✅ FIXED: Added HTTP method annotation
+    @GetMapping("/api/v1/users/phone/{phoneNumber}")
+    UserDto getUserByPhone(@PathVariable("phoneNumber") String phoneNumber);
 
     @GetMapping("/api/v1/users/registration/{registrationNumber}")
     UserDto getUserByRegistrationNumber(@PathVariable("registrationNumber") String registrationNumber);

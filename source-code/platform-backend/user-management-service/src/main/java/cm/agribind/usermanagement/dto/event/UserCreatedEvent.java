@@ -18,6 +18,10 @@ public class UserCreatedEvent {
     private LocalDateTime createdAt;
     private String preferredLanguage;
 
+    // ✅ NEW: Add password field (will be encrypted in transit)
+    private String temporaryPassword;
+    private boolean requiresPasswordChange;
+
     // Additional context
     private String source = "USER_MANAGEMENT_SERVICE";
     private LocalDateTime eventTime = LocalDateTime.now();
@@ -29,5 +33,6 @@ public class UserCreatedEvent {
         this.name = name;
         this.phoneNumber = phoneNumber;
         this.eventTime = LocalDateTime.now();
+        this.requiresPasswordChange = true;
     }
 }
