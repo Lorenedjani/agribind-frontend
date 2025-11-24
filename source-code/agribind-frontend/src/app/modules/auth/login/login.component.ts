@@ -28,8 +28,9 @@ export class LoginComponent {
       this.navigateToDashboard();
     }
 
+    // ✅ FIXED: Match form control names
     this.loginForm = this.fb.group({
-      username: ['', [Validators.required]], // Can be email or phone
+      username: ['', [Validators.required]], // ✅ Use 'username' not 'email'
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
@@ -49,6 +50,7 @@ export class LoginComponent {
   onSubmit() {
     this.errorMessage = '';
 
+    // ✅ Mark all fields as touched to show validation errors
     if (this.loginForm.invalid) {
       Object.keys(this.loginForm.controls).forEach(key => {
         this.loginForm.get(key)?.markAsTouched();
@@ -58,12 +60,16 @@ export class LoginComponent {
 
     this.isLoading = true;
 
+    // ✅ FIXED: Prepare credentials with correct field names
     const credentials = {
       username: this.loginForm.value.username.trim(),
       password: this.loginForm.value.password
     };
 
-    console.log('🔐 Submitting login for:', credentials.username);
+    console.log('🔐 Submitting login credentials:', {
+      username: credentials.username,
+      passwordLength: credentials.password.length
+    });
 
     this.authService.login(credentials).subscribe({
       next: (response) => {
@@ -82,6 +88,9 @@ export class LoginComponent {
         console.error('❌ Login failed:', error);
         this.isLoading = false;
         this.errorMessage = this.getErrorMessage(error);
+
+        // ✅ Show error message in UI
+        alert(this.errorMessage);
       }
     });
   }
@@ -93,7 +102,7 @@ export class LoginComponent {
       return;
     }
 
-    // ✅ FIXED: Route based on user role with correct paths
+    // ✅ Route based on user role
     switch (user.role.toUpperCase()) {
       case 'FARMER':
         console.log('📍 Navigating to farmer dashboard');
@@ -101,7 +110,6 @@ export class LoginComponent {
         break;
       case 'COOPERATIVE':
         console.log('📍 Navigating to cooperative dashboard');
-        // ✅ FIXED: Navigate to /cooperative which will redirect to /cooperative/members
         this.router.navigate(['/cooperative']);
         break;
       case 'GOVERNMENT':
@@ -120,15 +128,19 @@ export class LoginComponent {
     }
 
     if (error.status === 401) {
-      return 'Invalid username or password';
+      return 'Invalid email or password. Please check your credentials.';
     }
 
     if (error.status === 403) {
-      return 'Account is disabled or locked';
+      return 'Account is disabled or locked. Please contact support.';
     }
 
     if (error.status === 0) {
       return 'Cannot connect to server. Please check your internet connection.';
+    }
+
+    if (error.status === 400) {
+      return 'Invalid login request. Please check your input.';
     }
 
     return 'An error occurred during login. Please try again.';
