@@ -7,12 +7,17 @@ spring:
   profiles:
     active: prod
 
-  # Disable Kafka for now
-  kafka:
-    enabled: false
+  # Disable Security and related auto-configurations
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
+
+  # Disable Kafka for now
+  kafka:
+    enabled: false
 
   # RabbitMQ Configuration
   rabbitmq:
@@ -25,14 +30,19 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${EMAIL_USERNAME:your-email@gmail.com}
-    password: ${EMAIL_PASSWORD:your-app-password}
+    username: biancalorene13@gmail.com
+    password: ynvybzjmhyquzyss  # SANS ESPACES
+    protocol: smtp
     properties:
       mail:
         smtp:
           auth: true
           starttls:
+            required: true
             enable: true
+          starttls.enable: true
+          ssl:
+            trust: smtp.gmail.com
 
 # Eureka Client Configuration
 eureka:
@@ -42,7 +52,7 @@ eureka:
   instance:
     prefer-ip-address: true
 
-# Application Configuration - ADD THESE RABBITMQ PROPERTIES
+# Application Configuration
 app:
   rabbitmq:
     queue: notification-queue
@@ -60,7 +70,7 @@ twilio:
   auth-token: ${TWILIO_AUTH_TOKEN:test}
   phone-number: ${TWILIO_PHONE_NUMBER:+15005550006}
 
-# Actuator
+# Actuator - Disable security for actuator endpoints
 management:
   health:
     # Disable all component health checks
@@ -74,7 +84,19 @@ management:
   endpoint:
     health:
       show-details: always
+    # Disable security for all actuator endpoints
+    enabled-by-default: true
   endpoints:
     web:
       exposure:
         include: health,info
+      # Disable security for web endpoints
+      base-path: /
+  security:
+    enabled: false
+
+# Completely disable security
+security:
+  basic:
+    enabled: false
+  enabled: false

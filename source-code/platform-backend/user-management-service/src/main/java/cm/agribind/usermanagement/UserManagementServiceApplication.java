@@ -68,7 +68,7 @@ public class UserManagementServiceApplication implements CommandLineRunner {
 
     private void createDefaultCooperativeManagerWithEmail() {
         String phone = "+237694334198";
-        String email = "biancalorene13@gmail.com";
+        String email = "paulelorene@gmail.com";
         String name = "Lorene Djani";
 
         if (!userRepository.existsByPhoneNumber(phone)) {

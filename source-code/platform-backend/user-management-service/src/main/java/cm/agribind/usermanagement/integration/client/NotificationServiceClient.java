@@ -22,8 +22,11 @@ public class NotificationServiceClient {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final RestTemplate restTemplate;
 
-    @Value("${services.notification-service.url:http://notification-service}")
+    @Value("${services.notification-service.url:http://localhost:8083}")
     private String notificationServiceUrl;
+
+    @Value("${agribind.notifications.use-kafka:false}") // ✅ NEW: Control via config
+    private boolean useKafka;
 
     private static final String NOTIFICATION_TOPIC = "notifications";
 
@@ -34,41 +37,51 @@ public class NotificationServiceClient {
         log.info("Sending welcome notification to user: {} (Type: {})",
                 request.getUserId(), request.getUserType());
 
-        try {
-            // Send via Kafka for async processing
-            kafkaTemplate.send(NOTIFICATION_TOPIC, "user.welcome", request);
-            log.info("Welcome notification queued for: {}", request.getUserId());
-        } catch (Exception e) {
-            log.error("Failed to send welcome notification via Kafka, trying REST fallback", e);
-            // Fallback to REST API
-            sendWelcomeViaRest(request);
+        // ✅ CHANGED: Skip Kafka if not configured
+        if (useKafka) {
+            try {
+                kafkaTemplate.send(NOTIFICATION_TOPIC, "user.welcome", request);
+                log.info("Welcome notification queued via Kafka for: {}", request.getUserId());
+                return; // Success - exit
+            } catch (Exception e) {
+                log.warn("Kafka failed, falling back to REST: {}", e.getMessage());
+            }
         }
+
+        // ✅ Use REST API directly
+        sendWelcomeViaRest(request);
     }
 
     /**
      * Send SMS notification
      */
     public void sendSMS(SmsNotificationRequest request) {
-        try {
-            kafkaTemplate.send(NOTIFICATION_TOPIC, "sms.send", request);
-            log.info("SMS notification sent to Kafka for: {}", request.getPhoneNumber());
-        } catch (Exception e) {
-            log.error("Failed to send SMS notification", e);
-            sendSmsViaRest(request);
+        if (useKafka) {
+            try {
+                kafkaTemplate.send(NOTIFICATION_TOPIC, "sms.send", request);
+                log.info("SMS notification sent to Kafka for: {}", request.getPhoneNumber());
+                return;
+            } catch (Exception e) {
+                log.warn("Kafka failed for SMS, using REST: {}", e.getMessage());
+            }
         }
+        sendSmsViaRest(request);
     }
 
     /**
      * Send email notification
      */
     public void sendEmail(EmailNotificationRequest request) {
-        try {
-            kafkaTemplate.send(NOTIFICATION_TOPIC, "email.send", request);
-            log.info("Email notification sent to Kafka for: {}", request.getEmail());
-        } catch (Exception e) {
-            log.error("Failed to send email notification", e);
-            sendEmailViaRest(request);
+        if (useKafka) {
+            try {
+                kafkaTemplate.send(NOTIFICATION_TOPIC, "email.send", request);
+                log.info("Email notification sent to Kafka for: {}", request.getEmail());
+                return;
+            } catch (Exception e) {
+                log.warn("Kafka failed for Email, using REST: {}", e.getMessage());
+            }
         }
+        sendEmailViaRest(request);
     }
 
     /**
@@ -106,9 +119,8 @@ public class NotificationServiceClient {
         sendEmail(request);
     }
 
-    /**
-     * Build SMS message for welcome notification
-     */
+    // ===== PRIVATE HELPER METHODS =====
+
     private String buildWelcomeSmsMessage(String name, String username,
                                           String password, String userType) {
         String role = formatUserType(userType);
@@ -126,9 +138,6 @@ public class NotificationServiceClient {
         );
     }
 
-    /**
-     * Build email body for welcome notification
-     */
     private String buildWelcomeEmailBody(String name, String username,
                                          String password, String userType) {
         String role = formatUserType(userType);
@@ -198,9 +207,6 @@ public class NotificationServiceClient {
         );
     }
 
-    /**
-     * Format user type for display
-     */
     private String formatUserType(String userType) {
         return switch (userType.toUpperCase()) {
             case "COOPERATIVE" -> "Cooperative Manager";
@@ -211,7 +217,7 @@ public class NotificationServiceClient {
     }
 
     /**
-     * REST API fallback for welcome notification
+     * ✅ REST API fallback for welcome notification
      */
     private void sendWelcomeViaRest(WelcomeNotificationRequest request) {
         try {
@@ -220,15 +226,15 @@ public class NotificationServiceClient {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<WelcomeNotificationRequest> entity = new HttpEntity<>(request, headers);
 
-            restTemplate.postForObject(url, entity, NotificationResponse.class);
-            log.info("Welcome notification sent via REST for: {}", request.getUserId());
+            NotificationResponse response = restTemplate.postForObject(url, entity, NotificationResponse.class);
+            log.info("✅ Welcome notification sent via REST for: {}", request.getUserId());
         } catch (Exception e) {
-            log.error("Failed to send welcome notification via REST", e);
+            log.error("❌ Failed to send welcome notification via REST", e);
         }
     }
 
     /**
-     * REST API fallback for SMS
+     * ✅ REST API fallback for SMS
      */
     private void sendSmsViaRest(SmsNotificationRequest request) {
         try {
@@ -237,15 +243,15 @@ public class NotificationServiceClient {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<SmsNotificationRequest> entity = new HttpEntity<>(request, headers);
 
-            restTemplate.postForObject(url, entity, NotificationResponse.class);
-            log.info("SMS sent via REST for: {}", request.getPhoneNumber());
+            NotificationResponse response = restTemplate.postForObject(url, entity, NotificationResponse.class);
+            log.info("✅ SMS sent via REST to: {}", request.getPhoneNumber());
         } catch (Exception e) {
-            log.error("Failed to send SMS via REST", e);
+            log.error("❌ Failed to send SMS via REST to: {}", request.getPhoneNumber(), e);
         }
     }
 
     /**
-     * REST API fallback for Email
+     * ✅ REST API fallback for Email
      */
     private void sendEmailViaRest(EmailNotificationRequest request) {
         try {
@@ -254,10 +260,10 @@ public class NotificationServiceClient {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<EmailNotificationRequest> entity = new HttpEntity<>(request, headers);
 
-            restTemplate.postForObject(url, entity, NotificationResponse.class);
-            log.info("Email sent via REST for: {}", request.getEmail());
+            NotificationResponse response = restTemplate.postForObject(url, entity, NotificationResponse.class);
+            log.info("✅ Email sent via REST to: {}", request.getEmail());
         } catch (Exception e) {
-            log.error("Failed to send email via REST", e);
+            log.error("❌ Failed to send email via REST to: {}", request.getEmail(), e);
         }
     }
 

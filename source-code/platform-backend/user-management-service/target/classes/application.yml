@@ -84,6 +84,7 @@ agribind:
 
   notifications:
     enabled: true
+    use-kafka: false
     send-sms: true
     send-email: true
     # Email for specific user types
