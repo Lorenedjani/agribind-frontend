@@ -196,6 +196,8 @@ public class UserController {
         }
     }
 
+    // Add this method to UserController.java
+
     @GetMapping("/username/{username}")
     @Operation(summary = "Get user by username",
             description = "Get user by email or phone number (for authentication)")
@@ -210,6 +212,11 @@ public class UserController {
                 User user = userRepository.findByEmail(username)
                         .orElseThrow(() -> new UserNotFoundException("User not found"));
                 response = userMapper.toResponse(user);
+
+                // ✅ CRITICAL: Ensure passwordHash is included
+                log.debug("User found by email with passwordHash: {}",
+                        response.getPasswordHash() != null ? "present" : "missing");
+
                 return ResponseEntity.ok(response);
             } catch (UserNotFoundException e) {
                 // Fall through to try phone number
@@ -219,9 +226,15 @@ public class UserController {
         // Try phone number
         try {
             response = userQueryService.getUserByPhone(username);
+
+            // ✅ CRITICAL: Ensure passwordHash is included
+            log.debug("User found by phone with passwordHash: {}",
+                    response.getPasswordHash() != null ? "present" : "missing");
+
             return ResponseEntity.ok(response);
         } catch (UserNotFoundException e) {
             throw new UserNotFoundException("User not found with username: " + username);
         }
     }
+
 }

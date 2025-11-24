@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-11-24T12:58:52+0100",
+    date = "2025-11-24T23:49:43+0100",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 22.0.2 (Amazon.com Inc.)"
 )
 @Component
@@ -48,6 +48,9 @@ public class UserMapperImpl implements UserMapper {
         UserResponse userResponse = new UserResponse();
 
         userResponse.setPasswordHash( user.getPasswordHash() );
+        userResponse.setAccountLocked( user.getAccountLocked() );
+        userResponse.setFailedLoginAttempts( user.getFailedLoginAttempts() );
+        userResponse.setFirstLogin( user.getFirstLogin() );
         userResponse.setFullAddress( toFullAddress( user.getAddress() ) );
         userResponse.setProfilePictureUrl( userProfileProfilePicturePath( user ) );
         userResponse.setId( user.getId() );
@@ -60,9 +63,8 @@ public class UserMapperImpl implements UserMapper {
         userResponse.setRegistrationNumber( user.getRegistrationNumber() );
         userResponse.setCreatedAt( user.getCreatedAt() );
         userResponse.setUpdatedAt( user.getUpdatedAt() );
-        userResponse.setAccountLocked( user.getAccountLocked() );
-        userResponse.setFailedLoginAttempts( user.getFailedLoginAttempts() );
-        userResponse.setFirstLogin( user.getFirstLogin() );
+
+        userResponse.setAccountEnabled( user.getStatus() == cm.agribind.usermanagement.enums.UserStatus.ACTIVE );
 
         afterUserMapping( userResponse, user );
 

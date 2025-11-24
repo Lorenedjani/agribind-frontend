@@ -50,7 +50,6 @@ export class LoginComponent {
     this.errorMessage = '';
 
     if (this.loginForm.invalid) {
-      // Mark all fields as touched to show validation errors
       Object.keys(this.loginForm.controls).forEach(key => {
         this.loginForm.get(key)?.markAsTouched();
       });
@@ -94,18 +93,23 @@ export class LoginComponent {
       return;
     }
 
-    // Route based on user role
+    // ✅ FIXED: Route based on user role with correct paths
     switch (user.role.toUpperCase()) {
       case 'FARMER':
+        console.log('📍 Navigating to farmer dashboard');
         this.router.navigate(['/farmer/dashboard']);
         break;
       case 'COOPERATIVE':
-        this.router.navigate(['/cooperative/dashboard']);
+        console.log('📍 Navigating to cooperative dashboard');
+        // ✅ FIXED: Navigate to /cooperative which will redirect to /cooperative/members
+        this.router.navigate(['/cooperative']);
         break;
       case 'GOVERNMENT':
+        console.log('📍 Navigating to government dashboard');
         this.router.navigate(['/government/dashboard']);
         break;
       default:
+        console.warn('⚠️ Unknown role, navigating to default dashboard');
         this.router.navigate(['/dashboard']);
     }
   }
@@ -130,13 +134,10 @@ export class LoginComponent {
     return 'An error occurred during login. Please try again.';
   }
 
-  // Optional: QR Login for farmers
   onQRLogin() {
-    // Navigate to QR scanner page
     this.router.navigate(['/qr-login']);
   }
 
-  // Navigate to forgot password
   onForgotPassword() {
     this.router.navigate(['/forgot-password']);
   }

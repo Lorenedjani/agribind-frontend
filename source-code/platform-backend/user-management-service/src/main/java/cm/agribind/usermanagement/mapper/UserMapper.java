@@ -22,7 +22,13 @@ public interface UserMapper {
     @Mapping(target = "status", constant = "ACTIVE")
     @Mapping(target = "address", source = ".", qualifiedByName = "toAddress")
     User toEntity(CreateUserCommand command);
+
+    // ✅ CRITICAL FIX: Include passwordHash mapping
     @Mapping(target = "passwordHash", source = "passwordHash")
+    @Mapping(target = "accountLocked", source = "accountLocked")
+    @Mapping(target = "accountEnabled", expression = "java(user.getStatus() == cm.agribind.usermanagement.enums.UserStatus.ACTIVE)")
+    @Mapping(target = "failedLoginAttempts", source = "failedLoginAttempts")
+    @Mapping(target = "firstLogin", source = "firstLogin")
     @Mapping(target = "fullAddress", source = "address", qualifiedByName = "toFullAddress")
     @Mapping(target = "profilePictureUrl", source = "profile.profilePicturePath")
     UserResponse toResponse(User user);
@@ -69,7 +75,7 @@ public interface UserMapper {
     default Address toAddressFromUpdate(UpdateUserCommand command) {
         if (command.getRegion() == null &&
                 command.getDepartment() == null &&
-                command.getDistrict() == null &&
+                command.getDepartment() == null &&
                 command.getVillage() == null &&
                 command.getGpsCoordinates() == null) {
             return null;
@@ -86,7 +92,6 @@ public interface UserMapper {
 
     @AfterMapping
     default void afterUpdateMapping(@MappingTarget User user, UpdateUserCommand command) {
-        // Handle address update separately to merge with existing address
         if (user.getAddress() != null && command != null) {
             Address existingAddress = user.getAddress();
 

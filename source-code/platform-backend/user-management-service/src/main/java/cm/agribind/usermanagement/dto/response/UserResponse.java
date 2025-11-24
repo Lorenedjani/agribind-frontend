@@ -42,17 +42,23 @@ public class UserResponse {
     private Boolean canExport = true;
     private Boolean canEdit = true;
 
-    // Type-specific responses (populated based on type)
+    // Type-specific responses
     private FarmerResponse farmerDetails;
     private CooperativeResponse cooperativeDetails;
     private GovernmentResponse governmentDetails;
 
+    // ✅ CRITICAL FIX: Add password hash for Auth Service
     @JsonInclude(JsonInclude.Include.NON_DEFAULT)
     private String passwordHash;
 
-    // Account status fields for auth
+    // ✅ CRITICAL FIX: Add auth-related fields
     private Boolean accountLocked = false;
     private Boolean accountEnabled = true;
     private Integer failedLoginAttempts = 0;
     private Boolean firstLogin = false;
+
+    // ✅ ADD: For role-based routing
+    public String getRole() {
+        return type != null ? type.name() : null;
+    }
 }
