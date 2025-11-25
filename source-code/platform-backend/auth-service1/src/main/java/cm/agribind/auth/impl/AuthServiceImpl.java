@@ -294,13 +294,24 @@ public class AuthServiceImpl implements AuthService {
 
     // ============= PRIVATE HELPER METHODS =============
 
+    // Add this improved validation method to AuthServiceImpl.java
+
     private void validateAccountStatus(UserDto user) {
+        log.debug("Validating account - status: {}, locked: {}, enabled: {}",
+                user.getStatus(), user.getAccountLocked(), user.getAccountEnabled());
+
+        // Check status string
+        if (user.getStatus() != null && !"ACTIVE".equalsIgnoreCase(user.getStatus())) {
+            throw new BusinessException("Account status is: " + user.getStatus());
+        }
+
+        // Use safe getters
         if (!user.getAccountEnabled()) {
-            throw new BusinessException("Account is disabled");
+            throw new BusinessException("Account is disabled. Contact support.");
         }
 
         if (user.getAccountLocked()) {
-            throw new AccountLockedException("Account is locked due to multiple failed login attempts");
+            throw new AccountLockedException("Account is locked. Contact support.");
         }
     }
 

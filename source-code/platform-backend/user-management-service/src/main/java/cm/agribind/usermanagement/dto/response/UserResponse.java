@@ -37,7 +37,7 @@ public class UserResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // Quick actions availability
+    // Quick actions
     private Boolean canGenerateQR = true;
     private Boolean canExport = true;
     private Boolean canEdit = true;
@@ -47,18 +47,40 @@ public class UserResponse {
     private CooperativeResponse cooperativeDetails;
     private GovernmentResponse governmentDetails;
 
-    // ✅ CRITICAL FIX: Add password hash for Auth Service
-    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    // ✅ CRITICAL FIX: Add auth fields required by Auth Service
     private String passwordHash;
 
-    // ✅ CRITICAL FIX: Add auth-related fields
-    private Boolean accountLocked = false;
-    private Boolean accountEnabled = true;
-    private Integer failedLoginAttempts = 0;
-    private Boolean firstLogin = false;
+    // ✅ Account security fields - with proper initialization
+    private Boolean accountLocked;
+    private Boolean accountEnabled;
+    private Integer failedLoginAttempts;
+    private Boolean firstLogin;
+    private LocalDateTime lastLoginAt;
+    private LocalDateTime lastPasswordChange;
 
-    // ✅ ADD: For role-based routing
+    // ✅ Helper methods for safe access
+    public Boolean getAccountLocked() {
+        return accountLocked != null ? accountLocked : false;
+    }
+
+    public Boolean getAccountEnabled() {
+        return accountEnabled != null ? accountEnabled : true;
+    }
+
+    public Boolean getFirstLogin() {
+        return firstLogin != null ? firstLogin : true;
+    }
+
+    public Integer getFailedLoginAttempts() {
+        return failedLoginAttempts != null ? failedLoginAttempts : 0;
+    }
+
+    // ✅ For Auth Service compatibility
     public String getRole() {
         return type != null ? type.name() : null;
+    }
+
+    public String getUsername() {
+        return email; // Primary username is email
     }
 }

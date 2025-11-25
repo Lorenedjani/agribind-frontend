@@ -180,6 +180,6 @@ export class LoginComponent {
   }
 
   onForgotPassword() {
-    this.router.navigate(['/forgot-password']);
+    this.router.navigate(['/change-password']);
   }
 }

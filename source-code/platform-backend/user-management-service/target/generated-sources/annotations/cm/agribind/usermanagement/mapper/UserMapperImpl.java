@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-11-24T23:49:43+0100",
+    date = "2025-11-25T10:08:04+0100",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 22.0.2 (Amazon.com Inc.)"
 )
 @Component
@@ -53,6 +53,7 @@ public class UserMapperImpl implements UserMapper {
         userResponse.setFirstLogin( user.getFirstLogin() );
         userResponse.setFullAddress( toFullAddress( user.getAddress() ) );
         userResponse.setProfilePictureUrl( userProfileProfilePicturePath( user ) );
+        userResponse.setPreferredLanguage( userProfilePreferredLanguage( user ) );
         userResponse.setId( user.getId() );
         userResponse.setUserId( user.getUserId() );
         userResponse.setType( user.getType() );
@@ -126,5 +127,20 @@ public class UserMapperImpl implements UserMapper {
             return null;
         }
         return profilePicturePath;
+    }
+
+    private String userProfilePreferredLanguage(User user) {
+        if ( user == null ) {
+            return null;
+        }
+        Profile profile = user.getProfile();
+        if ( profile == null ) {
+            return null;
+        }
+        String preferredLanguage = profile.getPreferredLanguage();
+        if ( preferredLanguage == null ) {
+            return null;
+        }
+        return preferredLanguage;
     }
 }

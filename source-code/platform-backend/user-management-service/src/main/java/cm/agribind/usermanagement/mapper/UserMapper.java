@@ -23,14 +23,17 @@ public interface UserMapper {
     @Mapping(target = "address", source = ".", qualifiedByName = "toAddress")
     User toEntity(CreateUserCommand command);
 
-    // ✅ CRITICAL FIX: Include passwordHash mapping
+    // ✅ CRITICAL FIX: Explicit auth field mappings with proper handling
     @Mapping(target = "passwordHash", source = "passwordHash")
     @Mapping(target = "accountLocked", source = "accountLocked")
     @Mapping(target = "accountEnabled", expression = "java(user.getStatus() == cm.agribind.usermanagement.enums.UserStatus.ACTIVE)")
     @Mapping(target = "failedLoginAttempts", source = "failedLoginAttempts")
     @Mapping(target = "firstLogin", source = "firstLogin")
+    //@Mapping(target = "lastLoginAt", source = "lastLoginAt")
+    //@Mapping(target = "lastPasswordChange", source = "lastPasswordChange")
     @Mapping(target = "fullAddress", source = "address", qualifiedByName = "toFullAddress")
     @Mapping(target = "profilePictureUrl", source = "profile.profilePicturePath")
+    @Mapping(target = "preferredLanguage", source = "profile.preferredLanguage")
     UserResponse toResponse(User user);
 
     List<UserResponse> toResponseList(List<User> users);
@@ -115,6 +118,20 @@ public interface UserMapper {
 
     @AfterMapping
     default void afterUserMapping(@MappingTarget UserResponse response, User user) {
+        // ✅ CRITICAL: Ensure auth fields have proper defaults
+        if (response.getAccountLocked() == null) {
+            response.setAccountLocked(false);
+        }
+        if (response.getAccountEnabled() == null) {
+            response.setAccountEnabled(user.getStatus() == UserStatus.ACTIVE);
+        }
+        if (response.getFailedLoginAttempts() == null) {
+            response.setFailedLoginAttempts(0);
+        }
+        if (response.getFirstLogin() == null) {
+            response.setFirstLogin(true);
+        }
+
         // Set quick action flags
         response.setCanGenerateQR(user.getStatus() == UserStatus.ACTIVE);
         response.setCanExport(true);
