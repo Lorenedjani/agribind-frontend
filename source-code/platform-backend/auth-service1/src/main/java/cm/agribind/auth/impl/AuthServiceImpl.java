@@ -408,21 +408,43 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    // Update this method in AuthServiceImpl.java around line 425
+
     private void saveRefreshToken(String userId, String token, String deviceId) {
-        // Revoke existing tokens for this device
-        if (deviceId != null) {
-            refreshTokenRepository.revokeByUserIdAndDeviceId(userId, deviceId);
+        log.debug("Saving refresh token for user: {}, device: {}", userId, deviceId);
+
+        try {
+            // IMPORTANT: Revoke existing tokens for this user and device FIRST
+            if (deviceId != null && !deviceId.isEmpty()) {
+                // Delete existing tokens for this device to prevent duplicates
+                refreshTokenRepository.deleteByUserIdAndDeviceId(userId, deviceId);
+                log.debug("Deleted existing tokens for user: {} and device: {}", userId, deviceId);
+            } else {
+                // If no device ID, revoke all tokens for this user
+                refreshTokenRepository.deleteByUserId(userId);
+                log.debug("Deleted all existing tokens for user: {}", userId);
+            }
+
+            // Flush the deletions to ensure they're committed before insert
+            refreshTokenRepository.flush();
+
+            // Now create and save the new token
+            RefreshToken refreshToken = RefreshToken.builder()
+                    .token(token)
+                    .userId(userId)
+                    .deviceId(deviceId != null ? deviceId : "default")
+                    .expiresAt(LocalDateTime.now().plusSeconds(jwtService.getRefreshTokenExpiration() / 1000))
+                    .revoked(false)
+                    .build();
+
+            refreshTokenRepository.save(refreshToken);
+            log.info("✅ Refresh token saved successfully for user: {}", userId);
+
+        } catch (Exception e) {
+            log.error("❌ Failed to save refresh token for user: {}", userId, e);
+            // Don't throw exception - allow login to continue even if token save fails
+            // The user can still use their access token
         }
-
-        RefreshToken refreshToken = RefreshToken.builder()
-                .token(token)
-                .userId(userId)
-                .deviceId(deviceId)
-                .expiresAt(LocalDateTime.now().plusSeconds(jwtService.getRefreshTokenExpiration() / 1000))
-                .revoked(false)
-                .build();
-
-        refreshTokenRepository.save(refreshToken);
     }
 
     private void sendPasswordResetNotification(UserDto user, String resetToken) {
