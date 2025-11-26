@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -36,8 +37,10 @@ public class UserController {
 
     private final UserCommandService userCommandService;
     private final UserQueryService userQueryService;
-    private UserRepository userRepository;
-    private UserMapper userMapper;
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
+
+    // ==================== USER CRUD OPERATIONS ====================
 
     @PostMapping
     @Operation(summary = "Create a new user", description = "Create a new user (farmer, cooperative, or government official)")
@@ -55,7 +58,6 @@ public class UserController {
         log.info("Creating user with file - Type: {}, Name: {}", command.getType(), command.getName());
 
         if (profilePicture != null && !profilePicture.isEmpty()) {
-            // This would be handled in the service layer
             log.info("Profile picture provided: {}", profilePicture.getOriginalFilename());
         }
 
@@ -118,6 +120,123 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    // ==================== CRITICAL: AUTH SERVICE INTEGRATION ====================
+
+    @GetMapping("/username/{username}")
+    @Operation(summary = "Get user by username (email or phone)",
+            description = "Get user by email or phone number - CRITICAL for authentication")
+    public ResponseEntity<UserResponse> getUserByUsername(@PathVariable String username) {
+        log.info("🔐 AUTH SERVICE REQUEST: Fetching user by username: {}", username);
+
+        UserResponse response;
+
+        // Try email first if it contains @
+        if (username.contains("@")) {
+            try {
+                User user = userRepository.findByEmail(username)
+                        .orElseThrow(() -> new UserNotFoundException("User not found"));
+                response = userMapper.toResponse(user);
+
+                // ✅ CRITICAL: Verify passwordHash is included
+                if (response.getPasswordHash() == null || response.getPasswordHash().isEmpty()) {
+                    log.error("❌ CRITICAL ERROR: User found but passwordHash is NULL for: {}", username);
+                    throw new IllegalStateException("User account not properly configured");
+                }
+
+                log.info("✅ User found by email with passwordHash present");
+                return ResponseEntity.ok(response);
+            } catch (UserNotFoundException e) {
+                log.debug("User not found by email, trying phone number...");
+                // Fall through to try phone number
+            }
+        }
+
+        // Try phone number
+        try {
+            response = userQueryService.getUserByPhone(username);
+
+            // ✅ CRITICAL: Verify passwordHash is included
+            if (response.getPasswordHash() == null || response.getPasswordHash().isEmpty()) {
+                log.error("❌ CRITICAL ERROR: User found but passwordHash is NULL for: {}", username);
+                throw new IllegalStateException("User account not properly configured");
+            }
+
+            log.info("✅ User found by phone with passwordHash present");
+            return ResponseEntity.ok(response);
+        } catch (UserNotFoundException e) {
+            log.error("❌ User not found with username: {}", username);
+            throw new UserNotFoundException("User not found with username: " + username);
+        }
+    }
+
+    // ==================== AUTH SERVICE PASSWORD MANAGEMENT ====================
+
+    @PutMapping("/{userId}/password")
+    @Operation(summary = "Update user password", description = "Update user password hash (Auth Service only)")
+    public ResponseEntity<Void> updatePassword(
+            @PathVariable String userId,
+            @RequestBody Map<String, String> request) {
+
+        log.info("🔐 AUTH SERVICE REQUEST: Updating password for user: {}", userId);
+
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + userId));
+
+        String newPasswordHash = request.get("newPasswordHash");
+        if (newPasswordHash == null || newPasswordHash.isEmpty()) {
+            log.error("❌ Password hash is null or empty");
+            return ResponseEntity.badRequest().build();
+        }
+
+        user.setPasswordHash(newPasswordHash);
+        user.setFirstLogin(false); // Password has been changed
+        userRepository.save(user);
+
+        log.info("✅ Password updated successfully for user: {}", userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{userId}/first-login")
+    @Operation(summary = "Mark first login complete", description = "Mark first login complete (Auth Service only)")
+    public ResponseEntity<Void> markFirstLoginComplete(@PathVariable String userId) {
+        log.info("🔐 AUTH SERVICE REQUEST: Marking first login complete for user: {}", userId);
+
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + userId));
+
+        user.setFirstLogin(false);
+        userRepository.save(user);
+
+        log.info("✅ First login marked complete for user: {}", userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{userId}/language")
+    @Operation(summary = "Update user language", description = "Update user preferred language (Auth Service only)")
+    public ResponseEntity<Void> updateLanguage(
+            @PathVariable String userId,
+            @RequestBody Map<String, String> request) {
+
+        log.info("🔐 AUTH SERVICE REQUEST: Updating language for user: {}", userId);
+
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + userId));
+
+        String language = request.get("language");
+        if (language != null) {
+            if (user.getProfile() == null) {
+                user.setProfile(new cm.agribind.usermanagement.entity.Profile());
+            }
+            user.getProfile().setPreferredLanguage(language);
+            userRepository.save(user);
+            log.info("✅ Language updated to {} for user: {}", language, userId);
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    // ==================== USER UPDATE & DELETE ====================
+
     @PutMapping("/{userId}")
     @Operation(summary = "Update user", description = "Update user information")
     public ResponseEntity<UserResponse> updateUser(
@@ -146,6 +265,8 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    // ==================== USER QUERIES ====================
+
     @GetMapping("/types/{type}")
     @Operation(summary = "Get users by type", description = "Get all users of specific type")
     public ResponseEntity<List<UserResponse>> getUsersByType(@PathVariable UserType type) {
@@ -167,6 +288,8 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    // ==================== USER EXISTENCE CHECKS ====================
+
     @GetMapping("/exists/phone/{phoneNumber}")
     @Operation(summary = "Check phone number exists", description = "Check if phone number is already registered")
     public ResponseEntity<Boolean> checkPhoneExists(@PathVariable String phoneNumber) {
@@ -181,6 +304,8 @@ public class UserController {
         return ResponseEntity.ok(exists);
     }
 
+    // ==================== PROFILE PICTURE ====================
+
     @PostMapping("/{userId}/profile-picture")
     @Operation(summary = "Upload profile picture", description = "Upload or update user profile picture")
     public ResponseEntity<UserResponse> uploadProfilePicture(
@@ -188,7 +313,11 @@ public class UserController {
             @RequestParam("file") MultipartFile file) {
         log.info("Uploading profile picture for user: {}", userId);
         try {
-            UserResponse response = userCommandService.uploadProfilePicture(userId, file.getBytes(), file.getContentType());
+            UserResponse response = userCommandService.uploadProfilePicture(
+                    userId,
+                    file.getBytes(),
+                    file.getContentType()
+            );
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("Failed to upload profile picture", e);
@@ -196,45 +325,17 @@ public class UserController {
         }
     }
 
-    // Add this method to UserController.java
+    // ==================== HEALTH CHECK ====================
 
-    @GetMapping("/username/{username}")
-    @Operation(summary = "Get user by username",
-            description = "Get user by email or phone number (for authentication)")
-    public ResponseEntity<UserResponse> getUserByUsername(@PathVariable String username) {
-        log.info("Fetching user by username: {}", username);
-
-        UserResponse response;
-
-        // Try email first if it contains @
-        if (username.contains("@")) {
-            try {
-                User user = userRepository.findByEmail(username)
-                        .orElseThrow(() -> new UserNotFoundException("User not found"));
-                response = userMapper.toResponse(user);
-
-                // ✅ CRITICAL: Ensure passwordHash is included
-                log.debug("User found by email with passwordHash: {}",
-                        response.getPasswordHash() != null ? "present" : "missing");
-
-                return ResponseEntity.ok(response);
-            } catch (UserNotFoundException e) {
-                // Fall through to try phone number
-            }
-        }
-
-        // Try phone number
-        try {
-            response = userQueryService.getUserByPhone(username);
-
-            // ✅ CRITICAL: Ensure passwordHash is included
-            log.debug("User found by phone with passwordHash: {}",
-                    response.getPasswordHash() != null ? "present" : "missing");
-
-            return ResponseEntity.ok(response);
-        } catch (UserNotFoundException e) {
-            throw new UserNotFoundException("User not found with username: " + username);
-        }
+    @GetMapping("/health")
+    @Operation(summary = "Health check", description = "Check if User Management Service is running")
+    public ResponseEntity<Map<String, Object>> healthCheck() {
+        long userCount = userRepository.count();
+        return ResponseEntity.ok(Map.of(
+                "status", "UP",
+                "service", "user-management-service",
+                "totalUsers", userCount,
+                "timestamp", java.time.LocalDateTime.now()
+        ));
     }
-
 }

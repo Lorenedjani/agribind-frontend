@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-11-24T12:58:51+0100",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 22.0.2 (Amazon.com Inc.)"
+    date = "2025-11-25T18:42:45+0100",
+    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.44.0.v20251118-1623, environment: Java 21.0.9 (Eclipse Adoptium)"
 )
 @Component
 public class GovernmentMapperImpl implements GovernmentMapper {
@@ -33,13 +33,13 @@ public class GovernmentMapperImpl implements GovernmentMapper {
         governmentResponse.setIsFieldOfficer( governmentGovernmentDetailsIsFieldOfficer( government ) );
         governmentResponse.setVehicleAssignment( governmentGovernmentDetailsVehicleAssignment( government ) );
         governmentResponse.setAssignedEquipment( governmentGovernmentDetailsAssignedEquipment( government ) );
-        governmentResponse.setRole( government.getRole() );
         governmentResponse.setAssignedRegion( government.getAssignedRegion() );
+        governmentResponse.setCanApproveLoans( government.getCanApproveLoans() );
+        governmentResponse.setCanViewStatistics( government.getCanViewStatistics() );
         governmentResponse.setDepartment( government.getDepartment() );
         governmentResponse.setEmployeeId( government.getEmployeeId() );
         governmentResponse.setJurisdiction( government.getJurisdiction() );
-        governmentResponse.setCanApproveLoans( government.getCanApproveLoans() );
-        governmentResponse.setCanViewStatistics( government.getCanViewStatistics() );
+        governmentResponse.setRole( government.getRole() );
 
         return governmentResponse;
     }

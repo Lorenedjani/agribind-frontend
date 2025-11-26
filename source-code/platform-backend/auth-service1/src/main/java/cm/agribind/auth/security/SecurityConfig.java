@@ -1,5 +1,5 @@
 // src/main/java/cm/agribind/auth/config/SecurityConfig.java
-package cm.agribind.auth.config;
+package cm.agribind.auth.security;
 
 import cm.agribind.auth.security.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;

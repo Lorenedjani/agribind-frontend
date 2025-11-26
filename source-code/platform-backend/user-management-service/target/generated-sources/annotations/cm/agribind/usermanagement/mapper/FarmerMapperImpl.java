@@ -15,8 +15,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-11-24T12:58:51+0100",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 22.0.2 (Amazon.com Inc.)"
+    date = "2025-11-25T18:42:44+0100",
+    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.44.0.v20251118-1623, environment: Java 21.0.9 (Eclipse Adoptium)"
 )
 @Component
 public class FarmerMapperImpl implements FarmerMapper {
@@ -38,13 +38,13 @@ public class FarmerMapperImpl implements FarmerMapper {
         if ( set != null ) {
             farmer.setCropTypes( new LinkedHashSet<CropType>( set ) );
         }
+        farmer.setEducationLevel( command.getEducationLevel() );
+        farmer.setHasBankAccount( command.getHasBankAccount() );
         Set<LivestockType> set1 = command.getLivestockTypes();
         if ( set1 != null ) {
             farmer.setLivestockTypes( new LinkedHashSet<LivestockType>( set1 ) );
         }
         farmer.setYearsFarming( command.getYearsFarming() );
-        farmer.setEducationLevel( command.getEducationLevel() );
-        farmer.setHasBankAccount( command.getHasBankAccount() );
 
         farmer.setType( UserType.FARMER );
 
@@ -76,14 +76,14 @@ public class FarmerMapperImpl implements FarmerMapper {
         if ( set != null ) {
             farmerResponse.setCropTypes( new LinkedHashSet<CropType>( set ) );
         }
+        farmerResponse.setEducationLevel( farmer.getEducationLevel() );
+        farmerResponse.setHasBankAccount( farmer.getHasBankAccount() );
+        farmerResponse.setHasMobileMoney( farmer.getHasMobileMoney() );
         Set<LivestockType> set1 = farmer.getLivestockTypes();
         if ( set1 != null ) {
             farmerResponse.setLivestockTypes( new LinkedHashSet<LivestockType>( set1 ) );
         }
         farmerResponse.setYearsFarming( farmer.getYearsFarming() );
-        farmerResponse.setEducationLevel( farmer.getEducationLevel() );
-        farmerResponse.setHasBankAccount( farmer.getHasBankAccount() );
-        farmerResponse.setHasMobileMoney( farmer.getHasMobileMoney() );
 
         return farmerResponse;
     }
@@ -120,6 +120,12 @@ public class FarmerMapperImpl implements FarmerMapper {
                 farmer.setCropTypes( new LinkedHashSet<CropType>( set ) );
             }
         }
+        if ( command.getEducationLevel() != null ) {
+            farmer.setEducationLevel( command.getEducationLevel() );
+        }
+        if ( command.getHasBankAccount() != null ) {
+            farmer.setHasBankAccount( command.getHasBankAccount() );
+        }
         if ( farmer.getLivestockTypes() != null ) {
             Set<LivestockType> set1 = command.getLivestockTypes();
             if ( set1 != null ) {
@@ -135,12 +141,6 @@ public class FarmerMapperImpl implements FarmerMapper {
         }
         if ( command.getYearsFarming() != null ) {
             farmer.setYearsFarming( command.getYearsFarming() );
-        }
-        if ( command.getEducationLevel() != null ) {
-            farmer.setEducationLevel( command.getEducationLevel() );
-        }
-        if ( command.getHasBankAccount() != null ) {
-            farmer.setHasBankAccount( command.getHasBankAccount() );
         }
 
         afterFarmerMapping( command, farmer );

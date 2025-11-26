@@ -1,4 +1,4 @@
-package cm.agribind.usermanagement.service.impl;
+package cm.agribind.usermanagement.service;
 
 import cm.agribind.usermanagement.dto.command.GenerateQRCodeCommand;
 import cm.agribind.usermanagement.dto.response.QRCodeResponse;

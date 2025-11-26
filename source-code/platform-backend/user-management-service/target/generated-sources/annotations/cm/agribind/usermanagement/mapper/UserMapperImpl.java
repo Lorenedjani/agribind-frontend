@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-11-25T10:08:04+0100",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 22.0.2 (Amazon.com Inc.)"
+    date = "2025-11-25T18:42:46+0100",
+    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.44.0.v20251118-1623, environment: Java 21.0.9 (Eclipse Adoptium)"
 )
 @Component
 public class UserMapperImpl implements UserMapper {
@@ -28,11 +28,11 @@ public class UserMapperImpl implements UserMapper {
         User user = new User();
 
         user.setAddress( toAddress( command ) );
-        user.setType( command.getType() );
-        user.setName( command.getName() );
         user.setEmail( command.getEmail() );
-        user.setPhoneNumber( command.getPhoneNumber() );
+        user.setName( command.getName() );
         user.setNotes( command.getNotes() );
+        user.setPhoneNumber( command.getPhoneNumber() );
+        user.setType( command.getType() );
 
         user.setStatus( UserStatus.ACTIVE );
 
@@ -54,16 +54,16 @@ public class UserMapperImpl implements UserMapper {
         userResponse.setFullAddress( toFullAddress( user.getAddress() ) );
         userResponse.setProfilePictureUrl( userProfileProfilePicturePath( user ) );
         userResponse.setPreferredLanguage( userProfilePreferredLanguage( user ) );
-        userResponse.setId( user.getId() );
-        userResponse.setUserId( user.getUserId() );
-        userResponse.setType( user.getType() );
-        userResponse.setName( user.getName() );
-        userResponse.setEmail( user.getEmail() );
-        userResponse.setPhoneNumber( user.getPhoneNumber() );
-        userResponse.setStatus( user.getStatus() );
-        userResponse.setRegistrationNumber( user.getRegistrationNumber() );
         userResponse.setCreatedAt( user.getCreatedAt() );
+        userResponse.setEmail( user.getEmail() );
+        userResponse.setId( user.getId() );
+        userResponse.setName( user.getName() );
+        userResponse.setPhoneNumber( user.getPhoneNumber() );
+        userResponse.setRegistrationNumber( user.getRegistrationNumber() );
+        userResponse.setStatus( user.getStatus() );
+        userResponse.setType( user.getType() );
         userResponse.setUpdatedAt( user.getUpdatedAt() );
+        userResponse.setUserId( user.getUserId() );
 
         userResponse.setAccountEnabled( user.getStatus() == cm.agribind.usermanagement.enums.UserStatus.ACTIVE );
 
@@ -95,20 +95,20 @@ public class UserMapperImpl implements UserMapper {
         if ( command != null ) {
             user.setAddress( toAddressFromUpdate( command ) );
         }
+        if ( command.getEmail() != null ) {
+            user.setEmail( command.getEmail() );
+        }
         if ( command.getName() != null ) {
             user.setName( command.getName() );
         }
-        if ( command.getEmail() != null ) {
-            user.setEmail( command.getEmail() );
+        if ( command.getNotes() != null ) {
+            user.setNotes( command.getNotes() );
         }
         if ( command.getPhoneNumber() != null ) {
             user.setPhoneNumber( command.getPhoneNumber() );
         }
         if ( command.getStatus() != null ) {
             user.setStatus( command.getStatus() );
-        }
-        if ( command.getNotes() != null ) {
-            user.setNotes( command.getNotes() );
         }
 
         afterUpdateMapping( user, command );
