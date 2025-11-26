@@ -1,19 +1,22 @@
+// SOLUTION: Update Auth Service to use internal endpoint
+// File: source-code/platform-backend/auth-service1/src/main/java/cm/agribind/auth/integration/UserManagementClient.java
+
 package cm.agribind.auth.integration;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
-// ✅ FIXED: Proper Feign client that calls real User Management Service
 @FeignClient(
         name = "user-management-service",
         url = "${services.user-management:http://localhost:8082}"
 )
 public interface UserManagementClient {
 
-    @GetMapping("/api/v1/users/username/{username}")
+    // ✅ NEW: Use internal auth endpoint that includes password hash
+    @GetMapping("/api/v1/users/internal/auth/{username}")
     UserDto getUserByUsername(@PathVariable("username") String username);
 
-    // ✅ FIXED: Added HTTP method annotation
+    // ✅ Keep other endpoints unchanged
     @GetMapping("/api/v1/users/phone/{phoneNumber}")
     UserDto getUserByPhone(@PathVariable("phoneNumber") String phoneNumber);
 

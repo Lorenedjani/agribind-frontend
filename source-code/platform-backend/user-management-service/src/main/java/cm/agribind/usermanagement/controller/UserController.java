@@ -25,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -337,5 +338,69 @@ public class UserController {
                 "totalUsers", userCount,
                 "timestamp", java.time.LocalDateTime.now()
         ));
+    }
+
+
+    // ===== CRITICAL FIX: Internal Auth Endpoint =====
+
+    /**
+     * ⚠️ INTERNAL USE ONLY - Auth Service endpoint
+     * This endpoint returns the password hash for authentication
+     * Should be protected by internal network security
+     */
+    @GetMapping("/internal/auth/{username}")
+    public ResponseEntity<Map<String, Object>> getAuthInfo(@PathVariable String username) {
+        log.info("🔐 INTERNAL AUTH REQUEST for username: {}", username);
+
+        User user;
+
+        // Try email first if it contains @
+        if (username.contains("@")) {
+            user = userRepository.findByEmail(username)
+                    .orElseThrow(() -> new UserNotFoundException("User not found"));
+        } else {
+            // Try phone number
+            user = userRepository.findByPhoneNumber(username)
+                    .orElseThrow(() -> new UserNotFoundException("User not found"));
+        }
+
+        // ✅ CRITICAL: Build response with ALL auth fields
+        Map<String, Object> authInfo = new HashMap<>();
+        authInfo.put("userId", user.getUserId());
+        authInfo.put("username", user.getEmail() != null ? user.getEmail() : user.getPhoneNumber());
+        authInfo.put("email", user.getEmail());
+        authInfo.put("phoneNumber", user.getPhoneNumber());
+        authInfo.put("passwordHash", user.getPasswordHash()); // ✅ INCLUDE PASSWORD HASH
+        authInfo.put("role", user.getType().name());
+        authInfo.put("cooperativeId", getCooperativeId(user));
+        authInfo.put("preferredLanguage", getPreferredLanguage(user));
+        authInfo.put("firstLogin", user.getFirstLogin() != null ? user.getFirstLogin() : true);
+        authInfo.put("accountLocked", user.getAccountLocked() != null ? user.getAccountLocked() : false);
+        authInfo.put("accountEnabled", user.getStatus().name().equals("ACTIVE"));
+        authInfo.put("failedLoginAttempts", user.getFailedLoginAttempts() != null ? user.getFailedLoginAttempts() : 0);
+        authInfo.put("status", user.getStatus().name());
+
+        // ⚠️ SECURITY LOG
+        log.info("✅ Auth info provided for user: {} (passwordHash present: {})",
+                user.getUserId(),
+                user.getPasswordHash() != null && !user.getPasswordHash().isEmpty());
+
+        return ResponseEntity.ok(authInfo);
+    }
+
+    // Helper methods
+    private String getCooperativeId(User user) {
+        if (user instanceof cm.agribind.usermanagement.entity.Farmer) {
+            cm.agribind.usermanagement.entity.Farmer farmer =
+                    (cm.agribind.usermanagement.entity.Farmer) user;
+            return farmer.getCooperative() != null ?
+                    String.valueOf(farmer.getCooperative().getId()) : null;
+        }
+        return null;
+    }
+
+    private String getPreferredLanguage(User user) {
+        return user.getProfile() != null ?
+                user.getProfile().getPreferredLanguage() : "fr";
     }
 }
