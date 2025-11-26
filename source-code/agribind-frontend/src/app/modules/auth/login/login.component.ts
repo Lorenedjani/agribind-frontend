@@ -1,4 +1,6 @@
+// TEMPORARY DEBUG VERSION - Replace login.component.ts
 // src/app/modules/auth/login/login.component.ts
+
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -18,18 +20,17 @@ export class LoginComponent {
   isLoading = false;
   showPassword = false;
   errorMessage = '';
+  debugInfo = ''; // ✅ NEW: Debug information
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
     private authService: AuthService
   ) {
-    // Check if already logged in
     if (this.authService.isLoggedIn()) {
       this.navigateToDashboard();
     }
 
-    // Initialize form with proper field names
     this.loginForm = this.fb.group({
       username: ['', [Validators.required]],
       password: ['', [Validators.required, Validators.minLength(6)]]
@@ -49,14 +50,17 @@ export class LoginComponent {
   }
 
   onSubmit() {
-    console.log('🚀 LOGIN: Form submission started');
+    // ✅ ENHANCED: Detailed logging
+    const timestamp = new Date().toISOString();
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🚀 LOGIN ATTEMPT:', timestamp);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    // Reset error message
     this.errorMessage = '';
+    this.debugInfo = '';
 
-    // Validate form
     if (this.loginForm.invalid) {
-      console.log('❌ LOGIN: Form is invalid');
+      console.log('❌ Form is invalid');
       Object.keys(this.loginForm.controls).forEach(key => {
         this.loginForm.get(key)?.markAsTouched();
       });
@@ -64,72 +68,109 @@ export class LoginComponent {
       return;
     }
 
-    // Check if form values exist
     if (!this.loginForm.value.username || !this.loginForm.value.password) {
-      console.error('❌ LOGIN: Username or password is empty');
+      console.error('❌ Username or password is empty');
       this.errorMessage = 'Please enter both username and password';
       return;
     }
 
     this.isLoading = true;
 
-    // Prepare credentials
     const credentials = {
       username: this.loginForm.value.username.trim(),
       password: this.loginForm.value.password
     };
 
-    console.log('📤 LOGIN: Sending request:', {
-      username: credentials.username,
-      passwordLength: credentials.password.length,
-      apiUrl: 'http://localhost:8080/api/v1/auth/login'
-    });
+    // ✅ Log the request details
+    console.log('📤 REQUEST DETAILS:');
+    console.log('   Username:', credentials.username);
+    console.log('   Password Length:', credentials.password.length);
+    console.log('   API URL: http://localhost:8080/api/v1/auth/login');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    // Call auth service
     this.authService.login(credentials).subscribe({
       next: (response) => {
-        console.log('✅ LOGIN: Success', response);
+        console.log('✅ LOGIN SUCCESS:', timestamp);
+        console.log('   Response:', response);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
         this.isLoading = false;
 
-        // Check if user needs to change password on first login
         if (response.userInfo.firstLogin) {
-          console.log('⚠️ LOGIN: First login detected, redirecting to password change');
+          console.log('⚠️ First login detected, redirecting to password change');
           this.router.navigate(['/change-password']);
         } else {
           this.navigateToDashboard();
         }
       },
       error: (error: HttpErrorResponse) => {
-        console.error('❌ LOGIN: Failed', error);
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.error('❌ LOGIN FAILED:', timestamp);
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
         this.isLoading = false;
 
-        // Enhanced error handling with detailed logging
+        // ✅ ENHANCED: Detailed error diagnostics
+        const errorDetails = {
+          status: error.status || 0,
+          statusText: error.statusText || 'Unknown',
+          message: error.message || 'Unknown error',
+          url: error.url || 'Unknown URL',
+          error: error.error || {},
+          timestamp: timestamp
+        };
+
+        console.error('📊 ERROR DETAILS:');
+        console.error('   Status Code:', errorDetails.status);
+        console.error('   Status Text:', errorDetails.statusText);
+        console.error('   URL:', errorDetails.url);
+        console.error('   Error Message:', errorDetails.message);
+        console.error('   Error Object:', errorDetails.error);
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+        // ✅ User-friendly error messages
         if (error.status === 0) {
           this.errorMessage = 'Cannot connect to server. Please check if the backend is running.';
-          console.error('🔌 LOGIN: Network error - Backend may be down or CORS issue');
+          this.debugInfo = `❌ CORS or Network Error
+
+💡 Possible Causes:
+1. API Gateway not running (http://localhost:8080)
+2. CORS not configured properly
+3. SecurityConfig blocking auth endpoints
+4. Network connection issue
+
+🔧 Quick Fixes:
+1. Check if API Gateway is running: http://localhost:8080/actuator/health
+2. Check if Auth Service is running: http://localhost:8081/api/v1/auth/health
+3. Update SecurityConfig.java to permitAll() for /api/v1/auth/**
+4. Restart all services`;
+
+          console.error('🔌 NETWORK/CORS ERROR DETECTED!');
+          console.error('   This usually means:');
+          console.error('   1. API Gateway is not running on port 8080');
+          console.error('   2. CORS is blocking the request');
+          console.error('   3. SecurityConfig is blocking auth endpoints');
         } else if (error.status === 401) {
           this.errorMessage = 'Invalid email or password. Please check your credentials.';
-          console.error('🔐 LOGIN: Authentication failed - Invalid credentials');
+          this.debugInfo = `Status: ${error.status} - Unauthorized`;
+          console.error('🔐 AUTHENTICATION ERROR: Invalid credentials');
         } else if (error.status === 403) {
           this.errorMessage = 'Account is disabled or locked. Please contact support.';
-          console.error('🔒 LOGIN: Account access denied');
+          this.debugInfo = `Status: ${error.status} - Forbidden`;
+          console.error('🔒 FORBIDDEN: Account locked or disabled');
         } else if (error.status === 400) {
           this.errorMessage = 'Invalid login request. Please check your input.';
-          console.error('⚠️ LOGIN: Bad request');
+          this.debugInfo = `Status: ${error.status} - Bad Request`;
+          console.error('⚠️ BAD REQUEST: Invalid data sent');
         } else {
           this.errorMessage = this.getErrorMessage(error);
+          this.debugInfo = `Status: ${error.status} - ${error.statusText}`;
         }
 
-        // Show error in console for debugging
-        console.error('📊 LOGIN: Error details:', {
-          status: error.status,
-          message: error.message,
-          error: error.error,
-          url: error.url
-        });
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-        // Show error in UI
-        alert(this.errorMessage);
+        // Show error in alert for immediate visibility
+        alert(`❌ Login Failed!\n\n${this.errorMessage}\n\nCheck browser console for details.`);
       }
     });
   }
@@ -137,54 +178,47 @@ export class LoginComponent {
   private navigateToDashboard() {
     const user = this.authService.getCurrentUser();
     if (!user) {
-      console.error('❌ LOGIN: No user data after successful login');
+      console.error('❌ No user data after successful login');
       this.router.navigate(['/login']);
       return;
     }
 
-    // Route based on user role
-    console.log('📍 LOGIN: Routing user with role:', user.role);
+    console.log('📍 Routing user with role:', user.role);
 
     switch (user.role.toUpperCase()) {
       case 'FARMER':
-        console.log('📍 LOGIN: Navigating to farmer dashboard');
+        console.log('📍 Navigating to farmer dashboard');
         this.router.navigate(['/farmer/dashboard']);
         break;
       case 'COOPERATIVE':
-        console.log('📍 LOGIN: Navigating to cooperative dashboard');
-        this.router.navigate(['/cooperative']);
+        console.log('📍 Navigating to cooperative dashboard');
+        this.router.navigate(['/cooperative/dashboard']);
         break;
       case 'GOVERNMENT':
-        console.log('📍 LOGIN: Navigating to government dashboard');
+        console.log('📍 Navigating to government dashboard');
         this.router.navigate(['/government/dashboard']);
         break;
       default:
-        console.warn('⚠️ LOGIN: Unknown role, navigating to default dashboard');
+        console.warn('⚠️ Unknown role, navigating to default dashboard');
         this.router.navigate(['/dashboard']);
     }
   }
 
   private getErrorMessage(error: HttpErrorResponse): string {
-    console.log('🔍 LOGIN: Analyzing error:', {
-      status: error.status,
-      message: error.message,
-      errorObject: error.error
-    });
-
     if (error.status === 0) {
-      return 'Cannot connect to server. Please ensure the backend is running on http://localhost:8080';
+      return 'Cannot connect to server. Ensure backend is running on http://localhost:8080';
     }
 
     if (error.status === 401) {
-      return 'Invalid email or password. Please check your credentials.';
+      return 'Invalid email or password.';
     }
 
     if (error.status === 403) {
-      return 'Account is disabled or locked. Please contact support.';
+      return 'Account is disabled or locked.';
     }
 
     if (error.status === 400) {
-      return 'Invalid login request. Please check your input.';
+      return 'Invalid login request.';
     }
 
     if (error.error?.message) {
@@ -199,12 +233,12 @@ export class LoginComponent {
   }
 
   onQRLogin() {
-    console.log('📱 LOGIN: QR Login requested');
+    console.log('📱 QR Login requested');
     this.router.navigate(['/qr-login']);
   }
 
   onForgotPassword() {
-    console.log('🔑 LOGIN: Forgot password requested');
+    console.log('🔑 Forgot password requested');
     this.router.navigate(['/change-password']);
   }
 }

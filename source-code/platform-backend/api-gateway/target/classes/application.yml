@@ -1,6 +1,3 @@
-# Option 1: Disable Redis in API Gateway (Recommended for development)
-# File: api-gateway/src/main/resources/application.yml
-
 server:
   port: 8080
 
@@ -14,30 +11,23 @@ spring:
           enabled: true
           lower-case-service-id: true
       routes:
+        # Auth Service
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/v1/auth/**
+          filters:
+            #- StripPrefix=1
+            - name: RequestLoggingFilter
+
         # User Management Service
         - id: user-management-service
           uri: lb://user-management-service
           predicates:
             - Path=/api/v1/users/**, /api/v1/farmers/**, /api/v1/cooperatives/**, /api/v1/qrcodes/**, /api/v1/dashboard/**, /api/v1/exports/**
           filters:
-            - name: JwtAuthenticationFilter
-            # ✅ COMMENTED OUT: Rate limiting (requires Redis)
-            # - name: RequestRateLimiter
-            #   args:
-            #     redis-rate-limiter.replenishRate: 10
-            #     redis-rate-limiter.burstCapacity: 20
-
-        # Auth Service
-        - id: auth-service
-          uri: lb://auth-service
-          predicates:
-            - Path=/api/v1/auth/**
-          # ✅ COMMENTED OUT: Rate limiting (requires Redis)
-          # filters:
-          #   - name: RequestRateLimiter
-          #     args:
-          #       redis-rate-limiter.replenishRate: 20
-          #       redis-rate-limiter.burstCapacity: 40
+            #- StripPrefix=1
+            - name: RequestLoggingFilter
 
         # Notification Service
         - id: notification-service
@@ -45,12 +35,11 @@ spring:
           predicates:
             - Path=/api/notifications/**
           filters:
-            - name: JwtAuthenticationFilter
+            #StripPrefix=0
+            - name: RequestLoggingFilter
 
-  # ✅ COMMENTED OUT: Redis configuration
-  # redis:
-  #   host: localhost
-  #   port: 6379
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin
 
 eureka:
   client:
@@ -59,17 +48,16 @@ eureka:
   instance:
     prefer-ip-address: true
 
-jwt:
-  secret: agribind-super-secure-jwt-secret-key-2025-minimum-32-chars
-
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,gateway
+        include: "*"
   endpoint:
     health:
       show-details: always
+    gateway:
+      enabled: true
 
 logging:
   level:

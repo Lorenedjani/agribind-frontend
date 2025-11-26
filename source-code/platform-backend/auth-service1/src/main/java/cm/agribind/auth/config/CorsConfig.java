@@ -1,5 +1,5 @@
 // src/main/java/cm/agribind/auth/config/CorsConfig.java
-package cm.agribind.auth.config;
+//package cm.agribind.auth.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,10 +10,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
-@Configuration
-public class CorsConfig {
+//@Configuration
+//public class CorsConfig {
 
-    @Bean
+   /* @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
@@ -50,3 +50,5 @@ public class CorsConfig {
         return source;
     }
 }
+
+    */
