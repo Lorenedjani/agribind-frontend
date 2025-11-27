@@ -1,603 +1,118 @@
+// E:\INGE 4 ISI\Tutorial Project\agribind-platform\source-code\agribind-frontend\src\app\modules\cooperative\dashboard\cooperative-dashboard\cooperative-dashboard.component.scss
+
 .dashboard-container {
   display: flex;
-  min-height: 100vh;
-  background-color: #f8f9fa;
-}
-
-.sidebar {
-  width: 260px;
-  background: white; // Changed to white
-  border-right: 1px solid #e9ecef;
-  padding: 0;
-  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
-  position: fixed;
   height: 100vh;
-  overflow-y: auto;
-  z-index: 100;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #f8f9fa;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #dee2e6;
-    border-radius: 3px;
-
-    &:hover {
-      background: #adb5bd;
-    }
-  }
+  overflow: hidden;
+  background-color: #f5f5f5;
 }
 
-.sidebar-header {
-  padding: 24px 20px;
-  border-bottom: 1px solid #e9ecef; // Changed to light gray
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: white; // Changed to white
-
-  .sidebar-logo {
-    width: 44px;
-    height: 44px;
-    background: linear-gradient(135deg, #10b981, #059669); // Changed to green
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white; // Changed to white
-    font-size: 22px;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); // Green shadow
-    flex-shrink: 0;
-  }
-
-  .sidebar-header-text {
-    h3 {
-      margin: 0 0 4px 0;
-      color: #212529; // Changed to dark gray/black
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-    }
-
-    p {
-      margin: 0;
-      color: #6c757d; // Changed to medium gray
-      font-size: 12px;
-      font-weight: 500;
-    }
-  }
-
-  .close-btn {
-    background: none;
-    border: none;
-    color: #6c757d;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 6px;
-    transition: all 0.3s ease;
-
-    &:hover {
-      background: #f8f9fa;
-      color: #10b981; // Green on hover
-    }
-  }
-}
-
-.sidebar-nav {
+.main-content {
+  flex: 1;
+  margin-left: 240px; // Sidebar width
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 20px 14px;
-}
+  overflow: hidden;
+  transition: margin-left 0.3s ease;
 
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 13px 18px;
-  text-decoration: none;
-  color: #495057; // Changed to dark gray
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  position: relative;
-
-  &:hover {
-    background: rgba(16, 185, 129, 0.1); // Light green background on hover
-    color: #10b981; // Green text on hover
-    transform: translateX(4px);
-
-    .nav-icon {
-      color: #10b981; // Green icon on hover
-    }
-  }
-
-  &.active {
-    background: rgba(16, 185, 129, 0.15); // Light green background for active
-    color: #10b981; // Green text for active
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
-    font-weight: 600;
-
-    .nav-icon {
-      color: #10b981; // Green icon for active
-    }
-
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 4px;
-      height: 60%;
-      background: #10b981;
-      border-radius: 0 4px 4px 0;
-    }
-  }
-
-  .nav-icon {
-    font-size: 18px;
-    width: 20px;
-    text-align: center;
-    transition: all 0.3s ease;
-    color: #6c757d; // Gray icons by default
-  }
-
-  &:hover .nav-icon {
-    transform: scale(1.1);
-  }
-
-  .nav-text {
-    flex: 1;
-  }
-}
-
-.main-content-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  margin-left: 260px;
-}
-
-.main-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 32px;
-  background: white;
-  border-bottom: 1px solid #e9ecef;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  position: sticky;
-  top: 0;
-  z-index: 90;
-  gap: 20px;
-}
-
-.header-left {
-  flex: 1;
-  min-width: 0;
-
-  .page-title {
-    margin: 0 0 6px 0;
-    font-size: 28px;
-    color: #212529;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-  }
-
-  .welcome-text {
-    margin: 0;
-    color: #6c757d;
-    font-size: 14px;
-    font-weight: 500;
-  }
-}
-
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-// Language Selector
-.language-selector {
-  position: relative;
-
-  .language-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 18px;
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 14px;
-    font-weight: 600;
-
-    &:hover {
-      background: #e9ecef;
-      border-color: #10b981;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-    }
-
-    .current-language {
-      color: #495057;
-      font-weight: 600;
-    }
-
-    .dropdown-arrow {
-      font-size: 11px;
-      color: #6c757d;
-      transition: transform 0.3s ease;
-    }
-  }
-
-  &:hover .dropdown-arrow {
-    transform: translateY(2px);
-  }
-
-  .language-dropdown {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
+  .mobile-header {
+    display: none; // Hidden on desktop
     background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    min-width: 160px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1000;
-    overflow: hidden;
+    padding: 15px 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    align-items: center;
+    justify-content: space-between;
 
-    &.show {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(0);
-    }
-
-    .language-option {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      padding: 12px 18px;
+    .menu-btn {
       background: none;
       border: none;
+      font-size: 24px;
+      color: #328048;
       cursor: pointer;
-      transition: background 0.2s ease;
-      text-align: left;
-      font-size: 14px;
-      color: #495057;
-      font-weight: 500;
+      padding: 5px 10px;
 
       &:hover {
-        background: rgba(16, 185, 129, 0.1); // Light green on hover
-        color: #10b981; // Green text on hover
-      }
-
-      &:first-child {
-        border-radius: 10px 10px 0 0;
-      }
-
-      &:last-child {
-        border-radius: 0 0 10px 10px;
-      }
-
-      .flag {
-        font-size: 20px;
-      }
-    }
-  }
-}
-
-// Notification Bell
-.notification-container {
-  position: relative;
-
-  .notification-btn {
-    position: relative;
-    padding: 12px;
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-
-    &:hover {
-      background: #e9ecef;
-      border-color: #10b981;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-
-      .notification-icon {
-        color: #10b981; // Green on hover
+        background: #f0f0f0;
+        border-radius: 4px;
       }
     }
 
-    .notification-icon {
-      font-size: 20px;
-      color: #495057;
-      display: block;
-      animation: ring 3s ease-in-out infinite;
-      transition: color 0.3s ease;
-    }
+    .header-title {
+      flex: 1;
+      text-align: center;
 
-    .notification-badge {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      background: linear-gradient(135deg, #dc3545, #c82333);
-      color: white;
-      border-radius: 50%;
-      width: 22px;
-      height: 22px;
-      font-size: 11px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      border: 2px solid white;
-      box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
-    }
-  }
-}
-
-@keyframes ring {
-  0%, 100% { transform: rotate(0deg); }
-  10%, 30% { transform: rotate(-10deg); }
-  20%, 40% { transform: rotate(10deg); }
-  50% { transform: rotate(0deg); }
-}
-
-// User Profile
-.user-profile {
-  position: relative;
-
-  .profile-btn {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 8px 16px;
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-
-    &:hover {
-      background: #e9ecef;
-      border-color: #10b981;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    }
-
-    .profile-avatar {
-      .avatar-fallback {
-        width: 42px;
-        height: 42px;
-        background: linear-gradient(135deg, #10b981, #059669);
-        color: white;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 15px;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-      }
-    }
-
-    .profile-info {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 2px;
-
-      .user-name {
+      h2 {
+        margin: 0;
+        font-size: 18px;
+        color: #1d1f20;
         font-weight: 600;
-        font-size: 14px;
-        color: #212529;
-        line-height: 1.2;
-      }
-
-      .user-role {
-        font-size: 12px;
-        color: #6c757d;
-        line-height: 1.2;
       }
     }
 
-    .dropdown-arrow {
-      font-size: 11px;
-      color: #6c757d;
-      margin-left: 4px;
-      transition: transform 0.3s ease;
+    .user-info {
+      font-size: 24px;
+      color: #328048;
     }
   }
 
-  &:hover .dropdown-arrow {
-    transform: translateY(2px);
-  }
+  .content-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
 
-  .profile-dropdown {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 14px;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
-    min-width: 280px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1000;
-    overflow: hidden;
+    // Smooth scrolling
+    scroll-behavior: smooth;
 
-    &.show {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(0);
+    &::-webkit-scrollbar {
+      width: 8px;
     }
 
-    .dropdown-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 22px;
-      border-bottom: 1px solid #e9ecef;
-      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-
-      .dropdown-avatar {
-        .avatar-fallback {
-          width: 52px;
-          height: 52px;
-          background: linear-gradient(135deg, #10b981, #059669);
-          color: white;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          font-size: 18px;
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
-      }
-
-      .dropdown-user-info {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-
-        .dropdown-name {
-          font-weight: 700;
-          font-size: 16px;
-          color: #212529;
-          line-height: 1.2;
-        }
-
-        .dropdown-email {
-          font-size: 13px;
-          color: #6c757d;
-          line-height: 1.2;
-        }
-      }
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
     }
 
-    .dropdown-menu {
-      padding: 10px 0;
+    &::-webkit-scrollbar-thumb {
+      background: #328048;
+      border-radius: 4px;
 
-      .dropdown-item {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        width: 100%;
-        padding: 13px 22px;
-        background: none;
-        border: none;
-        text-decoration: none;
-        color: #495057;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-size: 14px;
-        font-weight: 500;
-
-        &:hover {
-          background: rgba(16, 185, 129, 0.1); // Light green on hover
-          color: #10b981; // Green text on hover
-          padding-left: 26px;
-
-          .item-icon {
-            transform: scale(1.1);
-            color: #10b981; // Green icon on hover
-          }
-        }
-
-        .item-icon {
-          font-size: 16px;
-          width: 20px;
-          text-align: center;
-          transition: all 0.2s ease;
-          color: #6c757d;
-        }
-
-        &.logout {
-          color: #dc3545;
-
-          &:hover {
-            background: #fff5f5;
-            color: #c82333;
-          }
-        }
-      }
-
-      .dropdown-divider {
-        height: 1px;
-        background: #e9ecef;
-        margin: 10px 0;
+      &:hover {
+        background: #265028;
       }
     }
   }
 }
 
-// Responsive Design
-@media (max-width: 1024px) {
-  .sidebar {
-    width: 220px;
-  }
-
-  .main-content-area {
-    margin-left: 220px;
-  }
-
-  .profile-info {
-    display: none;
-  }
+.sidebar-overlay {
+  display: none; // Hidden on desktop
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
 }
 
+// Mobile Responsive Design
 @media (max-width: 768px) {
-  .sidebar {
-    width: 70px;
+  .main-content {
+    margin-left: 0;
 
-    .sidebar-header-text,
-    .nav-text {
-      display: none;
-    }
-
-    .sidebar-header {
-      justify-content: center;
-    }
-
-    .nav-item {
-      justify-content: center;
-      padding: 13px;
+    .mobile-header {
+      display: flex;
     }
   }
 
-  .main-content-area {
-    margin-left: 70px;
+  .sidebar-overlay {
+    display: block;
   }
+}
 
-  .header-left .page-title {
-    font-size: 20px;
-  }
-
-  .header-left .welcome-text {
-    display: none;
+// Tablet
+@media (min-width: 769px) and (max-width: 1024px) {
+  .main-content {
+    .content-wrapper {
+      padding: 15px;
+    }
   }
 }

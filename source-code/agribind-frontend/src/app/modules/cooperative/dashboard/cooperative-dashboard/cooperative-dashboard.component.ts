@@ -1,69 +1,72 @@
-// src/app/modules/cooperative/dashboard/cooperative-dashboard/cooperative-dashboard.component.ts
-import { Component, OnInit, HostListener } from '@angular/core';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { filter } from 'rxjs/operators';
+// E:\INGE 4 ISI\Tutorial Project\agribind-platform\source-code\agribind-frontend\src\app\modules\cooperative\dashboard\cooperative-dashboard\cooperative-dashboard.component.ts
+
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
+import { CooperativeSidebarComponent } from '../../../../../shared/cooperative-sidebar/cooperative-sidebar.component';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-cooperative-dashboard',
-  templateUrl: './cooperative-dashboard.component.html',
-  styleUrls: ['./cooperative-dashboard.component.scss'],
   standalone: true,
-  imports: [RouterOutlet]  // REMOVED NgOptimizedImage
+  imports: [CommonModule, RouterModule, CooperativeSidebarComponent],
+  templateUrl: './cooperative-dashboard.component.html',
+  styleUrls: ['./cooperative-dashboard.component.scss']
 })
 export class CooperativeDashboardComponent implements OnInit {
-  pageTitle = 'Members';
-  currentLanguage = 'EN';
-  showLanguageDropdown = false;
-  showProfileDropdown = false;
+  currentUser: any;
+  sidebarOpen = false;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {}
 
-  ngOnInit() {
-    this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe(() => {
-        this.updatePageTitle();
-      });
-  }
-
-  private updatePageTitle() {
-    const url = this.router.url;
-    if (url.includes('members')) {
-      this.pageTitle = 'Members';
-    } else if (url.includes('inventory')) {
-      this.pageTitle = 'Inventory';
-    } else if (url.includes('credits')) {
-      this.pageTitle = 'Microcredits';
-    } else if (url.includes('reports')) {
-      this.pageTitle = 'Reports';
+  ngOnInit(): void {
+    // Check authentication
+    if (!this.authService.isLoggedIn()) {
+      console.log('❌ User not authenticated, redirecting to login');
+      this.router.navigate(['/login']);
+      return;
     }
-  }
 
-  toggleLanguageDropdown() {
-    this.showLanguageDropdown = !this.showLanguageDropdown;
-    this.showProfileDropdown = false;
-  }
+    // Get current user
+    this.currentUser = this.authService.getCurrentUser();
 
-  toggleProfileDropdown() {
-    this.showProfileDropdown = !this.showProfileDropdown;
-    this.showLanguageDropdown = false;
-  }
-
-  changeLanguage(lang: string) {
-    if (lang === 'fr') {
-      this.currentLanguage = 'FR';
-    } else {
-      this.currentLanguage = 'EN';
+    if (!this.currentUser) {
+      console.log('❌ No user data found, redirecting to login');
+      this.authService.logout();
+      return;
     }
-    this.showLanguageDropdown = false;
+
+    // Verify user role
+    if (this.currentUser.role !== 'COOPERATIVE') {
+      console.log('❌ User is not a cooperative, redirecting to appropriate dashboard');
+      this.redirectToRoleDashboard(this.currentUser.role);
+      return;
+    }
+
+    console.log('✅ Cooperative dashboard loaded for:', this.currentUser.username);
   }
 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent) {
-    const target = event.target as HTMLElement;
-    if (!target.closest('.language-selector') && !target.closest('.user-profile')) {
-      this.showLanguageDropdown = false;
-      this.showProfileDropdown = false;
+  toggleSidebar(): void {
+    this.sidebarOpen = !this.sidebarOpen;
+  }
+
+  closeSidebar(): void {
+    this.sidebarOpen = false;
+  }
+
+  private redirectToRoleDashboard(role: string): void {
+    switch (role.toUpperCase()) {
+      case 'FARMER':
+        this.router.navigate(['/farmer/dashboard']);
+        break;
+      case 'GOVERNMENT':
+        this.router.navigate(['/government/dashboard']);
+        break;
+      default:
+        this.router.navigate(['/login']);
     }
   }
 }

@@ -1,4 +1,4 @@
-package com.agribind.api_gateway.filters;
+package com.agribind.api_gateway.filter;
 
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;

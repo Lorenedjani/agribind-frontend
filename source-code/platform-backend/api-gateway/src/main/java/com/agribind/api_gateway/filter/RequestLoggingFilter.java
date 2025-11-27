@@ -1,4 +1,4 @@
-package com.agribind.api_gateway.filters;
+package com.agribind.api_gateway.filter;
 
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
