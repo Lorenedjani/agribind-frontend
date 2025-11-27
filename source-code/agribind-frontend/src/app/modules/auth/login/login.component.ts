@@ -1,5 +1,5 @@
-// TEMPORARY DEBUG VERSION - Replace login.component.ts
-// src/app/modules/auth/login/login.component.ts
+// FIXED VERSION - Replace your login.component.ts
+// source-code/agribind-frontend/src/app/modules/auth/login/login.component.ts
 
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -20,7 +20,6 @@ export class LoginComponent {
   isLoading = false;
   showPassword = false;
   errorMessage = '';
-  debugInfo = ''; // ✅ NEW: Debug information
 
   constructor(
     private fb: FormBuilder,
@@ -50,14 +49,12 @@ export class LoginComponent {
   }
 
   onSubmit() {
-    // ✅ ENHANCED: Detailed logging
     const timestamp = new Date().toISOString();
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('🚀 LOGIN ATTEMPT:', timestamp);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     this.errorMessage = '';
-    this.debugInfo = '';
 
     if (this.loginForm.invalid) {
       console.log('❌ Form is invalid');
@@ -81,7 +78,6 @@ export class LoginComponent {
       password: this.loginForm.value.password
     };
 
-    // ✅ Log the request details
     console.log('📤 REQUEST DETAILS:');
     console.log('   Username:', credentials.username);
     console.log('   Password Length:', credentials.password.length);
@@ -92,6 +88,8 @@ export class LoginComponent {
       next: (response) => {
         console.log('✅ LOGIN SUCCESS:', timestamp);
         console.log('   Response:', response);
+        console.log('   User Role:', response.userInfo.role);
+        console.log('   First Login:', response.userInfo.firstLogin);
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
         this.isLoading = false;
@@ -110,7 +108,6 @@ export class LoginComponent {
 
         this.isLoading = false;
 
-        // ✅ ENHANCED: Detailed error diagnostics
         const errorDetails = {
           status: error.status || 0,
           statusText: error.statusText || 'Unknown',
@@ -128,48 +125,18 @@ export class LoginComponent {
         console.error('   Error Object:', errorDetails.error);
         console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-        // ✅ User-friendly error messages
         if (error.status === 0) {
           this.errorMessage = 'Cannot connect to server. Please check if the backend is running.';
-          this.debugInfo = `❌ CORS or Network Error
-
-💡 Possible Causes:
-1. API Gateway not running (http://localhost:8080)
-2. CORS not configured properly
-3. SecurityConfig blocking auth endpoints
-4. Network connection issue
-
-🔧 Quick Fixes:
-1. Check if API Gateway is running: http://localhost:8080/actuator/health
-2. Check if Auth Service is running: http://localhost:8081/api/v1/auth/health
-3. Update SecurityConfig.java to permitAll() for /api/v1/auth/**
-4. Restart all services`;
-
-          console.error('🔌 NETWORK/CORS ERROR DETECTED!');
-          console.error('   This usually means:');
-          console.error('   1. API Gateway is not running on port 8080');
-          console.error('   2. CORS is blocking the request');
-          console.error('   3. SecurityConfig is blocking auth endpoints');
         } else if (error.status === 401) {
           this.errorMessage = 'Invalid email or password. Please check your credentials.';
-          this.debugInfo = `Status: ${error.status} - Unauthorized`;
-          console.error('🔐 AUTHENTICATION ERROR: Invalid credentials');
         } else if (error.status === 403) {
           this.errorMessage = 'Account is disabled or locked. Please contact support.';
-          this.debugInfo = `Status: ${error.status} - Forbidden`;
-          console.error('🔒 FORBIDDEN: Account locked or disabled');
         } else if (error.status === 400) {
           this.errorMessage = 'Invalid login request. Please check your input.';
-          this.debugInfo = `Status: ${error.status} - Bad Request`;
-          console.error('⚠️ BAD REQUEST: Invalid data sent');
         } else {
           this.errorMessage = this.getErrorMessage(error);
-          this.debugInfo = `Status: ${error.status} - ${error.statusText}`;
         }
 
-        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-        // Show error in alert for immediate visibility
         alert(`❌ Login Failed!\n\n${this.errorMessage}\n\nCheck browser console for details.`);
       }
     });
@@ -185,6 +152,7 @@ export class LoginComponent {
 
     console.log('📍 Routing user with role:', user.role);
 
+    // ✅ FIXED: Correct route paths based on app.routes.ts
     switch (user.role.toUpperCase()) {
       case 'FARMER':
         console.log('📍 Navigating to farmer dashboard');
@@ -192,15 +160,22 @@ export class LoginComponent {
         break;
       case 'COOPERATIVE':
         console.log('📍 Navigating to cooperative dashboard');
-        this.router.navigate(['/cooperative/dashboard']);
+        // ✅ FIX: Changed from '/cooperative/dashboard' to '/cooperative'
+        this.router.navigate(['/cooperative']).then(success => {
+          if (success) {
+            console.log('✅ Navigation successful to /cooperative');
+          } else {
+            console.error('❌ Navigation failed to /cooperative');
+          }
+        });
         break;
       case 'GOVERNMENT':
         console.log('📍 Navigating to government dashboard');
         this.router.navigate(['/government/dashboard']);
         break;
       default:
-        console.warn('⚠️ Unknown role, navigating to default dashboard');
-        this.router.navigate(['/dashboard']);
+        console.warn('⚠️ Unknown role:', user.role, '- navigating to login');
+        this.router.navigate(['/login']);
     }
   }
 
