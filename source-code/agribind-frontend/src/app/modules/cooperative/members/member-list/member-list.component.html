@@ -109,11 +109,11 @@
         <label for="statusSelect">
           <i class="fas fa-toggle-on"></i> Status
         </label>
-        <select 
-          id="statusSelect" 
-          [(ngModel)]="selectedStatus" 
+        <select
+          id="statusSelect"
+          [(ngModel)]="selectedStatus"
           (change)="onStatusChange()"
-          class="filter-select" 
+          class="filter-select"
           aria-label="Filter by Status">
           <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
         </select>
@@ -122,11 +122,11 @@
         <label for="regionSelect">
           <i class="fas fa-map-marker-alt"></i> Region
         </label>
-        <select 
-          id="regionSelect" 
-          [(ngModel)]="selectedRegion" 
+        <select
+          id="regionSelect"
+          [(ngModel)]="selectedRegion"
           (change)="onRegionChange()"
-          class="filter-select" 
+          class="filter-select"
           aria-label="Filter by Region">
           <option *ngFor="let region of regionOptions" [value]="region">{{ region }}</option>
         </select>
@@ -135,11 +135,11 @@
         <label for="cropSelect">
           <i class="fas fa-leaf"></i> Primary Crop
         </label>
-        <select 
-          id="cropSelect" 
-          [(ngModel)]="selectedCrop" 
+        <select
+          id="cropSelect"
+          [(ngModel)]="selectedCrop"
           (change)="onCropChange()"
-          class="filter-select" 
+          class="filter-select"
           aria-label="Filter by Primary Crop">
           <option *ngFor="let crop of cropOptions" [value]="crop">{{ crop }}</option>
         </select>
