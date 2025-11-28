@@ -1,0 +1,163 @@
+# application.yml
+spring:
+  application:
+    name: production-monitoring-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/agri_production_db?createDatabaseIfNotExist=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+  # Redis Configuration (for caching)
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    timeout: 60000
+    jedis:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+
+  # RabbitMQ Configuration (for event messaging)
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        acknowledge-mode: auto
+        concurrency: 5
+        max-concurrency: 10
+
+  config:
+    import: optional:configserver:http://localhost:8888
+
+# Server Configuration
+server:
+  port: ${SERVER_PORT:8082}
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.agriplatform.production: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/production-service.log
+    max-size: 10MB
+    max-history: 30
+
+# Management & Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Application-specific configurations
+app:
+  production:
+    offline-sync-interval: 300000  # 5 minutes in milliseconds
+    cache-ttl: 3600  # 1 hour in seconds
+    max-batch-size: 100
+    enable-notifications: true
+
+  security:
+    jwt:
+      secret: ${JWT_SECRET:your-secret-key-change-in-production}
+      expiration: 86400000  # 24 hours
+
+# RabbitMQ Queue Configuration
+rabbitmq:
+  queues:
+    production-recorded: production.recorded.queue
+    maturity-updated: production.maturity.updated.queue
+    aggregate-updated: production.aggregate.updated.queue
+  exchanges:
+    production: production.exchange
+  routing-keys:
+    production-recorded: production.recorded
+    maturity-updated: production.maturity.updated
+    aggregate-updated: production.aggregate.updated
+
+---
+# Development Profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+  cloud:
+    config:
+      enabled: false
+
+logging:
+  level:
+    com.agriplatform.production: DEBUG
+
+---
+# Production Profile
+#spring:
+#  config:
+#    activate:
+#      on-profile: prod
+#  jpa:
+#    show-sql: false
+#    hibernate:
+#      ddl-auto: validate
+
+logging:
+  level:
+    root: WARN
+    com.agriplatform.production: INFO
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+
