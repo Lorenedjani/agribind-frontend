@@ -4,6 +4,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ViewEncapsulation } from '@angular/core';
 import { CooperativeSidebarComponent } from "../../../../shared/cooperative-sidebar/cooperative-sidebar.component";
 import {
   ProductionService,
@@ -18,6 +19,7 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule, CooperativeSidebarComponent],
   templateUrl: './production.component.html',
+   encapsulation: ViewEncapsulation.None,
   styleUrls: ['./production.component.scss']
 })
 export class ProductionComponent implements OnInit {

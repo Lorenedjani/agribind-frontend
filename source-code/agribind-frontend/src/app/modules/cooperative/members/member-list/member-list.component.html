@@ -1,3 +1,4 @@
+<!-- src/app/modules/cooperative/members/member-list/member-list.component.html -->
 <div class="wrapper">
   <app-cooperative-sidebar></app-cooperative-sidebar>
 
@@ -7,12 +8,12 @@
       <h3>Members</h3>
     </div>
 
-    <button *ngIf="searchQuery" class="btn-clear" (click)="searchQuery = ''">×</button>
+    <button *ngIf="searchQuery" class="btn-clear" (click)="searchQuery = ''; onSearchChange()">×</button>
 
     <div class="top-bar-actions">
       <button class="notification-btn" title="Notifications">🔔</button>
 
-      <div class="user-info" title="{{ user.name }}">
+      <div class="user-info" [title]="user.name">
         <div class="avatar">{{ user.initials }}</div>
         <div class="user-details">
           <span class="user-name">{{ user.name }}</span>
@@ -23,6 +24,13 @@
   </header>
 
   <main class="main-content">
+    <!-- Loading Indicator -->
+    <div *ngIf="isLoading" class="spinner"></div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage && !isLoading" class="alert alert-error">
+      {{ errorMessage }}
+    </div>
 
     <!-- Cards Overview -->
     <section class="cards-overview">
@@ -80,6 +88,7 @@
           class="search-input"
           placeholder="Search members by name, ID, or type..."
           [(ngModel)]="searchQuery"
+          (input)="onSearchChange()"
         />
       </div>
       <div class="button-group">
@@ -100,7 +109,12 @@
         <label for="statusSelect">
           <i class="fas fa-toggle-on"></i> Status
         </label>
-        <select id="statusSelect" [(ngModel)]="selectedStatus" class="filter-select" aria-label="Filter by Status">
+        <select 
+          id="statusSelect" 
+          [(ngModel)]="selectedStatus" 
+          (change)="onStatusChange()"
+          class="filter-select" 
+          aria-label="Filter by Status">
           <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
         </select>
       </div>
@@ -108,7 +122,12 @@
         <label for="regionSelect">
           <i class="fas fa-map-marker-alt"></i> Region
         </label>
-        <select id="regionSelect" [(ngModel)]="selectedRegion" class="filter-select" aria-label="Filter by Region">
+        <select 
+          id="regionSelect" 
+          [(ngModel)]="selectedRegion" 
+          (change)="onRegionChange()"
+          class="filter-select" 
+          aria-label="Filter by Region">
           <option *ngFor="let region of regionOptions" [value]="region">{{ region }}</option>
         </select>
       </div>
@@ -116,7 +135,12 @@
         <label for="cropSelect">
           <i class="fas fa-leaf"></i> Primary Crop
         </label>
-        <select id="cropSelect" [(ngModel)]="selectedCrop" class="filter-select" aria-label="Filter by Primary Crop">
+        <select 
+          id="cropSelect" 
+          [(ngModel)]="selectedCrop" 
+          (change)="onCropChange()"
+          class="filter-select" 
+          aria-label="Filter by Primary Crop">
           <option *ngFor="let crop of cropOptions" [value]="crop">{{ crop }}</option>
         </select>
       </div>
@@ -185,14 +209,17 @@
               </div>
             </td>
           </tr>
-          <tr *ngIf="filteredMembers.length === 0">
-            <td colspan="8" class="no-data">No members match the filters.</td>
+          <tr *ngIf="paginatedMembers.length === 0 && !isLoading">
+            <td colspan="8" class="no-data">
+              <i class="fas fa-inbox"></i>
+              <p>No members match the filters.</p>
+            </td>
           </tr>
         </tbody>
       </table>
 
       <!-- Pagination Controls -->
-      <div class="pagination">
+      <div class="pagination" *ngIf="totalPages > 1">
         <button (click)="previousPage()" [disabled]="currentPage === 1">← Prev</button>
         <span>Page {{ currentPage }} of {{ totalPages }}</span>
         <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next →</button>
@@ -201,6 +228,7 @@
   </main>
 </div>
 
+<!-- Modals -->
 <app-member-form
   (memberAdded)="onMemberAdded($any($event))"
   (modalClosed)="onModalClosed()">
@@ -216,6 +244,6 @@
 </app-member-detail>
 
 <app-delete-member
-  (memberDeleted)="onMemberDeleted($event.id)"
+  (memberDeleted)="onMemberDeleted($event)"
   (modalClosed)="onModalClosed()">
 </app-delete-member>

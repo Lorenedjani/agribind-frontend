@@ -2,6 +2,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ViewEncapsulation } from '@angular/core';
 
 import { InventoryService } from './inventory.service';
 // Removed InventoryDashboardComponent import since it's not used in the template
@@ -29,9 +30,9 @@ interface InventoryItem {
   imports: [
     CommonModule,
     FormsModule,
-    // Removed InventoryDashboardComponent from imports
     CooperativeSidebarComponent
   ],
+  encapsulation: ViewEncapsulation.None,
   templateUrl: './inventory.component.html',
   styleUrls: ['./inventory.component.scss']
 })
