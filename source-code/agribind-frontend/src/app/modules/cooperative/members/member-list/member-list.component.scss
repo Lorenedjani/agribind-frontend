@@ -832,3 +832,18 @@ app-cooperative-sidebar {
     }
   }
 }
+/* Add to member-list.component.scss */
+.wrapper {
+  display: block !important;
+}
+
+.main-content {
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Ensure basic visibility */
+.cards-overview, .top-filters, .filters, .table-section {
+  opacity: 1 !important;
+  visibility: visible !important;
+}

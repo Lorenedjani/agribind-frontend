@@ -1,21 +1,49 @@
-// src/app/core/services/user.service.ts
+// src/app/core/services/user.service.ts - Complete Interface
+
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiClientService } from './api-client.service';
 
+// Enums
+export enum UserType {
+  FARMER = 'FARMER',
+  COOPERATIVE = 'COOPERATIVE',
+  GOVERNMENT = 'GOVERNMENT'
+}
+
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  PENDING = 'PENDING',
+  SUSPENDED = 'SUSPENDED',
+  DELETED = 'DELETED'
+}
+
+export enum Region {
+  ADAMAOUA = 'ADAMAOUA',
+  CENTRE = 'CENTRE',
+  EST = 'EST',
+  EXTREME_NORD = 'EXTREME_NORD',
+  LITTORAL = 'LITTORAL',
+  NORD = 'NORD',
+  NORD_OUEST = 'NORD_OUEST',
+  OUEST = 'OUEST',
+  SUD = 'SUD',
+  SUD_OUEST = 'SUD_OUEST'
+}
+
+// User Interface
 export interface User {
-phone: any;
-primaryCrop: any;
   id?: string;
   userId: string;
   name: string;
   email?: string;
   phoneNumber: string;
-  type: 'FARMER' | 'COOPERATIVE' | 'GOVERNMENT';
-  status: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'SUSPENDED' | 'DELETED';
+  type: UserType;
+  status: UserStatus;
   registrationNumber?: string;
-  region?: string;
+  region?: Region;
   department?: string;
   district?: string;
   village?: string;
@@ -24,40 +52,49 @@ primaryCrop: any;
   createdAt?: string;
   updatedAt?: string;
 
-  // Farmer specific
-  agriculturalType?: 'CROP' | 'LIVESTOCK' | 'MIXED';
+  // Type-specific fields
+  farmerDetails?: FarmerDetails;
+  cooperativeDetails?: CooperativeDetails;
+  governmentDetails?: GovernmentDetails;
+}
+
+export interface FarmerDetails {
+  agriculturalType?: string;
   cropTypes?: string[];
   livestockTypes?: string[];
-  landArea?: number;
+  totalLandArea?: number;
+  cultivatedArea?: number;
   cooperativeId?: string;
+  cooperativeName?: string;
+}
 
-  // Cooperative specific
+export interface CooperativeDetails {
   cooperativeType?: string;
+  legalRegistrationNumber?: string;
+  establishmentYear?: number;
+  contactPerson?: string;
+  totalMembers?: number;
   activeMemberCount?: number;
-
-  // Government specific
-  governmentRole?: string;
 }
 
-export interface PageResponse<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  currentPage: number;
-  size: number;
-  first: boolean;
-  last: boolean;
+export interface GovernmentDetails {
+  role?: string;
+  assignedRegion?: string;
+  department?: string;
+  employeeId?: string;
 }
 
+// Create User Command
 export interface CreateUserCommand {
-  type: 'FARMER' | 'COOPERATIVE' | 'GOVERNMENT';
+  type: UserType | string;
   name: string;
   email?: string;
   phoneNumber: string;
-  region?: string;
+  region?: Region | string;
   department?: string;
   district?: string;
   village?: string;
+  gpsCoordinates?: string;
   preferredLanguage?: string;
 
   // Farmer fields
@@ -71,10 +108,22 @@ export interface CreateUserCommand {
   cooperativeType?: string;
   legalRegistrationNumber?: string;
   establishmentYear?: number;
+  contactPerson?: string;
 
   // Government fields
   governmentRole?: string;
   employeeId?: string;
+}
+
+// Page Response
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  size: number;
+  first?: boolean;
+  last?: boolean;
 }
 
 @Injectable({
@@ -94,27 +143,6 @@ export class UserService {
     };
 
     return this.apiClient.get<PageResponse<User>>('/api/v1/users', params);
-  }
-
-  /**
-   * Get farmers only
-   */
-  getFarmers(page: number = 0, size: number = 10): Observable<PageResponse<User>> {
-    return this.getUsers(page, size, { type: 'FARMER' });
-  }
-
-  /**
-   * Get cooperatives only
-   */
-  getCooperatives(page: number = 0, size: number = 10): Observable<PageResponse<User>> {
-    return this.getUsers(page, size, { type: 'COOPERATIVE' });
-  }
-
-  /**
-   * Get government officials only
-   */
-  getGovernmentOfficials(page: number = 0, size: number = 10): Observable<PageResponse<User>> {
-    return this.getUsers(page, size, { type: 'GOVERNMENT' });
   }
 
   /**
@@ -141,8 +169,8 @@ export class UserService {
   /**
    * Create new user
    */
-  createUser(user: CreateUserCommand): Observable<User> {
-    return this.apiClient.post<User>('/api/v1/users', user);
+  createUser(command: CreateUserCommand): Observable<User> {
+    return this.apiClient.post<User>('/api/v1/users', command);
   }
 
   /**
@@ -155,8 +183,11 @@ export class UserService {
   /**
    * Update user status
    */
-  updateUserStatus(userId: string, status: string): Observable<User> {
-    return this.apiClient.patch<User>(`/api/v1/users/${userId}/status?status=${status}`, {});
+  updateUserStatus(userId: string, status: UserStatus): Observable<User> {
+    return this.apiClient.patch<User>(
+      `/api/v1/users/${userId}/status?status=${status}`,
+      {}
+    );
   }
 
   /**
@@ -181,19 +212,6 @@ export class UserService {
   }
 
   /**
-   * Search users with advanced filters
-   */
-  searchUsers(filters: any, page: number = 0, size: number = 10): Observable<PageResponse<User>> {
-    const searchQuery = {
-      ...filters,
-      page,
-      size
-    };
-
-    return this.apiClient.post<PageResponse<User>>('/api/v1/users/search', searchQuery);
-  }
-
-  /**
    * Export users to file
    */
   exportUsers(format: 'CSV' | 'EXCEL' | 'PDF', filters: any = {}): Observable<Blob> {
@@ -206,13 +224,81 @@ export class UserService {
   }
 
   /**
-   * Upload profile picture
+   * Get farmers only
    */
-  uploadProfilePicture(userId: string, file: File): Observable<User> {
-    const formData = new FormData();
-    formData.append('file', file);
+  getFarmers(page: number = 0, size: number = 10): Observable<PageResponse<User>> {
+    return this.getUsers(page, size, { type: UserType.FARMER });
+  }
 
-    // Note: This might need special handling as it's multipart/form-data
-    return this.apiClient.post<User>(`/api/v1/users/${userId}/profile-picture`, formData);
+  /**
+   * Get cooperatives only
+   */
+  getCooperatives(page: number = 0, size: number = 10): Observable<PageResponse<User>> {
+    return this.getUsers(page, size, { type: UserType.COOPERATIVE });
+  }
+
+  /**
+   * Get government officials only
+   */
+  getGovernmentOfficials(page: number = 0, size: number = 10): Observable<PageResponse<User>> {
+    return this.getUsers(page, size, { type: UserType.GOVERNMENT });
+  }
+}
+
+// QR Code Service Interface
+export interface QRCodeResponse {
+  userId: string;
+  purpose: string;
+  qrCodeImage: string;
+  qrCodeData: string;
+  downloadUrl?: string;
+  size?: number;
+  format?: string;
+  expiresAt?: string;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class QRCodeService {
+  constructor(private apiClient: ApiClientService) {}
+
+  /**
+   * Generate QR code for registration
+   */
+  generateRegistrationQRCode(userId: string): Observable<QRCodeResponse> {
+    return this.apiClient.get<QRCodeResponse>(`/api/v1/qrcodes/${userId}/registration`);
+  }
+
+  /**
+   * Generate QR code for login
+   */
+  generateLoginQRCode(userId: string): Observable<QRCodeResponse> {
+    return this.apiClient.get<QRCodeResponse>(`/api/v1/qrcodes/${userId}/login`);
+  }
+
+  /**
+   * Generate QR code for profile
+   */
+  generateProfileQRCode(userId: string): Observable<QRCodeResponse> {
+    return this.apiClient.get<QRCodeResponse>(`/api/v1/qrcodes/${userId}/profile`);
+  }
+
+  /**
+   * Validate QR code
+   */
+  validateQRCode(qrData: string): Observable<User> {
+    // ApiClientService.post accepts only (endpoint, data), so send qrData in the request body
+    return this.apiClient.post<User>('/api/v1/qrcodes/validate', { qrData });
+  }
+
+  /**
+   * Download QR code
+   */
+  downloadQRCode(userId: string, purpose: string = 'REGISTRATION'): Observable<Blob> {
+    return this.apiClient.get<Blob>(
+      `/api/v1/qrcodes/${userId}/download`,
+      { purpose, size: '300', format: 'PNG' }
+    );
   }
 }

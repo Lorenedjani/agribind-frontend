@@ -3,20 +3,19 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { ViewEncapsulation } from '@angular/core';
 
 // Services
-import { UserService, User, PageResponse, CreateUserCommand } from '../../../../core/services/user.service';
-import { AuthService, UserDisplayInfo } from '../../../../core/services/auth.service';
+import { UserService, CreateUserCommand } from '../../../../core/services/user.service';
+import { AuthService } from '../../../../core/services/auth.service';
+import { HttpClient } from '@angular/common/http';
 
-// Import child components
+// Components
 import { MemberFormComponent } from '../member-form/member-form.component';
 import { EditMemberFormComponent } from '../edit-member-form/edit-member-form.component';
 import { MemberDetailComponent } from '../member-detail/member-detail.component';
 import { DeleteMemberComponent } from '../delete-member/delete-member.component';
 import { CooperativeSidebarComponent } from "../../../../../shared/cooperative-sidebar/cooperative-sidebar.component";
 
-// Member interface
 interface Member {
   id: string;
   name: string;
@@ -26,12 +25,16 @@ interface Member {
   primaryCrop: string;
   status: string;
   email?: string;
-  joinDate?: string;
-  farmSize?: string;
-  address?: string;
-  farmLocation?: string;
-  lastProduction?: string;
-  creditStatus?: string;
+  registrationNumber?: string;
+  qrCodeUrl?: string;
+}
+
+interface QRCodeResponse {
+  userId: string;
+  purpose: string;
+  qrCodeImage: string;
+  qrCodeData: string;
+  downloadUrl?: string;
 }
 
 @Component({
@@ -47,8 +50,7 @@ interface Member {
     CooperativeSidebarComponent
   ],
   templateUrl: './member-list.component.html',
-  styleUrls: ['./member-list.component.scss'],
-  encapsulation: ViewEncapsulation.None
+  styleUrls: ['./member-list.component.scss']
 })
 export class MemberListComponent implements OnInit, OnDestroy {
   @ViewChild(MemberFormComponent) memberFormComponent!: MemberFormComponent;
@@ -57,6 +59,7 @@ export class MemberListComponent implements OnInit, OnDestroy {
   @ViewChild(DeleteMemberComponent) deleteMemberComponent!: DeleteMemberComponent;
 
   private destroy$ = new Subject<void>();
+  private apiUrl = 'http://localhost:8080'; // API Gateway URL
 
   members: Member[] = [];
   filteredMembers: Member[] = [];
@@ -78,20 +81,26 @@ export class MemberListComponent implements OnInit, OnDestroy {
 
   // Filter options
   statusOptions = ['All', 'ACTIVE', 'INACTIVE', 'PENDING', 'SUSPENDED'];
-  regionOptions = ['All', 'North West', 'South West', 'Littoral', 'Centre', 'West', 'Far North'];
+  regionOptions = ['All', 'ADAMAOUA', 'CENTRE', 'EST', 'EXTREME_NORD', 'LITTORAL',
+                   'NORD', 'NORD_OUEST', 'OUEST', 'SUD', 'SUD_OUEST'];
   cropOptions = ['All', 'Cocoa', 'Coffee', 'Cassava', 'Maize', 'Rice', 'Cotton', 'Palm Oil'];
 
-  // User info (for top bar) - now properly typed
-  user: UserDisplayInfo = {
-    name: 'Loading...',
-    role: 'User',
-    initials: 'U',
+  // User info
+  user: any = {
+    name: 'Cooperative Manager',
+    role: 'Cooperative',
+    initials: 'CM',
     email: ''
   };
 
+  // QR Code modal
+  showQRModal = false;
+  selectedQRCode: QRCodeResponse | null = null;
+
   constructor(
     private userService: UserService,
-    private authService: AuthService
+    private authService: AuthService,
+    private http: HttpClient
   ) {}
 
   ngOnInit() {
@@ -104,42 +113,26 @@ export class MemberListComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  /**
-   * Load current user information from AuthService
-   */
   loadUserInfo() {
-    // Subscribe to user display info observable
-    this.authService.userDisplayInfo$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (userInfo) => {
-          if (userInfo) {
-            this.user = userInfo;
-            console.log('✅ User info loaded:', this.user);
-          }
-        },
-        error: (error) => {
-          console.error('❌ Error loading user info:', error);
-          // Fallback to synchronous method
-          this.user = this.authService.getUserDisplayInfo();
-        }
-      });
-
-    // Also get it synchronously for immediate display
-    const syncUser = this.authService.getUserDisplayInfo();
-    if (syncUser) {
-      this.user = syncUser;
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser) {
+      this.user = {
+        name: currentUser.username || currentUser.email || 'User',
+        role: this.formatRole(currentUser.role),
+        initials: this.getInitials(currentUser.username || currentUser.email || 'User'),
+        email: currentUser.email || ''
+      };
     }
   }
 
-  /**
-   * Load members from backend API
-   */
   loadMembers() {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const filters: any = {};
+    const filters: any = {
+      page: this.currentPage - 1,
+      size: this.pageSize
+    };
 
     if (this.selectedStatus !== 'All') {
       filters.status = this.selectedStatus;
@@ -153,62 +146,160 @@ export class MemberListComponent implements OnInit, OnDestroy {
       filters.searchTerm = this.searchQuery.trim();
     }
 
-    const apiPage = this.currentPage - 1;
-
-    console.log('Loading members with filters:', filters);
-
-    this.userService.getUsers(apiPage, this.pageSize, filters)
+    this.userService.getUsers(filters.page, filters.size, filters)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response: PageResponse<User>) => {
-          console.log('✅ Members loaded successfully:', response);
-
-          this.members = response.content.map(user => this.transformUserToMember(user));
+        next: (response: any) => {
+          this.members = response.content.map((user: any) => this.transformUserToMember(user));
           this.totalElements = response.totalElements;
           this.totalPages = response.totalPages;
           this.isLoading = false;
-
           this.applyLocalFilters();
         },
         error: (error) => {
           console.error('❌ Error loading members:', error);
-          this.errorMessage = error.message || 'Failed to load members. Please try again.';
+          this.errorMessage = 'Failed to load members. Please try again.';
           this.isLoading = false;
-
-          this.loadMockDataAsFallback();
         }
       });
   }
 
-  transformUserToMember(user: User): Member {
+  onMemberAdded(newMember: any) {
+    console.log('Member added:', newMember);
+
+    // Transform to CreateUserCommand format
+    const createCommand: CreateUserCommand = {
+      type: newMember.type,
+      name: newMember.name,
+      email: newMember.email,
+      phoneNumber: newMember.phoneNumber,
+      region: this.parseRegion(newMember.region),
+      department: newMember.department,
+      district: newMember.district,
+      village: newMember.village,
+      preferredLanguage: newMember.preferredLanguage,
+      agriculturalType: newMember.agriculturalType,
+      cropTypes: newMember.cropTypes,
+      landArea: newMember.landArea,
+      cooperativeType: newMember.cooperativeType,
+      legalRegistrationNumber: newMember.legalRegistrationNumber,
+      establishmentYear: newMember.establishmentYear
+    };
+
+    this.isLoading = true;
+
+    this.userService.createUser(createCommand)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (user: any) => {
+          console.log('✅ Member created successfully:', user);
+
+          // Show success message with registration details
+          this.showSuccessWithQR(user);
+
+          // Reload the list
+          this.loadMembers();
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('❌ Error creating member:', error);
+          this.errorMessage = error.message || 'Failed to add member';
+          this.isLoading = false;
+          this.showErrorMessage(this.errorMessage);
+        }
+      });
+  }
+
+  // Show success message with QR code option
+  showSuccessWithQR(user: any) {
+    const message = `
+      ✅ Member created successfully!
+
+      Registration Number: ${user.registrationNumber || 'N/A'}
+      User ID: ${user.userId}
+
+      Click OK to view and download the QR code.
+    `;
+
+    if (confirm(message)) {
+      this.generateAndShowQRCode(user.userId);
+    }
+  }
+
+  // Generate and display QR code
+  generateAndShowQRCode(userId: string) {
+    const url = `${this.apiUrl}/api/v1/qrcodes/${userId}/registration`;
+
+    this.http.get<QRCodeResponse>(url)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (qrResponse) => {
+          this.selectedQRCode = qrResponse;
+          this.showQRModal = true;
+        },
+        error: (error) => {
+          console.error('❌ Error generating QR code:', error);
+          alert('Failed to generate QR code. Please try again later.');
+        }
+      });
+  }
+
+  // Handle QR code button click in table
+  onQRCodeClick(member: Member) {
+    this.generateAndShowQRCode(member.id);
+  }
+
+  // Download QR code
+  downloadQRCode() {
+    if (!this.selectedQRCode) return;
+
+    // Convert base64 to blob
+    const base64Data = this.selectedQRCode.qrCodeImage.replace(/^data:image\/png;base64,/, '');
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'image/png' });
+
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `qr-code-${this.selectedQRCode.userId}.png`;
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+  }
+
+  closeQRModal() {
+    this.showQRModal = false;
+    this.selectedQRCode = null;
+  }
+
+  // Other existing methods...
+  transformUserToMember(user: any): Member {
     return {
-      id: user.userId || user.id || 'N/A',
+      id: user.userId || user.id,
       name: user.name,
-      phone: user.phoneNumber || user.phone || 'N/A',
+      phone: user.phoneNumber,
       type: this.formatUserType(user.type),
-      region: user.region || 'N/A',
+      region: user.region,
       primaryCrop: this.getPrimaryCrop(user),
       status: this.formatStatus(user.status),
       email: user.email,
-      joinDate: user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A',
-      farmSize: user.landArea ? `${user.landArea} hectares` : 'N/A',
-      address: this.formatAddress(user),
-      farmLocation: user.village || user.district || 'N/A',
-      lastProduction: 'N/A',
-      creditStatus: 'Good'
+      registrationNumber: user.registrationNumber
     };
   }
 
-  getPrimaryCrop(user: User): string {
-    if (user.cropTypes && user.cropTypes.length > 0) {
-      return user.cropTypes[0];
+  getPrimaryCrop(user: any): string {
+    if (user.farmerDetails?.cropTypes && user.farmerDetails.cropTypes.length > 0) {
+      return user.farmerDetails.cropTypes[0];
     }
-    return user.primaryCrop || 'N/A';
-  }
-
-  formatAddress(user: User): string {
-    const parts = [user.village, user.district, user.region].filter(Boolean);
-    return parts.length > 0 ? parts.join(', ') : 'N/A';
+    return 'N/A';
   }
 
   formatUserType(type: string): string {
@@ -225,28 +316,58 @@ export class MemberListComponent implements OnInit, OnDestroy {
       'ACTIVE': 'Active',
       'INACTIVE': 'Inactive',
       'PENDING': 'Pending',
-      'SUSPENDED': 'Suspended',
-      'DELETED': 'Deleted'
+      'SUSPENDED': 'Suspended'
     };
     return statusMap[status] || status;
   }
 
+  formatRole(role: string): string {
+    const roleMap: { [key: string]: string } = {
+      'COOPERATIVE': 'Cooperative Manager',
+      'FARMER': 'Farmer',
+      'GOVERNMENT': 'Government Official'
+    };
+    return roleMap[role] || role;
+  }
+
+  getInitials(name: string): string {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  }
+
+  parseRegion(region: string): any {
+    const regionMap: any = {
+      'ADAMAOUA': 'ADAMAOUA',
+      'CENTRE': 'CENTRE',
+      'EST': 'EST',
+      'EXTREME_NORD': 'EXTREME_NORD',
+      'LITTORAL': 'LITTORAL',
+      'NORD': 'NORD',
+      'NORD_OUEST': 'NORD_OUEST',
+      'OUEST': 'OUEST',
+      'SUD': 'SUD',
+      'SUD_OUEST': 'SUD_OUEST'
+    };
+    return regionMap[region] || region;
+  }
+
   applyLocalFilters() {
     this.filteredMembers = this.members.filter(member => {
-      const matchesCrop = this.selectedCrop === 'All' ||
-        member.primaryCrop === this.selectedCrop;
-
+      const matchesCrop = this.selectedCrop === 'All' || member.primaryCrop === this.selectedCrop;
       return matchesCrop;
     });
-
     this.updatePaginatedMembers();
   }
 
   updatePaginatedMembers() {
     this.paginatedMembers = this.filteredMembers;
-    console.log(`Showing ${this.paginatedMembers.length} members on page ${this.currentPage} of ${this.totalPages}`);
   }
 
+  // Navigation and filters
   previousPage() {
     if (this.currentPage > 1) {
       this.currentPage--;
@@ -281,6 +402,7 @@ export class MemberListComponent implements OnInit, OnDestroy {
     this.loadMembers();
   }
 
+  // Modal openers
   openAddMemberModal() {
     if (this.memberFormComponent) {
       this.memberFormComponent.openModal();
@@ -305,92 +427,25 @@ export class MemberListComponent implements OnInit, OnDestroy {
     }
   }
 
-  onMemberAdded(newMember: any) {
-    console.log('Member added:', newMember);
-
-    const userType: CreateUserCommand['type'] = newMember.Type === 'Farmer' ? 'FARMER' : 'COOPERATIVE';
-
-    const createCommand: CreateUserCommand = {
-      type: userType,
-      name: newMember.Name,
-      email: newMember.email,
-      phoneNumber: newMember.contact,
-      region: newMember.location,
-      preferredLanguage: 'en',
-      agriculturalType: 'CROP',
-      cropTypes: [newMember.primaryCrop],
-      landArea: parseFloat(newMember.farmSize) || 0
-    };
-
-    this.isLoading = true;
-
-    this.userService.createUser(createCommand)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (user: User) => {
-          console.log('✅ Member created successfully:', user);
-          this.isLoading = false;
-          this.loadMembers();
-          this.showSuccessMessage('Member added successfully!');
-        },
-        error: (error) => {
-          console.error('❌ Error creating member:', error);
-          this.errorMessage = error.message || 'Failed to add member';
-          this.isLoading = false;
-          this.showErrorMessage(this.errorMessage);
-        }
-      });
-  }
-
-  onMemberUpdated(updatedMember: Member) {
+  // Event handlers
+  onMemberUpdated(updatedMember: any) {
     console.log('Member updated:', updatedMember);
-
-    const updateCommand = {
-      name: updatedMember.name,
-      phoneNumber: updatedMember.phone,
-      email: updatedMember.email,
-      region: updatedMember.region
-    };
-
-    this.isLoading = true;
-
-    this.userService.updateUser(updatedMember.id, updateCommand)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (user: User) => {
-          console.log('✅ Member updated successfully:', user);
-          this.isLoading = false;
-          this.loadMembers();
-          this.showSuccessMessage('Member updated successfully!');
-        },
-        error: (error) => {
-          console.error('❌ Error updating member:', error);
-          this.errorMessage = error.message || 'Failed to update member';
-          this.isLoading = false;
-          this.showErrorMessage(this.errorMessage);
-        }
-      });
+    this.loadMembers();
+    this.showSuccessMessage('Member updated successfully!');
   }
 
   onMemberDeleted(member: Member) {
     console.log('Member deleted:', member);
 
-    this.isLoading = true;
-
     this.userService.deleteUser(member.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          console.log('✅ Member deleted successfully');
-          this.isLoading = false;
           this.loadMembers();
           this.showSuccessMessage('Member deleted successfully!');
         },
         error: (error) => {
-          console.error('❌ Error deleting member:', error);
-          this.errorMessage = error.message || 'Failed to delete member';
-          this.isLoading = false;
-          this.showErrorMessage(this.errorMessage);
+          this.showErrorMessage('Failed to delete member');
         }
       });
   }
@@ -401,31 +456,10 @@ export class MemberListComponent implements OnInit, OnDestroy {
 
   onExport() {
     console.log('Exporting members...');
-    this.isLoading = true;
-
-    this.userService.exportUsers('CSV', { type: 'FARMER' })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (blob: Blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `members_export_${new Date().getTime()}.csv`;
-          link.click();
-          window.URL.revokeObjectURL(url);
-
-          this.isLoading = false;
-          this.showSuccessMessage('Export completed successfully!');
-        },
-        error: (error) => {
-          console.error('❌ Export failed:', error);
-          this.errorMessage = error.message || 'Failed to export members';
-          this.isLoading = false;
-          this.showErrorMessage(this.errorMessage);
-        }
-      });
+    // Implementation for export
   }
 
+  // Statistics
   getTotalMembers(): number {
     return this.totalElements;
   }
@@ -457,6 +491,7 @@ export class MemberListComponent implements OnInit, OnDestroy {
     return Math.round((this.getActiveMembers() / this.totalElements) * 100);
   }
 
+  // Styling helpers
   getTypeClass(type: string): string {
     return type === 'Farmer' ? 'type-farmer' : 'type-cooperative';
   }
@@ -477,48 +512,5 @@ export class MemberListComponent implements OnInit, OnDestroy {
 
   showErrorMessage(message: string) {
     alert('Error: ' + message);
-  }
-
-  loadMockDataAsFallback() {
-    console.warn('⚠️ Loading mock data as fallback');
-
-    this.members = [
-      {
-        id: 'M001',
-        name: 'Kwame Osei',
-        phone: '+237 654 123 456',
-        type: 'Farmer',
-        region: 'North West',
-        primaryCrop: 'Cocoa',
-        status: 'Active',
-        email: 'kwame.osei@example.com',
-        joinDate: '2023-01-15',
-        farmSize: '5.2 hectares',
-        address: 'Bambili, Bamenda',
-        farmLocation: 'Mankon Town',
-        lastProduction: '2.5 tons',
-        creditStatus: 'Good'
-      },
-      {
-        id: 'M002',
-        name: 'Ama Boateng',
-        phone: '+237 677 234 567',
-        type: 'Farmer',
-        region: 'Centre',
-        primaryCrop: 'Coffee',
-        status: 'Active',
-        email: 'ama.boateng@example.com',
-        joinDate: '2023-02-20',
-        farmSize: '3.8 hectares',
-        address: 'Efoulan, Yaoundé',
-        farmLocation: 'Yaoundé Central',
-        lastProduction: '1.8 tons',
-        creditStatus: 'Excellent'
-      }
-    ];
-
-    this.totalElements = this.members.length;
-    this.totalPages = 1;
-    this.applyLocalFilters();
   }
 }

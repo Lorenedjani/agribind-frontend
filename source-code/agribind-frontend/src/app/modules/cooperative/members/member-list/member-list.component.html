@@ -247,3 +247,302 @@
   (memberDeleted)="onMemberDeleted($event)"
   (modalClosed)="onModalClosed()">
 </app-delete-member>
+
+<!-- Add this QR Code Modal to member-list.component.html (at the end, before closing tags) -->
+
+<!-- QR Code Modal -->
+<div class="modal-overlay" *ngIf="showQRModal && selectedQRCode">
+  <div class="qr-modal">
+    <div class="qr-modal-header">
+      <h2>
+        <i class="fas fa-qrcode"></i> Registration QR Code
+      </h2>
+      <button class="close-btn" (click)="closeQRModal()">✖</button>
+    </div>
+
+    <div class="qr-modal-body">
+      <div class="qr-code-display">
+        <img [src]="selectedQRCode.qrCodeImage"
+             alt="QR Code"
+             class="qr-code-image">
+      </div>
+
+      <div class="qr-info">
+        <div class="info-item">
+          <label>User ID:</label>
+          <span class="info-value">{{ selectedQRCode.userId }}</span>
+        </div>
+        <div class="info-item">
+          <label>Purpose:</label>
+          <span class="info-value">{{ selectedQRCode.purpose }}</span>
+        </div>
+        <div class="info-item">
+          <label>QR Data:</label>
+          <code class="qr-data">{{ selectedQRCode.qrCodeData }}</code>
+        </div>
+      </div>
+
+      <div class="qr-instructions">
+        <h4><i class="fas fa-info-circle"></i> Instructions</h4>
+        <ul>
+          <li>Download and print this QR code</li>
+          <li>Provide it to the farmer for easy registration</li>
+          <li>Scan with the AgriBind mobile app to complete registration</li>
+          <li>Store securely - this contains unique registration data</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="qr-modal-footer">
+      <button class="btn btn-secondary" (click)="closeQRModal()">
+        <i class="fas fa-times"></i> Close
+      </button>
+      <button class="btn btn-primary" (click)="downloadQRCode()">
+        <i class="fas fa-download"></i> Download QR Code
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add this CSS to member-list.component.scss -->
+<style>
+.qr-modal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 550px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.qr-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px;
+  border-bottom: 2px solid #e1e5e9;
+  background: linear-gradient(135deg, #328048 0%, #2e7d32 100%);
+  border-radius: 16px 16px 0 0;
+
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    i {
+      font-size: 1.8rem;
+    }
+  }
+
+  .close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.2s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(90deg);
+    }
+  }
+}
+
+.qr-modal-body {
+  padding: 32px 28px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.qr-code-display {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 3px dashed #328048;
+
+  .qr-code-image {
+    max-width: 300px;
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.qr-info {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #dee2e6;
+
+    &:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    label {
+      font-weight: 600;
+      color: #495057;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-value {
+      color: #212529;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .qr-data {
+      background: #fff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #495057;
+      border: 1px solid #dee2e6;
+      word-break: break-all;
+      font-family: 'Courier New', monospace;
+    }
+  }
+}
+
+.qr-instructions {
+  background: #e3f2fd;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border-left: 4px solid #2196f3;
+
+  h4 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    color: #1976d2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 20px;
+
+    li {
+      color: #1565c0;
+      margin-bottom: 8px;
+      line-height: 1.5;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+.qr-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 28px;
+  border-top: 2px solid #e1e5e9;
+  background: #f8f9fa;
+  border-radius: 0 0 16px 16px;
+
+  .btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    i {
+      font-size: 1rem;
+    }
+
+    &.btn-secondary {
+      background: #6c757d;
+      color: white;
+
+      &:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+      }
+    }
+
+    &.btn-primary {
+      background: linear-gradient(135deg, #328048 0%, #2e7d32 100%);
+      color: white;
+
+      &:hover {
+        background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(50, 128, 72, 0.4);
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .qr-modal {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .qr-modal-header {
+    padding: 20px;
+  }
+
+  .qr-modal-body {
+    padding: 20px;
+  }
+
+  .qr-code-display .qr-code-image {
+    max-width: 250px;
+  }
+
+  .qr-modal-footer {
+    flex-direction: column;
+    padding: 16px 20px;
+
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+</style>
