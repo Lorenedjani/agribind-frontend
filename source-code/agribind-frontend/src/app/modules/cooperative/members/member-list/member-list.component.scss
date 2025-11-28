@@ -1,3 +1,5 @@
+// src/app/modules/cooperative/members/member-list/member-list.component.scss
+
 :root {
   --color-sidebar-green: #328048;
   --color-sidebar-green-dark: #276233;
@@ -21,29 +23,37 @@
   font-family: 'Inter', sans-serif;
   color: #2c2c2c;
   background: var(--color-gray-bg);
+  position: relative;
 }
 
+/* Fixed Sidebar */
 app-cooperative-sidebar {
-  width: 240px !important;
+  width: 240px;
   height: 100vh;
   position: fixed;
   left: 0;
   top: 0;
   background: #fff;
   border-right: 1px solid #ddd;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: 2px 0 8px rgba(0,0,0,0.06);
   z-index: 1001;
+  overflow-y: auto;
 }
 
+/* Main Content Area */
 .main-content {
   margin-left: 240px;
   flex-grow: 1;
-  padding: 100px 48px 48px;
+  padding-top: 80px; /* Space for fixed header */
+  padding-left: 48px;
+  padding-right: 48px;
+  padding-bottom: 48px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   overflow-y: auto;
   background: var(--color-gray-bg);
+  width: calc(100% - 240px);
 }
 
 /* Fixed Header */
@@ -52,9 +62,10 @@ app-cooperative-sidebar {
   top: 0;
   left: 240px;
   right: 0;
-  z-index: 1002;
+  height: 64px;
+  z-index: 1000;
   background: #fff;
-  padding: 16px 48px;
+  padding: 0 48px;
   border-bottom: 1px solid #e7e7e7;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   display: flex;
@@ -75,6 +86,11 @@ app-cooperative-sidebar {
     border: none;
     cursor: pointer;
     margin-left: 1rem;
+    transition: color 0.2s;
+
+    &:hover {
+      color: var(--color-sidebar-green);
+    }
   }
 
   .top-bar-actions {
@@ -90,6 +106,11 @@ app-cooperative-sidebar {
       border: none;
       cursor: pointer;
       margin-right: 8px;
+      transition: color 0.2s;
+
+      &:hover {
+        color: var(--color-sidebar-green);
+      }
 
       &:after {
         content: "";
@@ -109,6 +130,13 @@ app-cooperative-sidebar {
       align-items: center;
       gap: 14px;
       cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 8px;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: #f8f9fa;
+      }
 
       .avatar {
         background: var(--color-sidebar-green);
@@ -122,11 +150,13 @@ app-cooperative-sidebar {
         align-items: center;
         justify-content: center;
         user-select: none;
+        flex-shrink: 0;
       }
 
       .user-details {
         display: flex;
         flex-direction: column;
+        line-height: 1.3;
 
         .user-name {
           font-weight: 700;
@@ -146,13 +176,12 @@ app-cooperative-sidebar {
 
 /* Cards Overview */
 .cards-overview {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 24px;
   margin-bottom: 36px;
-  flex-wrap: wrap;
 
   .card {
-    flex: 1 1 240px;
     background: #fff;
     border-radius: 14px;
     box-shadow: 0 6px 16px rgba(50, 128, 72, 0.12);
@@ -160,7 +189,6 @@ app-cooperative-sidebar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    min-width: 220px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     cursor: pointer;
 
@@ -184,14 +212,14 @@ app-cooperative-sidebar {
         font-weight: 600;
         font-size: 14px;
         margin: 0 0 4px;
-      }
 
-      .green-text {
-        color: var(--color-sidebar-green);
-      }
+        &.green-text {
+          color: var(--color-sidebar-green);
+        }
 
-      .yellow-text {
-        color: var(--color-yellow-text);
+        &.yellow-text {
+          color: var(--color-yellow-text);
+        }
       }
 
       .card-title {
@@ -232,10 +260,10 @@ app-cooperative-sidebar {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 24px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 
   .search-wrapper {
-    flex-grow: 1;
+    flex: 1 1 300px;
     max-width: 700px;
     position: relative;
   }
@@ -258,7 +286,7 @@ app-cooperative-sidebar {
     &:focus {
       outline: none;
       box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-      border-color: #e0e0e0;
+      border-color: var(--color-sidebar-green);
     }
   }
 
@@ -348,6 +376,11 @@ app-cooperative-sidebar {
       color: #7a7a7a;
       margin-bottom: 10px;
       user-select: none;
+
+      i {
+        margin-right: 8px;
+        color: var(--color-sidebar-green);
+      }
     }
 
     select.filter-select {
@@ -358,6 +391,7 @@ app-cooperative-sidebar {
       background: #fafafa;
       color: #555;
       transition: border-color 0.3s;
+      cursor: pointer;
 
       &:focus {
         outline: none;
@@ -384,14 +418,17 @@ app-cooperative-sidebar {
     font-size: 15px;
     color: #444;
 
-    thead tr {
-      th {
-        color: var(--color-sidebar-green);
-        font-weight: 700;
-        padding: 16px 18px;
-        text-align: left;
-        white-space: nowrap;
-        border-bottom: 2px solid #cee4ce;
+    thead tr th {
+      color: var(--color-sidebar-green);
+      font-weight: 700;
+      padding: 16px 18px;
+      text-align: left;
+      white-space: nowrap;
+      border-bottom: 2px solid #cee4ce;
+
+      i {
+        margin-right: 6px;
+        font-size: 14px;
       }
     }
 
@@ -453,7 +490,28 @@ app-cooperative-sidebar {
     }
   }
 
-  /* Badges for Type */
+  .contact-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .phone-icon {
+      color: var(--color-sidebar-green);
+      font-size: 14px;
+    }
+  }
+
+  .location-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    i {
+      color: var(--color-sidebar-green);
+      font-size: 14px;
+    }
+  }
+
   .badge {
     padding: 8px 18px;
     border-radius: 20px;
@@ -472,7 +530,6 @@ app-cooperative-sidebar {
     }
   }
 
-  /* Crop badges */
   .crop-badge {
     display: inline-block;
     padding: 8px 18px;
@@ -483,13 +540,19 @@ app-cooperative-sidebar {
     font-size: 14px;
   }
 
-  /* Status badges with proper colors */
   .status-badge {
     padding: 8px 18px;
     border-radius: 20px;
     font-weight: 600;
     font-size: 14px;
     user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    i {
+      font-size: 8px;
+    }
 
     &.status-active {
       background-color: var(--color-sidebar-green);
@@ -507,7 +570,6 @@ app-cooperative-sidebar {
     }
   }
 
-  /* Action Buttons */
   .action-buttons-group {
     display: flex;
     gap: 8px;
@@ -530,6 +592,7 @@ app-cooperative-sidebar {
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
+
     &:active {
       transform: translateY(0);
     }
@@ -573,12 +636,23 @@ app-cooperative-sidebar {
   }
 }
 
-/* No data state */
 .no-data {
   text-align: center;
   font-style: italic;
   color: #999;
   padding: 30px 0;
+
+  i {
+    font-size: 48px;
+    color: #ddd;
+    display: block;
+    margin-bottom: 16px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 16px;
+  }
 }
 
 /* Pagination */
@@ -602,6 +676,7 @@ app-cooperative-sidebar {
     &:disabled {
       background-color: #a7c19b;
       cursor: not-allowed;
+      opacity: 0.6;
     }
 
     &:hover:not(:disabled) {
@@ -617,54 +692,143 @@ app-cooperative-sidebar {
   }
 }
 
-/* Responsive Adjustments */
-@media (max-width: 992px) {
-  .cards-overview {
-    justify-content: center;
+/* Loading Spinner */
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid var(--color-sidebar-green);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 40px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Alert Messages */
+.alert {
+  padding: 16px 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  &.alert-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #dc2626;
   }
 
-  .cards-overview .card {
-    flex: 1 1 45%;
-  }
-
-  .filters {
-    gap: 30px;
-    flex-wrap: wrap;
+  &.alert-success {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #059669;
   }
 }
 
-@media (max-width: 576px) {
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .cards-overview {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  app-cooperative-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+
+    &.open {
+      transform: translateX(0);
+    }
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 100px 20px 20px;
+    width: 100%;
+  }
+
+  .top-bar {
+    left: 0;
+    padding: 0 20px;
+
+    .user-details {
+      display: none;
+    }
+  }
+
+  .cards-overview {
+    grid-template-columns: 1fr;
+  }
+
   .top-filters {
-    flex-wrap: wrap;
-    gap: 12px;
+    flex-direction: column;
+    align-items: stretch;
+
+    .search-wrapper {
+      max-width: 100%;
+    }
 
     .button-group {
       width: 100%;
       justify-content: space-between;
 
       button {
-        width: 48%;
+        flex: 1;
         min-width: unset;
       }
     }
+  }
 
-    .search-wrapper {
-      width: 100%;
-      max-width: 100%;
-      min-width: unset;
+  .filters {
+    gap: 20px;
+
+    .filter-group {
+      flex: 1 1 100%;
     }
   }
 
-  .main-content {
-    margin-left: 0;
-    padding: 130px 20px 20px;
-  }
+  .table-section {
+    padding: 20px;
 
-  app-cooperative-sidebar {
-    display: none;
+    table {
+      min-width: 700px;
+    }
   }
+}
 
+@media (max-width: 480px) {
   .top-bar {
-    left: 0;
+    .page-title h3 {
+      font-size: 18px;
+    }
+
+    .user-info {
+      .avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+      }
+    }
+  }
+
+  .cards-overview .card {
+    padding: 20px 24px;
+
+    .card-content h2 {
+      font-size: 24px;
+    }
+
+    .icon-box {
+      width: 50px;
+      height: 50px;
+      font-size: 24px;
+    }
   }
 }

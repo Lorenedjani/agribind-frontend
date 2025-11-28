@@ -6,8 +6,8 @@ import { Subject, takeUntil } from 'rxjs';
 import { ViewEncapsulation } from '@angular/core';
 
 // Services
-import { UserService, User, PageResponse } from '../../../../core/services/user.service';
-import { AuthService } from '../../../../core/services/auth.service';
+import { UserService, User, PageResponse, CreateUserCommand } from '../../../../core/services/user.service';
+import { AuthService, UserDisplayInfo } from '../../../../core/services/auth.service';
 
 // Import child components
 import { MemberFormComponent } from '../member-form/member-form.component';
@@ -16,7 +16,7 @@ import { MemberDetailComponent } from '../member-detail/member-detail.component'
 import { DeleteMemberComponent } from '../delete-member/delete-member.component';
 import { CooperativeSidebarComponent } from "../../../../../shared/cooperative-sidebar/cooperative-sidebar.component";
 
-// Simple Member interface for the component
+// Member interface
 interface Member {
   id: string;
   name: string;
@@ -81,11 +81,12 @@ export class MemberListComponent implements OnInit, OnDestroy {
   regionOptions = ['All', 'North West', 'South West', 'Littoral', 'Centre', 'West', 'Far North'];
   cropOptions = ['All', 'Cocoa', 'Coffee', 'Cassava', 'Maize', 'Rice', 'Cotton', 'Palm Oil'];
 
-  // User info (for top bar)
-  user = {
-    name: 'Admin User',
-    role: 'Administrator',
-    initials: 'AU'
+  // User info (for top bar) - now properly typed
+  user: UserDisplayInfo = {
+    name: 'Loading...',
+    role: 'User',
+    initials: 'U',
+    email: ''
   };
 
   constructor(
@@ -104,16 +105,30 @@ export class MemberListComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Load current user information
+   * Load current user information from AuthService
    */
   loadUserInfo() {
-    const currentUser = this.authService.getCurrentUser();
-    if (currentUser) {
-      this.user = {
-        name: currentUser.username || 'User',
-        role: this.formatRole(currentUser.role),
-        initials: this.getInitials(currentUser.username || 'User')
-      };
+    // Subscribe to user display info observable
+    this.authService.userDisplayInfo$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (userInfo) => {
+          if (userInfo) {
+            this.user = userInfo;
+            console.log('✅ User info loaded:', this.user);
+          }
+        },
+        error: (error) => {
+          console.error('❌ Error loading user info:', error);
+          // Fallback to synchronous method
+          this.user = this.authService.getUserDisplayInfo();
+        }
+      });
+
+    // Also get it synchronously for immediate display
+    const syncUser = this.authService.getUserDisplayInfo();
+    if (syncUser) {
+      this.user = syncUser;
     }
   }
 
@@ -124,25 +139,20 @@ export class MemberListComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.errorMessage = '';
 
-    // Build filters for API
     const filters: any = {};
 
-    // Apply status filter
     if (this.selectedStatus !== 'All') {
       filters.status = this.selectedStatus;
     }
 
-    // Apply region filter
     if (this.selectedRegion !== 'All') {
       filters.region = this.selectedRegion;
     }
 
-    // Apply search query
     if (this.searchQuery.trim()) {
       filters.searchTerm = this.searchQuery.trim();
     }
 
-    // Convert page number (1-based for UI, 0-based for API)
     const apiPage = this.currentPage - 1;
 
     console.log('Loading members with filters:', filters);
@@ -165,15 +175,11 @@ export class MemberListComponent implements OnInit, OnDestroy {
           this.errorMessage = error.message || 'Failed to load members. Please try again.';
           this.isLoading = false;
 
-          // Load mock data as fallback
           this.loadMockDataAsFallback();
         }
       });
   }
 
-  /**
-   * Transform User from API to Member format
-   */
   transformUserToMember(user: User): Member {
     return {
       id: user.userId || user.id || 'N/A',
@@ -188,14 +194,11 @@ export class MemberListComponent implements OnInit, OnDestroy {
       farmSize: user.landArea ? `${user.landArea} hectares` : 'N/A',
       address: this.formatAddress(user),
       farmLocation: user.village || user.district || 'N/A',
-      lastProduction: 'N/A', // This would come from production records
-      creditStatus: 'Good' // This would come from credit service
+      lastProduction: 'N/A',
+      creditStatus: 'Good'
     };
   }
 
-  /**
-   * Get primary crop from user
-   */
   getPrimaryCrop(user: User): string {
     if (user.cropTypes && user.cropTypes.length > 0) {
       return user.cropTypes[0];
@@ -203,17 +206,11 @@ export class MemberListComponent implements OnInit, OnDestroy {
     return user.primaryCrop || 'N/A';
   }
 
-  /**
-   * Format user address
-   */
   formatAddress(user: User): string {
     const parts = [user.village, user.district, user.region].filter(Boolean);
     return parts.length > 0 ? parts.join(', ') : 'N/A';
   }
 
-  /**
-   * Format user type for display
-   */
   formatUserType(type: string): string {
     const typeMap: { [key: string]: string } = {
       'FARMER': 'Farmer',
@@ -223,9 +220,6 @@ export class MemberListComponent implements OnInit, OnDestroy {
     return typeMap[type] || type;
   }
 
-  /**
-   * Format status for display
-   */
   formatStatus(status: string): string {
     const statusMap: { [key: string]: string } = {
       'ACTIVE': 'Active',
@@ -237,35 +231,8 @@ export class MemberListComponent implements OnInit, OnDestroy {
     return statusMap[status] || status;
   }
 
-  /**
-   * Format role for display
-   */
-  formatRole(role: string): string {
-    const roleMap: { [key: string]: string } = {
-      'COOPERATIVE': 'Cooperative Manager',
-      'FARMER': 'Farmer',
-      'GOVERNMENT': 'Government Official'
-    };
-    return roleMap[role] || 'User';
-  }
-
-  /**
-   * Get initials from name
-   */
-  getInitials(name: string): string {
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-  }
-
-  /**
-   * Apply local filters (for crop type which isn't in backend filter)
-   */
   applyLocalFilters() {
     this.filteredMembers = this.members.filter(member => {
-      // Crop filter (local only)
       const matchesCrop = this.selectedCrop === 'All' ||
         member.primaryCrop === this.selectedCrop;
 
@@ -275,37 +242,25 @@ export class MemberListComponent implements OnInit, OnDestroy {
     this.updatePaginatedMembers();
   }
 
-  /**
-   * Update paginated members for current view
-   */
   updatePaginatedMembers() {
-    // Since we're using server-side pagination, just use the filtered members
     this.paginatedMembers = this.filteredMembers;
-
-    // Update display count
     console.log(`Showing ${this.paginatedMembers.length} members on page ${this.currentPage} of ${this.totalPages}`);
   }
 
-  /**
-   * Pagination methods
-   */
   previousPage() {
     if (this.currentPage > 1) {
       this.currentPage--;
-      this.loadMembers(); // Reload from server
+      this.loadMembers();
     }
   }
 
   nextPage() {
     if (this.currentPage < this.totalPages) {
       this.currentPage++;
-      this.loadMembers(); // Reload from server
+      this.loadMembers();
     }
   }
 
-  /**
-   * Filter change handlers
-   */
   onStatusChange() {
     this.currentPage = 1;
     this.loadMembers();
@@ -322,14 +277,10 @@ export class MemberListComponent implements OnInit, OnDestroy {
   }
 
   onSearchChange() {
-    // Debounce search
     this.currentPage = 1;
     this.loadMembers();
   }
 
-  /**
-   * Modal handlers
-   */
   openAddMemberModal() {
     if (this.memberFormComponent) {
       this.memberFormComponent.openModal();
@@ -354,15 +305,13 @@ export class MemberListComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Event handlers from child components
-   */
   onMemberAdded(newMember: any) {
     console.log('Member added:', newMember);
 
-    // Create user command for API
-    const createCommand = {
-      type: newMember.Type === 'Farmer' ? 'FARMER' : 'COOPERATIVE',
+    const userType: CreateUserCommand['type'] = newMember.Type === 'Farmer' ? 'FARMER' : 'COOPERATIVE';
+
+    const createCommand: CreateUserCommand = {
+      type: userType,
       name: newMember.Name,
       email: newMember.email,
       phoneNumber: newMember.contact,
@@ -381,7 +330,7 @@ export class MemberListComponent implements OnInit, OnDestroy {
         next: (user: User) => {
           console.log('✅ Member created successfully:', user);
           this.isLoading = false;
-          this.loadMembers(); // Reload the list
+          this.loadMembers();
           this.showSuccessMessage('Member added successfully!');
         },
         error: (error) => {
@@ -411,7 +360,7 @@ export class MemberListComponent implements OnInit, OnDestroy {
         next: (user: User) => {
           console.log('✅ Member updated successfully:', user);
           this.isLoading = false;
-          this.loadMembers(); // Reload the list
+          this.loadMembers();
           this.showSuccessMessage('Member updated successfully!');
         },
         error: (error) => {
@@ -434,7 +383,7 @@ export class MemberListComponent implements OnInit, OnDestroy {
         next: () => {
           console.log('✅ Member deleted successfully');
           this.isLoading = false;
-          this.loadMembers(); // Reload the list
+          this.loadMembers();
           this.showSuccessMessage('Member deleted successfully!');
         },
         error: (error) => {
@@ -450,9 +399,6 @@ export class MemberListComponent implements OnInit, OnDestroy {
     console.log('Modal closed');
   }
 
-  /**
-   * Export functionality
-   */
   onExport() {
     console.log('Exporting members...');
     this.isLoading = true;
@@ -480,9 +426,6 @@ export class MemberListComponent implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * Statistics methods for cards
-   */
   getTotalMembers(): number {
     return this.totalElements;
   }
@@ -514,9 +457,6 @@ export class MemberListComponent implements OnInit, OnDestroy {
     return Math.round((this.getActiveMembers() / this.totalElements) * 100);
   }
 
-  /**
-   * Helper methods for template
-   */
   getTypeClass(type: string): string {
     return type === 'Farmer' ? 'type-farmer' : 'type-cooperative';
   }
@@ -531,25 +471,14 @@ export class MemberListComponent implements OnInit, OnDestroy {
     return statusMap[status] || 'status-active';
   }
 
-  /**
-   * Show success message
-   */
   showSuccessMessage(message: string) {
-    // You can implement a toast notification service here
     alert(message);
   }
 
-  /**
-   * Show error message
-   */
   showErrorMessage(message: string) {
-    // You can implement a toast notification service here
     alert('Error: ' + message);
   }
 
-  /**
-   * Load mock data as fallback when backend is unavailable
-   */
   loadMockDataAsFallback() {
     console.warn('⚠️ Loading mock data as fallback');
 

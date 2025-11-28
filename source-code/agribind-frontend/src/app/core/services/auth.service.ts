@@ -6,7 +6,7 @@ import { ApiClientService } from './api-client.service';
 import { Router } from '@angular/router';
 
 export interface LoginRequest {
-  username: string; // Can be email or phone number
+  username: string;
   password: string;
   deviceId?: string;
 }
@@ -23,7 +23,7 @@ export interface UserInfo {
   userId: string;
   username: string;
   email: string;
-  role: string; // FARMER, COOPERATIVE, GOVERNMENT
+  role: string;
   cooperativeId?: string;
   preferredLanguage: string;
   firstLogin: boolean;
@@ -42,6 +42,14 @@ export interface ApiResponse<T> {
   timestamp: string;
 }
 
+// Helper interface for UI display
+export interface UserDisplayInfo {
+  name: string;
+  role: string;
+  initials: string;
+  email: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -49,11 +57,19 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<UserInfo | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
+  // Observable for user display info
+  public userDisplayInfo$: Observable<UserDisplayInfo | null>;
+
   constructor(
     private apiClient: ApiClientService,
     private router: Router
   ) {
     this.loadStoredUser();
+
+    // Map user info to display info
+    this.userDisplayInfo$ = this.currentUser$.pipe(
+      map(user => user ? this.mapToDisplayInfo(user) : null)
+    );
   }
 
   private loadStoredUser(): void {
@@ -71,21 +87,67 @@ export class AuthService {
   }
 
   /**
-   * Login with username (email or phone) and password
+   * Map UserInfo to UserDisplayInfo for UI
    */
+  private mapToDisplayInfo(user: UserInfo): UserDisplayInfo {
+    return {
+      name: user.username || user.email || 'User',
+      role: this.formatRole(user.role),
+      initials: this.getInitials(user.username || user.email || 'User'),
+      email: user.email || ''
+    };
+  }
+
+  /**
+   * Format role for display
+   */
+  private formatRole(role: string): string {
+    const roleMap: { [key: string]: string } = {
+      'COOPERATIVE': 'Cooperative Manager',
+      'FARMER': 'Farmer',
+      'GOVERNMENT': 'Government Official'
+    };
+    return roleMap[role] || role;
+  }
+
+  /**
+   * Get initials from name
+   */
+  private getInitials(name: string): string {
+    if (!name) return 'U';
+
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  }
+
+  /**
+   * Get current user display info synchronously
+   */
+  getUserDisplayInfo(): UserDisplayInfo {
+    const user = this.getCurrentUser();
+    if (user) {
+      return this.mapToDisplayInfo(user);
+    }
+    return {
+      name: 'User',
+      role: 'Guest',
+      initials: 'U',
+      email: ''
+    };
+  }
+
   login(credentials: LoginRequest): Observable<LoginResponse> {
     console.log('🔐 Attempting login with:', credentials.username);
 
-    // Add device ID if not provided
     if (!credentials.deviceId) {
       credentials.deviceId = this.getOrCreateDeviceId();
     }
 
     return this.apiClient.post<ApiResponse<LoginResponse>>('/api/v1/auth/login', credentials).pipe(
-      map(response => {
-        // Handle wrapped response
-        return response.data || response as any;
-      }),
+      map(response => response.data || response as any),
       tap(loginData => {
         console.log('✅ Login response received:', loginData);
         this.handleLoginSuccess(loginData);
@@ -97,9 +159,6 @@ export class AuthService {
     );
   }
 
-  /**
-   * QR Code login for farmers
-   */
   qrLogin(registrationNumber: string): Observable<LoginResponse> {
     console.log('📱 Attempting QR login with registration:', registrationNumber);
 
@@ -118,9 +177,6 @@ export class AuthService {
     );
   }
 
-  /**
-   * Change password for authenticated user
-   */
   changePassword(request: PasswordChangeRequest): Observable<void> {
     const userId = this.getCurrentUser()?.userId;
     if (!userId) {
@@ -139,9 +195,6 @@ export class AuthService {
     );
   }
 
-  /**
-   * Set password on first login
-   */
   setFirstLoginPassword(newPassword: string, confirmPassword: string): Observable<void> {
     const userId = this.getCurrentUser()?.userId;
     if (!userId) {
@@ -155,7 +208,6 @@ export class AuthService {
     }).pipe(
       tap(() => {
         console.log('✅ First login password set successfully');
-        // Update user to mark first login complete
         const user = this.getCurrentUser();
         if (user) {
           user.firstLogin = false;
@@ -168,9 +220,6 @@ export class AuthService {
     );
   }
 
-  /**
-   * Refresh access token
-   */
   refreshToken(): Observable<LoginResponse> {
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) {
@@ -182,7 +231,6 @@ export class AuthService {
     }).pipe(
       map(response => response.data || response as any),
       tap(loginData => {
-        // Update tokens
         localStorage.setItem('accessToken', loginData.accessToken);
         console.log('✅ Token refreshed successfully');
       }),
@@ -194,15 +242,11 @@ export class AuthService {
     );
   }
 
-  /**
-   * Logout current user
-   */
   logout(): void {
     const userId = this.currentUserSubject.value?.userId;
     const deviceId = this.getDeviceId();
 
     if (userId) {
-      // Call logout endpoint (fire and forget)
       this.apiClient.post('/api/v1/auth/logout', { userId, deviceId }).subscribe({
         next: () => console.log('✅ Logout successful'),
         error: (err) => console.error('❌ Logout error:', err)
@@ -213,17 +257,12 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
-  /**
-   * Handle successful login
-   */
   private handleLoginSuccess(loginData: LoginResponse): void {
     if (loginData.accessToken && loginData.userInfo) {
-      // Store tokens
       localStorage.setItem('accessToken', loginData.accessToken);
       localStorage.setItem('refreshToken', loginData.refreshToken);
       localStorage.setItem('user', JSON.stringify(loginData.userInfo));
 
-      // Update current user
       this.currentUserSubject.next(loginData.userInfo);
 
       console.log('✅ Login successful:', {
@@ -237,9 +276,6 @@ export class AuthService {
     }
   }
 
-  /**
-   * Clear stored authentication data
-   */
   private clearStoredData(): void {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
@@ -248,9 +284,6 @@ export class AuthService {
     console.log('🗑️ Authentication data cleared');
   }
 
-  /**
-   * Get or create device ID for tracking
-   */
   private getOrCreateDeviceId(): string {
     let deviceId = localStorage.getItem('deviceId');
     if (!deviceId) {
@@ -268,9 +301,6 @@ export class AuthService {
     return 'WEB-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
   }
 
-  /**
-   * Format error for consistent error handling
-   */
   private formatError(error: any): any {
     if (error.error?.message) {
       return { message: error.error.message, status: error.status };
