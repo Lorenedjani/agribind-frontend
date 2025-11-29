@@ -160,77 +160,115 @@ export class MemberListComponent implements OnInit, OnDestroy {
       });
   }
 
-  onMemberAdded(newMember: any) {
-    console.log('➕ Member added event received:', newMember);
+// CRITICAL FIX: member-list.component.ts - Updated onMemberAdded method
 
-    // Transform to CreateUserCommand format
-    const createCommand: CreateUserCommand = {
-      type: newMember.type,
-      name: newMember.name,
-      email: newMember.email,
-      phoneNumber: newMember.phoneNumber,
-      region: newMember.region,
-      department: newMember.department,
-      district: newMember.district,
-      village: newMember.village,
-      gpsCoordinates: newMember.gpsCoordinates, // Farm GPS coordinates
-      preferredLanguage: newMember.preferredLanguage,
-      agriculturalType: newMember.agriculturalType,
-      cropTypes: newMember.cropTypes,
-      landArea: newMember.landArea,
-      cooperativeType: newMember.cooperativeType,
-      legalRegistrationNumber: newMember.legalRegistrationNumber,
-      establishmentYear: newMember.establishmentYear,
-      contactPerson: newMember.contactPerson
-    };
+onMemberAdded(newMember: any) {
+  console.log('➕ Member added event received:', newMember);
 
-    console.log('🚀 Sending createUser command:', createCommand);
-    this.isLoading = true;
+  // ✅ Transform to CreateUserCommand format matching backend exactly
+  const createCommand: any = {
+    type: newMember.type, // 'FARMER' or 'COOPERATIVE'
+    name: newMember.name,
+    email: newMember.email || null,
+    phoneNumber: newMember.phoneNumber,
 
-    this.userService.createUser(createCommand)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (user: any) => {
-          console.log('✅ Member created successfully:', user);
-          this.showSuccessMessage(`Member ${user.name} created successfully!`);
+    // ✅ RESIDENTIAL ADDRESS (where they live)
+    region: newMember.region,
+    department: newMember.department || null,
+    district: newMember.district || null,
+    village: newMember.village || null,
 
-          // Show QR code if available
-          if (user.registrationNumber) {
-            this.showSuccessWithQR(user);
-          }
+    // ✅ FARM GPS COORDINATES (where their farm is located)
+    gpsCoordinates: newMember.gpsCoordinates || null,
 
-          // Reload the list
-          this.loadMembers();
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('❌ Error creating member:', error);
-          this.errorMessage = this.formatErrorMessage(error);
-          this.isLoading = false;
-          this.showErrorMessage(this.errorMessage);
+    preferredLanguage: newMember.preferredLanguage || 'fr'
+  };
+
+  // ✅ Add FARMER-specific fields
+  if (newMember.type === 'FARMER') {
+    createCommand.agriculturalType = newMember.agriculturalType;
+    createCommand.cropTypes = newMember.cropTypes || [];
+    createCommand.livestockTypes = []; // Empty array if not provided
+    createCommand.landArea = newMember.landArea;
+    createCommand.cooperativeId = null; // Set if farmer belongs to a cooperative
+  }
+
+  // ✅ Add COOPERATIVE-specific fields
+  if (newMember.type === 'COOPERATIVE') {
+    createCommand.cooperativeType = newMember.cooperativeType;
+    createCommand.legalRegistrationNumber = newMember.legalRegistrationNumber;
+    createCommand.establishmentYear = newMember.establishmentYear;
+    createCommand.contactPerson = newMember.contactPerson;
+  }
+
+  console.log('🚀 Sending createUser command:', createCommand);
+  this.isLoading = true;
+
+  this.userService.createUser(createCommand)
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (user: any) => {
+        console.log('✅ Member created successfully:', user);
+
+        // Show success message with user details
+        const successMessage = `✅ ${user.name} has been registered successfully!\n\n` +
+          `User ID: ${user.userId}\n` +
+          `Registration Number: ${user.registrationNumber || 'N/A'}\n` +
+          `Phone: ${user.phoneNumber}\n` +
+          (user.email ? `Email: ${user.email}\n` : '') +
+          `\nCredentials have been sent via ${user.email ? 'SMS and Email' : 'SMS'}.`;
+
+        alert(successMessage);
+
+        // Reload the member list
+        this.loadMembers();
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('❌ Error creating member:', error);
+
+        // Enhanced error messages
+        let errorMessage = 'Failed to create member. ';
+
+        if (error.error?.message) {
+          errorMessage += error.error.message;
+        } else if (error.status === 400) {
+          errorMessage += 'Invalid data provided. Please check all required fields.';
+        } else if (error.status === 409) {
+          errorMessage += 'Phone number or email already exists.';
+        } else if (error.status === 403) {
+          errorMessage += 'You do not have permission to create members.';
+        } else if (error.status === 0) {
+          errorMessage += 'Cannot connect to server. Please check your connection.';
+        } else {
+          errorMessage += 'Please try again.';
         }
-      });
+
+        this.errorMessage = errorMessage;
+        this.isLoading = false;
+        alert('❌ ' + errorMessage);
+      }
+    });
+}
+
+// ✅ ADD THIS: Enhanced error formatting
+private formatErrorMessage(error: any): string {
+  if (error.error?.message) {
+    return error.error.message;
   }
 
-  formatErrorMessage(error: any): string {
-    if (error.error?.message) {
-      return error.error.message;
-    }
-    if (error.message) {
-      return error.message;
-    }
-    if (error.status === 403) {
-      return 'You do not have permission to perform this action.';
-    }
-    if (error.status === 401) {
-      return 'Your session has expired. Please log in again.';
-    }
-    if (error.status === 400) {
-      return 'Invalid data provided. Please check your input.';
-    }
-    return 'Failed to create member. Please try again.';
-  }
+  const statusMessages: { [key: number]: string } = {
+    0: 'Cannot connect to server. Please check your internet connection.',
+    400: 'Invalid data provided. Please check all required fields.',
+    401: 'Your session has expired. Please log in again.',
+    403: 'You do not have permission to perform this action.',
+    404: 'Resource not found.',
+    409: 'Phone number or email already exists.',
+    500: 'Server error. Please try again later.'
+  };
 
+  return statusMessages[error.status] || 'An unexpected error occurred. Please try again.';
+}
   showSuccessWithQR(user: any) {
     const message = `✅ Member created successfully!\n\nRegistration Number: ${user.registrationNumber || 'N/A'}\nUser ID: ${user.userId}\n\nWould you like to view and download the QR code?`;
 
