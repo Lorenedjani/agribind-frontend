@@ -48,14 +48,14 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
   isSubmitting = false;
   memberForm!: FormGroup;
 
-  // ✅ FIXED: Google Maps variables with proper initialization
+  // ✅ Google Maps variables
   private map: any = null;
   private marker: any = null;
   private autocomplete: any = null;
   private geocoder: any = null;
   private mapInitialized = false;
-  private mapLoadTimeout: any;
-  private scriptLoaded = false;
+  private initAttempts = 0;
+  private maxInitAttempts = 10;
 
   userRole: string = 'COOPERATIVE';
   selectedMemberType: 'FARMER' | 'COOPERATIVE' = 'FARMER';
@@ -75,17 +75,15 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.initForm();
+    this.loadGoogleMapsScript();
   }
 
   ngAfterViewInit(): void {
-    // Don't initialize map here - wait for modal to open
+    // Map will be initialized when modal opens
   }
 
   ngOnDestroy(): void {
     this.cleanupGoogleMaps();
-    if (this.mapLoadTimeout) {
-      clearTimeout(this.mapLoadTimeout);
-    }
   }
 
   private initForm(): void {
@@ -150,91 +148,93 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
       .forEach(control => control?.updateValueAndValidity({ emitEvent: false }));
   }
 
-  // ===== GOOGLE MAPS INTEGRATION - FIXED =====
+  // ===== GOOGLE MAPS INTEGRATION - COMPLETE FIX =====
 
-  private async loadGoogleMapsScript(): Promise<void> {
-    // ✅ Check if script already loaded
-    if (this.scriptLoaded && window.google && window.google.maps) {
+  private loadGoogleMapsScript(): void {
+    // Check if already loaded
+    if (window.google && window.google.maps) {
       console.log('✅ Google Maps already loaded');
-      this.mapInitialized = true;
-      this.geocoder = new window.google.maps.Geocoder();
       return;
     }
 
-    return new Promise((resolve, reject) => {
-      // ✅ Check if script is currently loading
-      const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
-      if (existingScript) {
-        console.log('⏳ Google Maps script already exists, waiting...');
-        const checkInterval = setInterval(() => {
-          if (window.google && window.google.maps) {
-            clearInterval(checkInterval);
-            this.scriptLoaded = true;
-            this.mapInitialized = true;
-            this.geocoder = new window.google.maps.Geocoder();
-            resolve();
-          }
-        }, 100);
-        return;
-      }
+    // Check if script already exists
+    if (document.querySelector('script[src*="maps.googleapis.com"]')) {
+      console.log('⏳ Google Maps script already loading...');
+      return;
+    }
 
-      // ✅ Create new script
-      const script = document.createElement('script');
-      const apiKey = environment.googleMapsApiKey || 'AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg';
+    console.log('📍 Loading Google Maps script...');
 
-      // ✅ Set callback BEFORE adding script
-      window.initMap = () => {
-        console.log('✅ Google Maps initMap callback fired');
-        this.scriptLoaded = true;
-        this.mapInitialized = true;
-        if (window.google && window.google.maps) {
-          this.geocoder = new window.google.maps.Geocoder();
-        }
-        resolve();
-      };
+    const script = document.createElement('script');
+    const apiKey = environment.googleMapsApiKey || 'AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg';
 
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initMap`;
-      script.async = true;
-      script.defer = true;
+    // Set callback before adding script
+    window.initMap = () => {
+      console.log('✅ Google Maps loaded successfully');
+      this.geocoder = new window.google.maps.Geocoder();
+    };
 
-      script.onerror = () => {
-        console.error('❌ Failed to load Google Maps');
-        reject(new Error('Failed to load Google Maps'));
-      };
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initMap`;
+    script.async = true;
+    script.defer = true;
 
-      document.head.appendChild(script);
-      console.log('📍 Google Maps script added to DOM');
-    });
+    script.onerror = () => {
+      console.error('❌ Failed to load Google Maps');
+    };
+
+    document.head.appendChild(script);
   }
 
   private async initMapInstance(): Promise<void> {
-    try {
-      console.log('🗺️ Initializing map instance...');
+    console.log('🗺️ Attempting to initialize map...');
 
-      // ✅ Load script first
-      await this.loadGoogleMapsScript();
-
-      // ✅ Wait for container to be in DOM
-      await this.waitForElement('farm-map-container');
-
-      const mapContainer = document.getElementById('farm-map-container');
-      if (!mapContainer) {
-        console.warn('⚠️ Map container not found after waiting');
+    // Wait for Google Maps to be ready
+    if (!window.google || !window.google.maps) {
+      console.log('⏳ Waiting for Google Maps to load...');
+      if (this.initAttempts < this.maxInitAttempts) {
+        this.initAttempts++;
+        setTimeout(() => this.initMapInstance(), 500);
+        return;
+      } else {
+        console.error('❌ Google Maps failed to load after maximum attempts');
         return;
       }
+    }
 
-      console.log('✅ Map container found, creating map...');
+    // Wait for map container
+    const mapContainer = document.getElementById('farm-map-container');
+    if (!mapContainer) {
+      console.log('⏳ Waiting for map container...');
+      if (this.initAttempts < this.maxInitAttempts) {
+        this.initAttempts++;
+        setTimeout(() => this.initMapInstance(), 300);
+        return;
+      } else {
+        console.error('❌ Map container not found after maximum attempts');
+        return;
+      }
+    }
 
-      const cameroonCenter = { lat: 5.9631, lng: 10.1591 };
+    // All conditions met, create the map
+    this.ngZone.run(() => {
+      try {
+        console.log('✅ Creating map instance...');
 
-      // ✅ Run map creation in Angular zone
-      this.ngZone.run(() => {
+        const cameroonCenter = { lat: 5.9631, lng: 10.1591 };
+
         this.map = new window.google.maps.Map(mapContainer, {
           center: cameroonCenter,
           zoom: 6,
           mapTypeControl: true,
           streetViewControl: false,
-          fullscreenControl: true
+          fullscreenControl: true,
+          styles: [
+            {
+              featureType: 'poi',
+              elementType: 'labels',
+              stylers: [{ visibility: 'on' }]
+            }
+          ]
         });
 
         this.marker = new window.google.maps.Marker({
@@ -245,9 +245,7 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
           visible: false
         });
 
-        console.log('✅ Map and marker created successfully');
-
-        // ✅ Setup event listeners
+        // Event listeners
         this.map.addListener('click', (event: any) => {
           this.ngZone.run(() => {
             this.placeFarmMarker(event.latLng);
@@ -260,67 +258,62 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
           });
         });
 
-        // ✅ Initialize autocomplete
+        this.mapInitialized = true;
+        console.log('✅ Map initialized successfully');
+
+        // Initialize autocomplete
         this.initFarmLocationAutocomplete();
-      });
 
-    } catch (error) {
-      console.error('❌ Map initialization failed:', error);
-    }
-  }
-
-  private waitForElement(id: string, timeout = 5000): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const startTime = Date.now();
-
-      const checkElement = () => {
-        const element = document.getElementById(id);
-        if (element) {
-          resolve();
-        } else if (Date.now() - startTime > timeout) {
-          reject(new Error(`Element ${id} not found after ${timeout}ms`));
-        } else {
-          setTimeout(checkElement, 100);
-        }
-      };
-
-      checkElement();
+      } catch (error) {
+        console.error('❌ Error creating map:', error);
+      }
     });
   }
 
   private initFarmLocationAutocomplete(): void {
     const searchInput = document.getElementById('farm-location-search') as HTMLInputElement;
-    if (!searchInput || !window.google) {
-      console.warn('⚠️ Cannot init autocomplete - missing input or Google Maps');
+    if (!searchInput || !window.google || !window.google.maps) {
+      console.warn('⚠️ Cannot initialize autocomplete');
       return;
     }
 
-    this.autocomplete = new window.google.maps.places.Autocomplete(searchInput, {
-      types: ['geocode', 'establishment'],
-      componentRestrictions: { country: 'cm' }
-    });
-
-    this.autocomplete.addListener('place_changed', () => {
-      this.ngZone.run(() => {
-        const place = this.autocomplete.getPlace();
-
-        if (!place.geometry) {
-          console.warn('⚠️ No geometry found for selected place');
-          return;
-        }
-
-        this.map.setCenter(place.geometry.location);
-        this.map.setZoom(15);
-        this.placeFarmMarker(place.geometry.location);
-
-        this.memberForm.patchValue({
-          farmFullAddress: place.formatted_address
-        }, { emitEvent: false });
+    try {
+      this.autocomplete = new window.google.maps.places.Autocomplete(searchInput, {
+        types: ['geocode', 'establishment'],
+        componentRestrictions: { country: 'cm' },
+        fields: ['geometry', 'formatted_address', 'name']
       });
-    });
+
+      this.autocomplete.addListener('place_changed', () => {
+        this.ngZone.run(() => {
+          const place = this.autocomplete.getPlace();
+
+          if (!place.geometry || !place.geometry.location) {
+            console.warn('⚠️ No geometry found for selected place');
+            return;
+          }
+
+          this.map.setCenter(place.geometry.location);
+          this.map.setZoom(15);
+          this.placeFarmMarker(place.geometry.location);
+
+          this.memberForm.patchValue({
+            farmFullAddress: place.formatted_address || place.name
+          }, { emitEvent: false });
+
+          console.log('✅ Location selected from autocomplete');
+        });
+      });
+
+      console.log('✅ Autocomplete initialized');
+    } catch (error) {
+      console.error('❌ Error initializing autocomplete:', error);
+    }
   }
 
   private placeFarmMarker(location: any): void {
+    if (!this.marker || !this.map) return;
+
     this.marker.setPosition(location);
     this.marker.setVisible(true);
     this.map.panTo(location);
@@ -328,6 +321,8 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private updateFarmCoordinatesFromMarker(): void {
+    if (!this.marker) return;
+
     const position = this.marker.getPosition();
     if (position) {
       const lat = position.lat();
@@ -352,6 +347,11 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.marker) {
       this.marker.setVisible(false);
     }
+
+    if (this.map) {
+      this.map.setCenter({ lat: 5.9631, lng: 10.1591 });
+      this.map.setZoom(6);
+    }
   }
 
   private cleanupGoogleMaps(): void {
@@ -367,6 +367,8 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
       window.google.maps.event.clearInstanceListeners(this.autocomplete);
       this.autocomplete = null;
     }
+    this.mapInitialized = false;
+    this.initAttempts = 0;
   }
 
   // ===== MODAL MANAGEMENT =====
@@ -384,15 +386,13 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     document.body.style.overflow = 'hidden';
 
-    // ✅ Delay map initialization to ensure DOM is ready
-    this.mapLoadTimeout = setTimeout(() => {
-      console.log('⏰ Map initialization timeout fired');
-      this.initMapInstance().then(() => {
-        console.log('✅ Map initialization complete');
-      }).catch(err => {
-        console.error('❌ Map initialization error:', err);
-      });
-    }, 800); // ✅ Increased delay for stability
+    // ✅ Initialize map after a delay to ensure DOM is ready
+    this.initAttempts = 0;
+    setTimeout(() => {
+      if (this.isModalOpen) {
+        this.initMapInstance();
+      }
+    }, 500);
   }
 
   closeModal(): void {
