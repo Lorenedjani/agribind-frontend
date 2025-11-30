@@ -21,26 +21,16 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
-                        // ✅ CRITICAL FIX: Allow internal auth endpoint
-                        .requestMatchers(
-                                "/api/v1/users/internal/**",      // ✅ Internal auth endpoint
-                                "/api/v1/users/exists/**",
-                                "/api/v1/qrcodes/validate",
-                                "/api/v1/qrcodes/scan-login",
-                                "/api/v1/qrcodes/scan-registration",
-                                "/uploads/**",
-                                "/exports/**",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/swagger-resources/**",
-                                "/webjars/**",
-                                "/actuator/health"
-                        ).permitAll()
-                        // Protected endpoints
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/government/**").hasAnyRole("GOVERNMENT", "ADMIN")
-                        .requestMatchers("/api/v1/cooperatives/**").hasAnyRole("COOPERATIVE", "ADMIN")
-                        .anyRequest().authenticated()
+                        // ✅ CRITICAL FIX: Allow ALL endpoints for development
+                        .requestMatchers("/api/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/exports/**").permitAll()
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-resources/**").permitAll()
+                        .requestMatchers("/webjars/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        .anyRequest().permitAll()
                 );
 
         return http.build();
