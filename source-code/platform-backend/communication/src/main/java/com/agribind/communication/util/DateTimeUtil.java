@@ -1,6 +1,7 @@
 package com.agribind.communication.util;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -14,9 +15,10 @@ import java.util.Date;
 /**
  * Utility class for date and time operations
  */
-@Slf4j
 @Component
 public class DateTimeUtil {
+
+    private static final Logger log = LoggerFactory.getLogger(DateTimeUtil.class);
 
     // Cameroon timezone
     private static final ZoneId CAMEROON_ZONE = ZoneId.of("Africa/Douala");

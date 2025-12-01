@@ -1,8 +1,9 @@
 package com.agribind.communication.service;
 
+import com.agribind.communication.dto.MemberDto; // Add this import
 import com.agribind.communication.model.TargetAudience;
-import lombok.*;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -16,10 +17,11 @@ import java.util.stream.Collectors;
  * In production, use Spring Cloud OpenFeign for better integration
  */
 @Service
-@Slf4j
 public class MemberService {
 
     private final RestTemplate restTemplate;
+
+    private static final Logger log = LoggerFactory.getLogger(MemberService.class);
 
     // This would typically be injected from configuration
     private static final String MEMBER_SERVICE_URL = "http://localhost:8080/api/members";

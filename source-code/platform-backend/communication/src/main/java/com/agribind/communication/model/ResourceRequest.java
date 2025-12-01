@@ -1,25 +1,16 @@
 package com.agribind.communication.model;
 
 import jakarta.persistence.*;
-import lombok.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
-
-// ==================== Resource Request Entity ====================
 @Entity
 @Table(name = "resource_requests")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class ResourceRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String requestId; // REQ-001
+    private String requestId;
 
     private String resourceName;
     private Integer quantity;
@@ -45,4 +36,41 @@ public class ResourceRequest {
         status = RequestStatus.PENDING;
         suppliersMatched = 0;
     }
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getRequestId() { return requestId; }
+    public void setRequestId(String requestId) { this.requestId = requestId; }
+
+    public String getResourceName() { return resourceName; }
+    public void setResourceName(String resourceName) { this.resourceName = resourceName; }
+
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+
+    public String getUnit() { return unit; }
+    public void setUnit(String unit) { this.unit = unit; }
+
+    public UrgencyLevel getUrgency() { return urgency; }
+    public void setUrgency(UrgencyLevel urgency) { this.urgency = urgency; }
+
+    public String getRequestedBy() { return requestedBy; }
+    public void setRequestedBy(String requestedBy) { this.requestedBy = requestedBy; }
+
+    public String getRequestedByZone() { return requestedByZone; }
+    public void setRequestedByZone(String requestedByZone) { this.requestedByZone = requestedByZone; }
+
+    public RequestStatus getStatus() { return status; }
+    public void setStatus(RequestStatus status) { this.status = status; }
+
+    public Integer getSuppliersMatched() { return suppliersMatched; }
+    public void setSuppliersMatched(Integer suppliersMatched) { this.suppliersMatched = suppliersMatched; }
+
+    public LocalDateTime getRequestDate() { return requestDate; }
+    public void setRequestDate(LocalDateTime requestDate) { this.requestDate = requestDate; }
+
+    public LocalDateTime getFulfilledDate() { return fulfilledDate; }
+    public void setFulfilledDate(LocalDateTime fulfilledDate) { this.fulfilledDate = fulfilledDate; }
 }

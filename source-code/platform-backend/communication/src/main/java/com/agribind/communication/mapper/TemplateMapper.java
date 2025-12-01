@@ -20,8 +20,6 @@ public interface TemplateMapper {
      */
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
-    @Mapping(target = "updatedAt", expression = "java(java.time.LocalDateTime.now())")
-    @Mapping(target = "templateVariables", ignore = true)
     MessageTemplate toEntity(MessageTemplateDto dto);
 
     /**
@@ -29,6 +27,5 @@ public interface TemplateMapper {
      */
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", expression = "java(java.time.LocalDateTime.now())")
     void updateEntityFromDto(MessageTemplateDto dto, @MappingTarget MessageTemplate template);
 }

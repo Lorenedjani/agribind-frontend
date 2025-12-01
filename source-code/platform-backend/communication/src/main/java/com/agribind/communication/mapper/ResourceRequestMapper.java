@@ -12,25 +12,26 @@ import org.mapstruct.*;
 public interface ResourceRequestMapper {
 
     /**
-     * Convert ResourceRequest entity to ResourceRequestResponse
+     * Convert ResourceRequest entity to DTO
      */
-    @Mapping(source = "id", target = "requestId")
-    @Mapping(source = "createdAt", target = "requestDate")
-    ResourceRequestResponse toResourceRequestResponse(ResourceRequest resourceRequest);
+    ResourceRequestDto toDto(ResourceRequest request);
 
     /**
-     * Convert ResourceRequestDto to ResourceRequest entity
+     * Convert ResourceRequestDto to entity
      */
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
-    @Mapping(target = "updatedAt", expression = "java(java.time.LocalDateTime.now())")
+    @Mapping(target = "requestDate", expression = "java(java.time.LocalDateTime.now())")
     ResourceRequest toEntity(ResourceRequestDto dto);
+
+    /**
+     * Convert ResourceRequest entity to Response DTO
+     */
+    ResourceRequestResponse toResponse(ResourceRequest request);
 
     /**
      * Update existing ResourceRequest entity from DTO
      */
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", expression = "java(java.time.LocalDateTime.now())")
-    void updateEntityFromDto(ResourceRequestDto dto, @MappingTarget ResourceRequest resourceRequest);
+    @Mapping(target = "requestDate", ignore = true)
+    void updateEntityFromDto(ResourceRequestDto dto, @MappingTarget ResourceRequest request);
 }

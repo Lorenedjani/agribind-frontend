@@ -1,7 +1,8 @@
 package com.agribind.communication.util;
 
 import com.agribind.communication.exception.InvalidFileException;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,9 +19,10 @@ import java.util.UUID;
 /**
  * Utility class for file operations
  */
-@Slf4j
 @Component
 public class FileUtil {
+
+    private static final Logger log = LoggerFactory.getLogger(FileUtil.class);
 
     // Allowed audio file extensions
     private static final List<String> ALLOWED_AUDIO_EXTENSIONS = Arrays.asList(

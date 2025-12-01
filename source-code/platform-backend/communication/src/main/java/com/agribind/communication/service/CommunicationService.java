@@ -3,8 +3,8 @@ package com.agribind.communication.service;
 import com.agribind.communication.dto.*;
 import com.agribind.communication.model.*;
 import com.agribind.communication.repository.*;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,9 +16,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class CommunicationService {
+
+    private static final Logger log = LoggerFactory.getLogger(CommunicationService.class); // Fixed logger class
 
     private final MessageRepository messageRepository;
     private final AlertRepository alertRepository;
@@ -29,6 +29,24 @@ public class CommunicationService {
     private final TwilioSmsService twilioSmsService;
     private final AudioMessageService audioMessageService;
     private final MemberService memberService;
+
+    public CommunicationService(MessageRepository messageRepository,
+                           AlertRepository alertRepository,
+                           ResourceRequestRepository resourceRequestRepository,
+                           MessageTemplateRepository messageTemplateRepository,
+                           CommunicationStatsRepository statsRepository,
+                           TwilioSmsService twilioSmsService,
+                           AudioMessageService audioMessageService,
+                           MemberService memberService) {
+    this.messageRepository = messageRepository;
+    this.alertRepository = alertRepository;
+    this.resourceRequestRepository = resourceRequestRepository;
+    this.messageTemplateRepository = messageTemplateRepository;
+    this.statsRepository = statsRepository;
+    this.twilioSmsService = twilioSmsService;
+    this.audioMessageService = audioMessageService;
+    this.memberService = memberService;
+}
 
     // ==================== SMS Operations ====================
 
@@ -49,17 +67,14 @@ public class CommunicationService {
         );
 
         // Create message record
-        Message message = Message.builder()
-            .type(MessageType.SMS)
-            .priority(request.getPriority())
-            .content(content)
-            .targetAudience(request.getTargetAudience())
-            .specificZone(request.getSpecificZone())
-            .scheduledAt(request.getScheduledAt())
-            .totalRecipients(phoneNumbers.size())
-            .estimatedCost(twilioSmsService.calculateEstimatedCost(phoneNumbers.size()))
-            .status(MessageStatus.SENDING)
-            .build();
+        Message message = new Message();
+        message.setContent(request.getContent());
+        message.setTargetAudience(request.getTargetAudience());
+        message.setSpecificZone(request.getSpecificZone());
+        message.setStatus(MessageStatus.SCHEDULED);
+        message.setPriority(request.getPriority());
+        message.setScheduledAt(request.getScheduledAt());
+        message.setCreatedAt(LocalDateTime.now());
 
         message = messageRepository.save(message);
 
@@ -71,14 +86,16 @@ public class CommunicationService {
             sendSmsAsync(messageId, phoneNumbers, finalContent);
         }
 
-        return SmsMessageResponse.builder()
-            .id(message.getId())
-            .content(message.getContent())
-            .recipientCount(message.getTotalRecipients())
-            .estimatedCost(message.getEstimatedCost())
-            .status(message.getStatus())
-            .createdAt(message.getCreatedAt())
-            .build();
+        // Replace builder with direct object creation
+        SmsMessageResponse response = new SmsMessageResponse();
+        response.setId(message.getId());
+        response.setContent(message.getContent());
+        response.setRecipientCount(message.getTotalRecipients());
+        response.setEstimatedCost(message.getEstimatedCost());
+        response.setStatus(message.getStatus());
+        response.setCreatedAt(message.getCreatedAt());
+
+        return response;
     }
 
     @Async
@@ -122,32 +139,34 @@ public class CommunicationService {
                 request.getSpecificZone()
             );
 
-            // Create message record
-            Message message = Message.builder()
-                .type(MessageType.AUDIO)
-                .priority(request.getPriority())
-                .title(request.getTitle())
-                .audioFileUrl(audioFileUrl)
-                .targetAudience(request.getTargetAudience())
-                .specificZone(request.getSpecificZone())
-                .totalRecipients(recipientCount)
-                .status(MessageStatus.SENT)
-                .sentAt(LocalDateTime.now())
-                .build();
+            // Create message record - replace builder with direct object creation
+            Message message = new Message();
+            message.setType(MessageType.AUDIO);
+            message.setPriority(request.getPriority());
+            message.setTitle(request.getTitle());
+            message.setAudioFileUrl(audioFileUrl);
+            message.setTargetAudience(request.getTargetAudience());
+            message.setSpecificZone(request.getSpecificZone());
+            message.setTotalRecipients(recipientCount);
+            message.setStatus(MessageStatus.SENT);
+            message.setSentAt(LocalDateTime.now());
+            message.setCreatedAt(LocalDateTime.now());
 
             message = messageRepository.save(message);
 
             updateStatistics();
 
-            return AudioMessageResponse.builder()
-                .id(message.getId())
-                .title(message.getTitle())
-                .language(request.getLanguage())
-                .audioFileUrl(message.getAudioFileUrl())
-                .recipientCount(message.getTotalRecipients())
-                .status(message.getStatus())
-                .createdAt(message.getCreatedAt())
-                .build();
+            // Replace builder with direct object creation
+            AudioMessageResponse response = new AudioMessageResponse();
+            response.setId(message.getId());
+            response.setTitle(message.getTitle());
+            response.setLanguage(request.getLanguage());
+            response.setAudioFileUrl(message.getAudioFileUrl());
+            response.setRecipientCount(message.getTotalRecipients());
+            response.setStatus(message.getStatus());
+            response.setCreatedAt(message.getCreatedAt());
+
+            return response;
 
         } catch (Exception e) {
             log.error("Error creating audio message: {}", e.getMessage());
@@ -170,18 +189,18 @@ public class CommunicationService {
         // Generate alert ID
         String alertId = generateAlertId();
 
-        // Create alert
-        Alert alert = Alert.builder()
-            .alertId(alertId)
-            .type(request.getType())
-            .priority(request.getPriority())
-            .title(request.getTitle())
-            .content(request.getContent())
-            .channels(request.getChannels())
-            .recipientCount(recipientCount)
-            .status(AlertStatus.ACTIVE)
-            .deliveryRate(0.0)
-            .build();
+        // Create alert - replace builder with direct object creation
+        Alert alert = new Alert();
+        alert.setAlertId(alertId);
+        alert.setType(request.getType());
+        alert.setPriority(request.getPriority());
+        alert.setTitle(request.getTitle());
+        alert.setContent(request.getContent());
+        alert.setChannels(request.getChannels());
+        alert.setRecipientCount(recipientCount);
+        alert.setStatus(AlertStatus.ACTIVE);
+        alert.setDeliveryRate(0.0);
+        alert.setCreatedAt(LocalDateTime.now());
 
         alert = alertRepository.save(alert);
 
@@ -189,18 +208,20 @@ public class CommunicationService {
         final Long alertId_final = alert.getId();
         sendAlertAsync(alertId_final, request);
 
-        return AlertResponse.builder()
-            .id(alert.getId())
-            .alertId(alert.getAlertId())
-            .type(alert.getType())
-            .priority(alert.getPriority())
-            .title(alert.getTitle())
-            .recipientCount(alert.getRecipientCount())
-            .channels(alert.getChannels())
-            .deliveryRate(alert.getDeliveryRate())
-            .status(alert.getStatus())
-            .createdAt(alert.getCreatedAt())
-            .build();
+        // Replace builder with direct object creation
+        AlertResponse response = new AlertResponse();
+        response.setId(alert.getId());
+        response.setAlertId(alert.getAlertId());
+        response.setType(alert.getType());
+        response.setPriority(alert.getPriority());
+        response.setTitle(alert.getTitle());
+        response.setRecipientCount(alert.getRecipientCount());
+        response.setChannels(alert.getChannels());
+        response.setDeliveryRate(alert.getDeliveryRate());
+        response.setStatus(alert.getStatus());
+        response.setCreatedAt(alert.getCreatedAt());
+
+        return response;
     }
 
     @Async
@@ -247,16 +268,17 @@ public class CommunicationService {
     public ResourceRequestResponse createResourceRequest(ResourceRequestDto dto) {
         String requestId = generateResourceRequestId();
 
-        ResourceRequest request = ResourceRequest.builder()
-            .requestId(requestId)
-            .resourceName(dto.getResourceName())
-            .quantity(dto.getQuantity())
-            .unit(dto.getUnit())
-            .urgency(dto.getUrgency())
-            .requestedBy(dto.getRequestedBy())
-            .requestedByZone(dto.getRequestedByZone())
-            .status(RequestStatus.PENDING)
-            .build();
+        // Replace builder with direct object creation
+        ResourceRequest request = new ResourceRequest();
+        request.setRequestId(requestId);
+        request.setResourceName(dto.getResourceName());
+        request.setQuantity(dto.getQuantity());
+        request.setUnit(dto.getUnit());
+        request.setUrgency(dto.getUrgency());
+        request.setRequestedBy(dto.getRequestedBy());
+        request.setRequestedByZone(dto.getRequestedByZone());
+        request.setStatus(RequestStatus.PENDING);
+        request.setRequestDate(LocalDateTime.now());
 
         request = resourceRequestRepository.save(request);
 
@@ -283,11 +305,12 @@ public class CommunicationService {
 
     @Transactional
     public MessageTemplateDto createTemplate(MessageTemplateDto dto) {
-        MessageTemplate template = MessageTemplate.builder()
-            .name(dto.getName())
-            .content(dto.getContent())
-            .variables(dto.getVariables())
-            .build();
+        // Replace builder with direct object creation
+        MessageTemplate template = new MessageTemplate();
+        template.setName(dto.getName());
+        template.setContent(dto.getContent());
+        template.setVariables(dto.getVariables());
+        template.setCreatedAt(LocalDateTime.now());
 
         template = messageTemplateRepository.save(template);
         return mapToTemplateDto(template);
@@ -311,26 +334,29 @@ public class CommunicationService {
         CommunicationStats stats = statsRepository.findTopByOrderByStatDateDesc()
             .orElseGet(this::createDefaultStats);
 
-        return CommunicationStatsResponse.builder()
-            .totalMessagesSent(stats.getTotalMessagesSent())
-            .messagesSentThisWeek(stats.getMessagesSentThisWeek())
-            .audioMessagesTotal(stats.getAudioMessagesTotal())
-            .audioLanguagesSupported(stats.getAudioLanguagesSupported())
-            .activeAlerts(stats.getActiveAlerts())
-            .criticalAlerts(stats.getCriticalAlerts())
-            .deliveryRate(stats.getDeliveryRate())
-            .deliveryRateChange(stats.getDeliveryRateChange())
-            .activeMembers(stats.getActiveMembers())
-            .activeLoansAmount(stats.getActiveLoansAmount())
-            .lowStockAlerts(stats.getLowStockAlerts())
-            .lastUpdated(stats.getStatDate())
-            .build();
+        // Replace builder with direct object creation
+        CommunicationStatsResponse response = new CommunicationStatsResponse();
+        response.setTotalMessagesSent(stats.getTotalMessagesSent());
+        response.setMessagesSentThisWeek(stats.getMessagesSentThisWeek());
+        response.setAudioMessagesTotal(stats.getAudioMessagesTotal());
+        response.setAudioLanguagesSupported(stats.getAudioLanguagesSupported());
+        response.setActiveAlerts(stats.getActiveAlerts());
+        response.setCriticalAlerts(stats.getCriticalAlerts());
+        response.setDeliveryRate(stats.getDeliveryRate());
+        response.setDeliveryRateChange(stats.getDeliveryRateChange());
+        response.setActiveMembers(stats.getActiveMembers());
+        response.setActiveLoansAmount(stats.getActiveLoansAmount());
+        response.setLowStockAlerts(stats.getLowStockAlerts());
+        response.setLastUpdated(stats.getStatDate());
+
+        return response;
     }
 
     @Transactional
     public void updateStatistics() {
         LocalDateTime weekStart = LocalDateTime.now().minusDays(7);
 
+        // Use the builder we added to CommunicationStats
         CommunicationStats stats = CommunicationStats.builder()
             .totalMessagesSent(messageRepository.count().intValue())
             .messagesSentThisWeek(messageRepository.countMessagesThisWeek(weekStart))
@@ -392,39 +418,42 @@ public class CommunicationService {
     }
 
     private AlertResponse mapToAlertResponse(Alert alert) {
-        return AlertResponse.builder()
-            .id(alert.getId())
-            .alertId(alert.getAlertId())
-            .type(alert.getType())
-            .priority(alert.getPriority())
-            .title(alert.getTitle())
-            .recipientCount(alert.getRecipientCount())
-            .channels(alert.getChannels())
-            .deliveryRate(alert.getDeliveryRate())
-            .status(alert.getStatus())
-            .createdAt(alert.getCreatedAt())
-            .build();
+        // Replace builder with direct object creation
+        AlertResponse response = new AlertResponse();
+        response.setId(alert.getId());
+        response.setAlertId(alert.getAlertId());
+        response.setType(alert.getType());
+        response.setPriority(alert.getPriority());
+        response.setTitle(alert.getTitle());
+        response.setRecipientCount(alert.getRecipientCount());
+        response.setChannels(alert.getChannels());
+        response.setDeliveryRate(alert.getDeliveryRate());
+        response.setStatus(alert.getStatus());
+        response.setCreatedAt(alert.getCreatedAt());
+        return response;
     }
 
     private ResourceRequestResponse mapToResourceRequestResponse(ResourceRequest request) {
-        return ResourceRequestResponse.builder()
-            .id(request.getId())
-            .requestId(request.getRequestId())
-            .resourceName(request.getResourceName())
-            .quantity(request.getQuantity())
-            .urgency(request.getUrgency())
-            .status(request.getStatus())
-            .suppliersMatched(request.getSuppliersMatched())
-            .requestDate(request.getRequestDate())
-            .build();
+        // Replace builder with direct object creation
+        ResourceRequestResponse response = new ResourceRequestResponse();
+        response.setId(request.getId());
+        response.setRequestId(request.getRequestId());
+        response.setResourceName(request.getResourceName());
+        response.setQuantity(request.getQuantity());
+        response.setUrgency(request.getUrgency());
+        response.setStatus(request.getStatus());
+        response.setSuppliersMatched(request.getSuppliersMatched());
+        response.setRequestDate(request.getRequestDate());
+        return response;
     }
 
     private MessageTemplateDto mapToTemplateDto(MessageTemplate template) {
-        return MessageTemplateDto.builder()
-            .id(template.getId())
-            .name(template.getName())
-            .content(template.getContent())
-            .variables(template.getVariables())
-            .build();
+        // Replace builder with direct object creation
+        MessageTemplateDto dto = new MessageTemplateDto();
+        dto.setId(template.getId());
+        dto.setName(template.getName());
+        dto.setContent(template.getContent());
+        dto.setVariables(template.getVariables());
+        return dto;
     }
 }

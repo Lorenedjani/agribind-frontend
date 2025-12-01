@@ -8,8 +8,8 @@ package com.agribind.communication.scheduler;
 import com.agribind.communication.model.Alert;
 import com.agribind.communication.model.AlertStatus;
 import com.agribind.communication.repository.AlertRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +21,15 @@ import java.util.List;
  * Scheduler to handle alert expiration
  */
 @Component
-@RequiredArgsConstructor
-@Slf4j
 public class AlertExpirationScheduler {
 
+    private static final Logger log = LoggerFactory.getLogger(AlertExpirationScheduler.class);
+
     private final AlertRepository alertRepository;
+
+    public AlertExpirationScheduler(AlertRepository alertRepository) {
+        this.alertRepository = alertRepository;
+    }
 
     /**
      * Expire old alerts

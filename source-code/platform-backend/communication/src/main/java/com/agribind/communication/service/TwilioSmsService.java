@@ -3,7 +3,9 @@ package com.agribind.communication.service;
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -12,9 +14,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-@Slf4j
 @Service
 public class TwilioSmsService {
+
+    private static final Logger log = LoggerFactory.getLogger(MemberService.class);
 
     @Value("${twilio.account-sid}")
     private String accountSid;

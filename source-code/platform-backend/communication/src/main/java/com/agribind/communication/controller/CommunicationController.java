@@ -4,8 +4,8 @@ import com.agribind.communication.dto.*;
 import com.agribind.communication.service.AudioMessageService;
 import com.agribind.communication.service.CommunicationService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,13 +16,18 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/communications")
-@RequiredArgsConstructor
-@Slf4j
 @CrossOrigin(origins = "*")
 public class CommunicationController {
 
+    private static final Logger log = LoggerFactory.getLogger(CommunicationController.class);
+
     private final CommunicationService communicationService;
     private final AudioMessageService audioMessageService;
+
+    public CommunicationController(CommunicationService communicationService, AudioMessageService audioMessageService) {
+        this.communicationService = communicationService;
+        this.audioMessageService = audioMessageService;
+    }
 
     // ==================== SMS Endpoints ====================
 
@@ -41,24 +46,24 @@ public class CommunicationController {
     ) {
         log.info("Composing bulk message for: {}", request.getRecipientAudience());
 
-        SmsMessageRequest smsRequest = SmsMessageRequest.builder()
-            .targetAudience(request.getRecipientAudience())
-            .specificZone(request.getSpecificZone())
-            .content(request.getMessageContent())
-            .priority(request.getPriority())
-            .scheduledAt(request.getScheduledDelivery())
-            .templateId(request.getTemplateId())
-            .build();
+        // Replace builder with direct object creation
+        SmsMessageRequest smsRequest = new SmsMessageRequest();
+        smsRequest.setTargetAudience(request.getRecipientAudience());
+        smsRequest.setSpecificZone(request.getSpecificZone());
+        smsRequest.setContent(request.getMessageContent());
+        smsRequest.setPriority(request.getPriority());
+        smsRequest.setScheduledAt(request.getScheduledDelivery());
+        smsRequest.setTemplateId(request.getTemplateId());
 
         SmsMessageResponse smsResponse = communicationService.sendBulkSms(smsRequest);
 
-        BulkMessageResponse response = BulkMessageResponse.builder()
-            .messageId(smsResponse.getId())
-            .recipientCount(smsResponse.getRecipientCount())
-            .estimatedCost(smsResponse.getEstimatedCost())
-            .status(smsResponse.getStatus())
-            .message("Message queued successfully")
-            .build();
+        // Replace builder with direct object creation
+        BulkMessageResponse response = new BulkMessageResponse();
+        response.setMessageId(smsResponse.getId());
+        response.setRecipientCount(smsResponse.getRecipientCount());
+        response.setEstimatedCost(smsResponse.getEstimatedCost());
+        response.setStatus(smsResponse.getStatus());
+        response.setMessage("Message queued successfully");
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -77,14 +82,14 @@ public class CommunicationController {
     ) {
         log.info("Uploading audio message: {} in {}", title, language);
 
-        AudioMessageRequest request = AudioMessageRequest.builder()
-            .targetAudience(parseTargetAudience(targetAudience))
-            .specificZone(specificZone)
-            .title(title)
-            .language(language)
-            .autoPlay(autoPlay)
-            .priority(parseMessagePriority(priority))
-            .build();
+        // Replace builder with direct object creation
+        AudioMessageRequest request = new AudioMessageRequest();
+        request.setTargetAudience(parseTargetAudience(targetAudience));
+        request.setSpecificZone(specificZone);
+        request.setTitle(title);
+        request.setLanguage(language);
+        request.setAutoPlay(autoPlay);
+        request.setPriority(parseMessagePriority(priority));
 
         AudioMessageResponse response = communicationService.createAudioMessage(request, file);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

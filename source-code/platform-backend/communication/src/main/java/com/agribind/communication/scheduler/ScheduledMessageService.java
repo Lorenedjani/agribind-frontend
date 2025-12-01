@@ -11,8 +11,8 @@ import com.agribind.communication.repository.MessageRepository;
 import com.agribind.communication.service.CommunicationService;
 import com.agribind.communication.service.MemberService;
 import com.agribind.communication.service.TwilioSmsService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,14 +25,24 @@ import java.util.List;
  * Runs every 5 minutes to check for messages that need to be sent
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class ScheduledMessageService {
+
+    private static final Logger log = LoggerFactory.getLogger(ScheduledMessageService.class);
 
     private final MessageRepository messageRepository;
     private final TwilioSmsService twilioSmsService;
     private final MemberService memberService;
     private final CommunicationService communicationService;
+
+    public ScheduledMessageService(MessageRepository messageRepository,
+                                 TwilioSmsService twilioSmsService,
+                                 MemberService memberService,
+                                 CommunicationService communicationService) {
+        this.messageRepository = messageRepository;
+        this.twilioSmsService = twilioSmsService;
+        this.memberService = memberService;
+        this.communicationService = communicationService;
+    }
 
     /**
      * Check and send scheduled messages

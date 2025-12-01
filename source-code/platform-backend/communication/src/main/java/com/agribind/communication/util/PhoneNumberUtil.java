@@ -1,6 +1,7 @@
 package com.agribind.communication.util;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.regex.Pattern;
@@ -9,9 +10,10 @@ import java.util.regex.Pattern;
  * Utility class for phone number validation and formatting
  * Specifically handles Cameroon phone numbers
  */
-@Slf4j
 @Component
 public class PhoneNumberUtil {
+
+    private static final Logger log = LoggerFactory.getLogger(PhoneNumberUtil.class);
 
     // Cameroon country code
     private static final String CAMEROON_COUNTRY_CODE = "+237";
