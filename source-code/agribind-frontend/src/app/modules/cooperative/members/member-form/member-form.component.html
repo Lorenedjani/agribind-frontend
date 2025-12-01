@@ -1,4 +1,6 @@
 <!-- src/app/modules/cooperative/members/member-form/member-form.component.html -->
+<!-- ✅ COMPLETE VERSION WITH MANUAL GPS INPUT -->
+
 <div class="modal-overlay" *ngIf="isModalOpen">
   <div class="modal">
     <div class="modal-header">
@@ -157,18 +159,38 @@
             </small>
           </div>
 
-          <!-- FARM LOCATION SECTION (Separate from residential address) -->
+          <!-- FARM LOCATION SECTION -->
           <div class="farm-location-section">
             <h3 class="section-title">
               <i class="fas fa-tractor"></i> Farm Location
             </h3>
             <p class="section-description">
-              This is the actual location of your farm, which may be different from your residential address.
+              Enter your farm's GPS coordinates. This is where your farm is located.
             </p>
 
-            <!-- Farm Location Search -->
+            <!-- Manual GPS Coordinates Input (PRIMARY METHOD) -->
             <div class="form-group">
-              <label>Search Farm Location <span class="required">*</span></label>
+              <label>Farm GPS Coordinates <span class="required">*</span></label>
+              <input
+                type="text"
+                formControlName="farmGpsCoordinates"
+                placeholder="e.g., 5.9631, 10.1591 (latitude, longitude)"
+                class="form-input"
+                [class.error]="isFieldInvalid('farmGpsCoordinates')">
+              <small class="help-text">
+                Enter GPS coordinates in format: latitude, longitude (e.g., 5.9631, 10.1591)
+              </small>
+              <small *ngIf="isFieldInvalid('farmGpsCoordinates')" class="error-message">
+                <span *ngIf="memberForm.get('farmGpsCoordinates')?.errors?.['required']">Farm GPS coordinates are required</span>
+                <span *ngIf="memberForm.get('farmGpsCoordinates')?.errors?.['invalidFormat']">Invalid format. Use: latitude, longitude</span>
+                <span *ngIf="memberForm.get('farmGpsCoordinates')?.errors?.['invalidNumbers']">Coordinates must be valid numbers</span>
+                <span *ngIf="memberForm.get('farmGpsCoordinates')?.errors?.['outOfRange']">Latitude must be -90 to 90, longitude -180 to 180</span>
+              </small>
+            </div>
+
+            <!-- Farm Location Search (Optional) -->
+            <div class="form-group">
+              <label>Search Farm Location (Optional)</label>
               <div class="location-search-container">
                 <input
                   id="farm-location-search"
@@ -179,36 +201,39 @@
                 <i class="fas fa-search search-icon"></i>
               </div>
               <small class="help-text">
-                Start typing your farm location and select from suggestions. The map will update automatically.
+                Start typing your farm location and select from suggestions (if map is available).
               </small>
             </div>
 
-            <!-- Interactive Map for Farm Location -->
+            <!-- Interactive Map for Farm Location (Optional) -->
             <div class="form-group">
-              <label>Select Exact Farm Location on Map <span class="required">*</span></label>
+              <label>Farm Location Map (Optional)</label>
               <div class="map-instructions">
                 <div class="instruction-item">
-                  <i class="fas fa-search"></i>
-                  <span>Search for your farm above</span>
+                  <i class="fas fa-info-circle"></i>
+                  <span>Map is optional - you can manually enter GPS coordinates above</span>
                 </div>
-                <div class="instruction-item">
+                <div class="instruction-item" *ngIf="mapInitialized">
                   <i class="fas fa-map-pin"></i>
-                  <span>Click on the map to adjust location</span>
-                </div>
-                <div class="instruction-item">
-                  <i class="fas fa-arrows-alt"></i>
-                  <span>Drag the marker for precise placement</span>
+                  <span>Click on the map to set location</span>
                 </div>
               </div>
 
-              <div id="farm-map-container" class="map-container"></div>
+              <div id="farm-map-container" class="map-container" *ngIf="mapInitialized">
+                <!-- Map will load here if Google Maps is available -->
+              </div>
+
+              <div class="map-loading" *ngIf="!mapInitialized">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Map is loading... You can enter GPS coordinates manually above.</span>
+              </div>
 
               <!-- Farm Coordinates Display -->
               <div class="coordinates-container" *ngIf="memberForm.get('farmGpsCoordinates')?.value">
                 <div class="coordinates-display success">
                   <i class="fas fa-check-circle"></i>
                   <div class="coordinates-info">
-                    <strong>Farm Location Selected</strong>
+                    <strong>Farm Location Set</strong>
                     <span>Coordinates: {{ memberForm.get('farmGpsCoordinates')?.value }}</span>
                     <span *ngIf="memberForm.get('farmFullAddress')?.value" class="farm-address">
                       Address: {{ memberForm.get('farmFullAddress')?.value }}
@@ -219,20 +244,6 @@
                   </button>
                 </div>
               </div>
-
-              <div class="coordinates-container" *ngIf="!memberForm.get('farmGpsCoordinates')?.value && memberForm.get('farmGpsCoordinates')?.touched">
-                <div class="coordinates-display error">
-                  <i class="fas fa-exclamation-circle"></i>
-                  <div class="coordinates-info">
-                    <strong>No Farm Location Selected</strong>
-                    <span>Please search and select your farm location on the map</span>
-                  </div>
-                </div>
-              </div>
-
-              <small *ngIf="isFieldInvalid('farmGpsCoordinates')" class="error-message">
-                Farm location is required
-              </small>
             </div>
           </div>
         </div>

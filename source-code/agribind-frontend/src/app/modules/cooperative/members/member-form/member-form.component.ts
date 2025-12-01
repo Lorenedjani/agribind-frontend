@@ -1,9 +1,9 @@
 // src/app/modules/cooperative/members/member-form/member-form.component.ts
-// ✅ COMPLETE FIXED VERSION WITH WORKING GOOGLE MAPS
+// ✅ COMPLETE VERSION WITH MANUAL GPS INPUT
 
 import { Component, EventEmitter, Output, OnInit, AfterViewInit, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { environment } from '../../../../../environments/environment';
 
 declare global {
@@ -53,7 +53,7 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
   private marker: any = null;
   private autocomplete: any = null;
   private geocoder: any = null;
-  private mapInitialized = false;
+  mapInitialized = false;
   private initAttempts = 0;
   private maxInitAttempts = 10;
 
@@ -98,9 +98,9 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
       village: [''],
       preferredLanguage: ['fr', Validators.required],
 
-      // Farm location
+      // Farm location - Manual entry is primary method
       farmLocationSearch: [''],
-      farmGpsCoordinates: [''],
+      farmGpsCoordinates: ['', [Validators.required, this.gpsCoordinatesValidator]],
       farmFullAddress: [''],
 
       // Farmer fields
@@ -135,7 +135,7 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
       .forEach(control => control?.clearValidators());
 
     if (this.selectedMemberType === 'FARMER') {
-      farmGpsControl?.setValidators([Validators.required]);
+      farmGpsControl?.setValidators([Validators.required, this.gpsCoordinatesValidator]);
       agricTypeControl?.setValidators([Validators.required]);
       landAreaControl?.setValidators([Validators.required, Validators.min(0.1)]);
     } else if (this.selectedMemberType === 'COOPERATIVE') {
@@ -148,16 +148,38 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
       .forEach(control => control?.updateValueAndValidity({ emitEvent: false }));
   }
 
-  // ===== GOOGLE MAPS INTEGRATION - COMPLETE FIX =====
+  // ===== GPS COORDINATES VALIDATOR =====
+  private gpsCoordinatesValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) {
+      return null;
+    }
+
+    const coordPattern = /^-?\d+\.?\d*,\s*-?\d+\.?\d*$/;
+    if (!coordPattern.test(control.value)) {
+      return { invalidFormat: true };
+    }
+
+    const [lat, lng] = control.value.split(',').map((s: string) => parseFloat(s.trim()));
+    
+    if (isNaN(lat) || isNaN(lng)) {
+      return { invalidNumbers: true };
+    }
+
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return { outOfRange: true };
+    }
+
+    return null;
+  }
+
+  // ===== GOOGLE MAPS INTEGRATION =====
 
   private loadGoogleMapsScript(): void {
-    // Check if already loaded
     if (window.google && window.google.maps) {
       console.log('✅ Google Maps already loaded');
       return;
     }
 
-    // Check if script already exists
     if (document.querySelector('script[src*="maps.googleapis.com"]')) {
       console.log('⏳ Google Maps script already loading...');
       return;
@@ -168,7 +190,6 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
     const script = document.createElement('script');
     const apiKey = environment.googleMapsApiKey || 'AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg';
 
-    // Set callback before adding script
     window.initMap = () => {
       console.log('✅ Google Maps loaded successfully');
       this.geocoder = new window.google.maps.Geocoder();
@@ -188,7 +209,6 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
   private async initMapInstance(): Promise<void> {
     console.log('🗺️ Attempting to initialize map...');
 
-    // Wait for Google Maps to be ready
     if (!window.google || !window.google.maps) {
       console.log('⏳ Waiting for Google Maps to load...');
       if (this.initAttempts < this.maxInitAttempts) {
@@ -201,7 +221,6 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     }
 
-    // Wait for map container
     const mapContainer = document.getElementById('farm-map-container');
     if (!mapContainer) {
       console.log('⏳ Waiting for map container...');
@@ -215,7 +234,6 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     }
 
-    // All conditions met, create the map
     this.ngZone.run(() => {
       try {
         console.log('✅ Creating map instance...');
@@ -228,13 +246,6 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
           mapTypeControl: true,
           streetViewControl: false,
           fullscreenControl: true,
-          styles: [
-            {
-              featureType: 'poi',
-              elementType: 'labels',
-              stylers: [{ visibility: 'on' }]
-            }
-          ]
         });
 
         this.marker = new window.google.maps.Marker({
@@ -245,7 +256,6 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
           visible: false
         });
 
-        // Event listeners
         this.map.addListener('click', (event: any) => {
           this.ngZone.run(() => {
             this.placeFarmMarker(event.latLng);
@@ -261,7 +271,6 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
         this.mapInitialized = true;
         console.log('✅ Map initialized successfully');
 
-        // Initialize autocomplete
         this.initFarmLocationAutocomplete();
 
       } catch (error) {
@@ -327,7 +336,7 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
     if (position) {
       const lat = position.lat();
       const lng = position.lng();
-      const coordinates = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+      const coordinates = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
 
       this.memberForm.patchValue({
         farmGpsCoordinates: coordinates
@@ -386,7 +395,6 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     document.body.style.overflow = 'hidden';
 
-    // ✅ Initialize map after a delay to ensure DOM is ready
     this.initAttempts = 0;
     setTimeout(() => {
       if (this.isModalOpen) {
@@ -425,12 +433,10 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
         preferredLanguage: formData.preferredLanguage
       };
 
-      // ✅ Add farm GPS coordinates for farmers
       if (formData.type === 'FARMER' && formData.farmGpsCoordinates) {
         newMember.gpsCoordinates = formData.farmGpsCoordinates;
       }
 
-      // Type-specific fields
       if (formData.type === 'FARMER') {
         newMember.agriculturalType = formData.agriculturalType;
         newMember.cropTypes = formData.cropTypes || [];
