@@ -1,5 +1,5 @@
 // src/main/java/cm/agribind/auth/config/CorsConfig.java
-//package cm.agribind.auth.config;
+package cm.agribind.auth.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

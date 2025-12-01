@@ -6,6 +6,34 @@
     "configurations": [
         {
             "type": "java",
+            "name": "UserManagementServiceApplication",
+            "request": "launch",
+            "mainClass": "cm.agribind.usermanagement.UserManagementServiceApplication",
+            "projectName": "user-management-service"
+        },
+        {
+            "type": "java",
+            "name": "AuthServiceApplication",
+            "request": "launch",
+            "mainClass": "cm.agribind.auth.AuthServiceApplication",
+            "projectName": "auth-service"
+        },
+        {
+            "type": "java",
+            "name": "EurekaServerApplication",
+            "request": "launch",
+            "mainClass": "cm.agribind.eureka.EurekaServerApplication",
+            "projectName": "eureka-server"
+        },
+        {
+            "type": "java",
+            "name": "ApiGatewayApplication",
+            "request": "launch",
+            "mainClass": "com.agribind.api_gateway.ApiGatewayApplication",
+            "projectName": "api-gateway"
+        },
+        {
+            "type": "java",
             "name": "Current File",
             "request": "launch",
             "mainClass": "${file}"
