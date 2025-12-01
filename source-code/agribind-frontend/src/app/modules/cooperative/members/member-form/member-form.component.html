@@ -9,7 +9,7 @@
     <form [formGroup]="memberForm" (ngSubmit)="onSubmit()">
       <div class="modal-body">
 
-        <!-- Member Type Selection (Only for Admin) -->
+        <!-- Member Type Selection -->
         <div class="form-group" *ngIf="canAddCooperative()">
           <label>Member Type <span class="required">*</span></label>
           <div class="type-selector">
@@ -31,7 +31,10 @@
         <!-- Common Fields -->
         <div class="form-group">
           <label>Full Name <span class="required">*</span></label>
-          <input formControlName="name" placeholder="Enter full name">
+          <input type="text"
+                 formControlName="name"
+                 placeholder="Enter full name"
+                 [class.error]="isFieldInvalid('name')">
           <small *ngIf="isFieldInvalid('name')" class="error-message">
             <span *ngIf="memberForm.get('name')?.errors?.['required']">Name is required</span>
             <span *ngIf="memberForm.get('name')?.errors?.['minlength']">Name must be at least 2 characters</span>
@@ -43,7 +46,8 @@
             <label>Phone Number <span class="required">*</span></label>
             <input type="tel"
                    formControlName="phoneNumber"
-                   placeholder="+237 6XXXXXXXX">
+                   placeholder="+237 6XXXXXXXX"
+                   [class.error]="isFieldInvalid('phoneNumber')">
             <small *ngIf="isFieldInvalid('phoneNumber')" class="error-message">
               <span *ngIf="memberForm.get('phoneNumber')?.errors?.['required']">Phone is required</span>
               <span *ngIf="memberForm.get('phoneNumber')?.errors?.['pattern']">Format: +237 6XXXXXXXX</span>
@@ -52,37 +56,55 @@
 
           <div class="form-group">
             <label>Email</label>
-            <input type="email" formControlName="email" placeholder="email@example.com">
+            <input type="email"
+                   formControlName="email"
+                   placeholder="email@example.com"
+                   [class.error]="isFieldInvalid('email')">
             <small *ngIf="isFieldInvalid('email')" class="error-message">
               <span *ngIf="memberForm.get('email')?.errors?.['email']">Invalid email format</span>
             </small>
           </div>
         </div>
 
-        <!-- Location Fields -->
-        <div class="form-group">
-          <label>Region <span class="required">*</span></label>
-          <select formControlName="region">
-            <option value="">Select region</option>
-            <option *ngFor="let region of regionOptions" [value]="region">{{ region }}</option>
-          </select>
-          <small *ngIf="isFieldInvalid('region')" class="error-message">Region is required</small>
-        </div>
+        <!-- FARMER'S RESIDENTIAL ADDRESS SECTION -->
+        <div class="address-section">
+          <h3 class="section-title">
+            <i class="fas fa-home"></i> Residential Address
+          </h3>
+          <p class="section-description">
+            This is where you live (may be different from your farm location).
+          </p>
 
-        <div class="form-row">
           <div class="form-group">
-            <label>Department</label>
-            <input formControlName="department" placeholder="Enter department">
+            <label>Region <span class="required">*</span></label>
+            <select formControlName="region" [class.error]="isFieldInvalid('region')">
+              <option value="">Select region</option>
+              <option *ngFor="let region of regionOptions" [value]="region">{{ region }}</option>
+            </select>
+            <small *ngIf="isFieldInvalid('region')" class="error-message">Region is required</small>
           </div>
-          <div class="form-group">
-            <label>District</label>
-            <input formControlName="district" placeholder="Enter district">
-          </div>
-        </div>
 
-        <div class="form-group">
-          <label>Village</label>
-          <input formControlName="village" placeholder="Enter village">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Department</label>
+              <input type="text"
+                     formControlName="department"
+                     placeholder="Enter department">
+            </div>
+            <div class="form-group">
+              <label>District</label>
+              <input type="text"
+                     formControlName="district"
+                     placeholder="Enter district">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Village/City</label>
+            <input type="text"
+                   formControlName="village"
+                   placeholder="Enter village or city">
+          </div>
         </div>
 
         <div class="form-group">
@@ -99,7 +121,7 @@
 
           <div class="form-group">
             <label>Agricultural Type <span class="required">*</span></label>
-            <select formControlName="agriculturalType">
+            <select formControlName="agriculturalType" [class.error]="isFieldInvalid('agriculturalType')">
               <option value="">Select type</option>
               <option *ngFor="let type of agriculturalTypeOptions" [value]="type">{{ type }}</option>
             </select>
@@ -127,11 +149,91 @@
                    formControlName="landArea"
                    placeholder="e.g., 5.5"
                    step="0.1"
-                   min="0.1">
+                   min="0.1"
+                   [class.error]="isFieldInvalid('landArea')">
             <small *ngIf="isFieldInvalid('landArea')" class="error-message">
               <span *ngIf="memberForm.get('landArea')?.errors?.['required']">Land area is required</span>
               <span *ngIf="memberForm.get('landArea')?.errors?.['min']">Must be at least 0.1 hectares</span>
             </small>
+          </div>
+
+          <!-- FARM LOCATION SECTION (Separate from residential address) -->
+          <div class="farm-location-section">
+            <h3 class="section-title">
+              <i class="fas fa-tractor"></i> Farm Location
+            </h3>
+            <p class="section-description">
+              This is the actual location of your farm, which may be different from your residential address.
+            </p>
+
+            <!-- Farm Location Search -->
+            <div class="form-group">
+              <label>Search Farm Location <span class="required">*</span></label>
+              <div class="location-search-container">
+                <input
+                  id="farm-location-search"
+                  formControlName="farmLocationSearch"
+                  placeholder="Enter farm address, village, or area name..."
+                  type="text"
+                  class="location-search-input">
+                <i class="fas fa-search search-icon"></i>
+              </div>
+              <small class="help-text">
+                Start typing your farm location and select from suggestions. The map will update automatically.
+              </small>
+            </div>
+
+            <!-- Interactive Map for Farm Location -->
+            <div class="form-group">
+              <label>Select Exact Farm Location on Map <span class="required">*</span></label>
+              <div class="map-instructions">
+                <div class="instruction-item">
+                  <i class="fas fa-search"></i>
+                  <span>Search for your farm above</span>
+                </div>
+                <div class="instruction-item">
+                  <i class="fas fa-map-pin"></i>
+                  <span>Click on the map to adjust location</span>
+                </div>
+                <div class="instruction-item">
+                  <i class="fas fa-arrows-alt"></i>
+                  <span>Drag the marker for precise placement</span>
+                </div>
+              </div>
+
+              <div id="farm-map-container" class="map-container"></div>
+
+              <!-- Farm Coordinates Display -->
+              <div class="coordinates-container" *ngIf="memberForm.get('farmGpsCoordinates')?.value">
+                <div class="coordinates-display success">
+                  <i class="fas fa-check-circle"></i>
+                  <div class="coordinates-info">
+                    <strong>Farm Location Selected</strong>
+                    <span>Coordinates: {{ memberForm.get('farmGpsCoordinates')?.value }}</span>
+                    <span *ngIf="memberForm.get('farmFullAddress')?.value" class="farm-address">
+                      Address: {{ memberForm.get('farmFullAddress')?.value }}
+                    </span>
+                  </div>
+                  <button type="button" class="btn-clear" (click)="clearFarmLocation()">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="coordinates-container" *ngIf="!memberForm.get('farmGpsCoordinates')?.value && memberForm.get('farmGpsCoordinates')?.touched">
+                <div class="coordinates-display error">
+                  <i class="fas fa-exclamation-circle"></i>
+                  <div class="coordinates-info">
+                    <strong>No Farm Location Selected</strong>
+                    <span>Please search and select your farm location on the map</span>
+                  </div>
+                </div>
+              </div>
+
+              <small *ngIf="isFieldInvalid('farmGpsCoordinates')" class="error-message">
+                Farm location is required
+              </small>
+            </div>
           </div>
         </div>
 
@@ -141,7 +243,7 @@
 
           <div class="form-group">
             <label>Cooperative Type <span class="required">*</span></label>
-            <select formControlName="cooperativeType">
+            <select formControlName="cooperativeType" [class.error]="isFieldInvalid('cooperativeType')">
               <option value="">Select type</option>
               <option *ngFor="let type of cooperativeTypeOptions" [value]="type">{{ type }}</option>
             </select>
@@ -152,8 +254,10 @@
 
           <div class="form-group">
             <label>Legal Registration Number <span class="required">*</span></label>
-            <input formControlName="legalRegistrationNumber"
-                   placeholder="e.g., COOP-2025-001">
+            <input type="text"
+                   formControlName="legalRegistrationNumber"
+                   placeholder="e.g., COOP-2025-001"
+                   [class.error]="isFieldInvalid('legalRegistrationNumber')">
             <small *ngIf="isFieldInvalid('legalRegistrationNumber')" class="error-message">
               Registration number is required
             </small>
@@ -171,7 +275,10 @@
 
             <div class="form-group">
               <label>Contact Person <span class="required">*</span></label>
-              <input formControlName="contactPerson" placeholder="Primary contact name">
+              <input type="text"
+                     formControlName="contactPerson"
+                     placeholder="Primary contact name"
+                     [class.error]="isFieldInvalid('contactPerson')">
               <small *ngIf="isFieldInvalid('contactPerson')" class="error-message">
                 Contact person is required
               </small>

@@ -7,7 +7,6 @@ import { Subject, takeUntil } from 'rxjs';
 // Services
 import { UserService, CreateUserCommand } from '../../../../core/services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { HttpClient } from '@angular/common/http';
 
 // Components
 import { MemberFormComponent } from '../member-form/member-form.component';
@@ -26,7 +25,6 @@ interface Member {
   status: string;
   email?: string;
   registrationNumber?: string;
-  qrCodeUrl?: string;
 }
 
 interface QRCodeResponse {
@@ -59,7 +57,6 @@ export class MemberListComponent implements OnInit, OnDestroy {
   @ViewChild(DeleteMemberComponent) deleteMemberComponent!: DeleteMemberComponent;
 
   private destroy$ = new Subject<void>();
-  private apiUrl = 'http://localhost:8080'; // API Gateway URL
 
   members: Member[] = [];
   filteredMembers: Member[] = [];
@@ -83,7 +80,7 @@ export class MemberListComponent implements OnInit, OnDestroy {
   statusOptions = ['All', 'ACTIVE', 'INACTIVE', 'PENDING', 'SUSPENDED'];
   regionOptions = ['All', 'ADAMAOUA', 'CENTRE', 'EST', 'EXTREME_NORD', 'LITTORAL',
                    'NORD', 'NORD_OUEST', 'OUEST', 'SUD', 'SUD_OUEST'];
-  cropOptions = ['All', 'Cocoa', 'Coffee', 'Cassava', 'Maize', 'Rice', 'Cotton', 'Palm Oil'];
+  cropOptions = ['All', 'COCOA', 'COFFEE', 'CASSAVA', 'MAIZE', 'RICE', 'COTTON', 'PALM_OIL'];
 
   // User info
   user: any = {
@@ -99,8 +96,7 @@ export class MemberListComponent implements OnInit, OnDestroy {
 
   constructor(
     private userService: UserService,
-    private authService: AuthService,
-    private http: HttpClient
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
@@ -129,10 +125,7 @@ export class MemberListComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const filters: any = {
-      page: this.currentPage - 1,
-      size: this.pageSize
-    };
+    const filters: any = {};
 
     if (this.selectedStatus !== 'All') {
       filters.status = this.selectedStatus;
@@ -146,10 +139,13 @@ export class MemberListComponent implements OnInit, OnDestroy {
       filters.searchTerm = this.searchQuery.trim();
     }
 
-    this.userService.getUsers(filters.page, filters.size, filters)
+    console.log('🔍 Loading members with filters:', filters);
+
+    this.userService.getUsers(this.currentPage - 1, this.pageSize, filters)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
+          console.log('✅ Members loaded:', response);
           this.members = response.content.map((user: any) => this.transformUserToMember(user));
           this.totalElements = response.totalElements;
           this.totalPages = response.totalPages;
@@ -158,136 +154,144 @@ export class MemberListComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('❌ Error loading members:', error);
-          this.errorMessage = 'Failed to load members. Please try again.';
+          this.errorMessage = 'Failed to load members. Please check your connection and try again.';
           this.isLoading = false;
         }
       });
   }
 
-  onMemberAdded(newMember: any) {
-    console.log('Member added:', newMember);
+// CRITICAL FIX: member-list.component.ts - Updated onMemberAdded method
 
-    // Transform to CreateUserCommand format
-    const createCommand: CreateUserCommand = {
-      type: newMember.type,
-      name: newMember.name,
-      email: newMember.email,
-      phoneNumber: newMember.phoneNumber,
-      region: this.parseRegion(newMember.region),
-      department: newMember.department,
-      district: newMember.district,
-      village: newMember.village,
-      preferredLanguage: newMember.preferredLanguage,
-      agriculturalType: newMember.agriculturalType,
-      cropTypes: newMember.cropTypes,
-      landArea: newMember.landArea,
-      cooperativeType: newMember.cooperativeType,
-      legalRegistrationNumber: newMember.legalRegistrationNumber,
-      establishmentYear: newMember.establishmentYear
-    };
+onMemberAdded(newMember: any) {
+  console.log('➕ Member added event received:', newMember);
 
-    this.isLoading = true;
+  // ✅ Transform to CreateUserCommand format matching backend exactly
+  const createCommand: any = {
+    type: newMember.type, // 'FARMER' or 'COOPERATIVE'
+    name: newMember.name,
+    email: newMember.email || null,
+    phoneNumber: newMember.phoneNumber,
 
-    this.userService.createUser(createCommand)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (user: any) => {
-          console.log('✅ Member created successfully:', user);
+    // ✅ RESIDENTIAL ADDRESS (where they live)
+    region: newMember.region,
+    department: newMember.department || null,
+    district: newMember.district || null,
+    village: newMember.village || null,
 
-          // Show success message with registration details
-          this.showSuccessWithQR(user);
+    // ✅ FARM GPS COORDINATES (where their farm is located)
+    gpsCoordinates: newMember.gpsCoordinates || null,
 
-          // Reload the list
-          this.loadMembers();
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('❌ Error creating member:', error);
-          this.errorMessage = error.message || 'Failed to add member';
-          this.isLoading = false;
-          this.showErrorMessage(this.errorMessage);
-        }
-      });
+    preferredLanguage: newMember.preferredLanguage || 'fr'
+  };
+
+  // ✅ Add FARMER-specific fields
+  if (newMember.type === 'FARMER') {
+    createCommand.agriculturalType = newMember.agriculturalType;
+    createCommand.cropTypes = newMember.cropTypes || [];
+    createCommand.livestockTypes = []; // Empty array if not provided
+    createCommand.landArea = newMember.landArea;
+    createCommand.cooperativeId = null; // Set if farmer belongs to a cooperative
   }
 
-  // Show success message with QR code option
+  // ✅ Add COOPERATIVE-specific fields
+  if (newMember.type === 'COOPERATIVE') {
+    createCommand.cooperativeType = newMember.cooperativeType;
+    createCommand.legalRegistrationNumber = newMember.legalRegistrationNumber;
+    createCommand.establishmentYear = newMember.establishmentYear;
+    createCommand.contactPerson = newMember.contactPerson;
+  }
+
+  console.log('🚀 Sending createUser command:', createCommand);
+  this.isLoading = true;
+
+  this.userService.createUser(createCommand)
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (user: any) => {
+        console.log('✅ Member created successfully:', user);
+
+        // Show success message with user details
+        const successMessage = `✅ ${user.name} has been registered successfully!\n\n` +
+          `User ID: ${user.userId}\n` +
+          `Registration Number: ${user.registrationNumber || 'N/A'}\n` +
+          `Phone: ${user.phoneNumber}\n` +
+          (user.email ? `Email: ${user.email}\n` : '') +
+          `\nCredentials have been sent via ${user.email ? 'SMS and Email' : 'SMS'}.`;
+
+        alert(successMessage);
+
+        // Reload the member list
+        this.loadMembers();
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('❌ Error creating member:', error);
+
+        // Enhanced error messages
+        let errorMessage = 'Failed to create member. ';
+
+        if (error.error?.message) {
+          errorMessage += error.error.message;
+        } else if (error.status === 400) {
+          errorMessage += 'Invalid data provided. Please check all required fields.';
+        } else if (error.status === 409) {
+          errorMessage += 'Phone number or email already exists.';
+        } else if (error.status === 403) {
+          errorMessage += 'You do not have permission to create members.';
+        } else if (error.status === 0) {
+          errorMessage += 'Cannot connect to server. Please check your connection.';
+        } else {
+          errorMessage += 'Please try again.';
+        }
+
+        this.errorMessage = errorMessage;
+        this.isLoading = false;
+        alert('❌ ' + errorMessage);
+      }
+    });
+}
+
+// ✅ ADD THIS: Enhanced error formatting
+private formatErrorMessage(error: any): string {
+  if (error.error?.message) {
+    return error.error.message;
+  }
+
+  const statusMessages: { [key: number]: string } = {
+    0: 'Cannot connect to server. Please check your internet connection.',
+    400: 'Invalid data provided. Please check all required fields.',
+    401: 'Your session has expired. Please log in again.',
+    403: 'You do not have permission to perform this action.',
+    404: 'Resource not found.',
+    409: 'Phone number or email already exists.',
+    500: 'Server error. Please try again later.'
+  };
+
+  return statusMessages[error.status] || 'An unexpected error occurred. Please try again.';
+}
   showSuccessWithQR(user: any) {
-    const message = `
-      ✅ Member created successfully!
-
-      Registration Number: ${user.registrationNumber || 'N/A'}
-      User ID: ${user.userId}
-
-      Click OK to view and download the QR code.
-    `;
+    const message = `✅ Member created successfully!\n\nRegistration Number: ${user.registrationNumber || 'N/A'}\nUser ID: ${user.userId}\n\nWould you like to view and download the QR code?`;
 
     if (confirm(message)) {
-      this.generateAndShowQRCode(user.userId);
+      this.userService.getUserById(user.userId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (fullUser: any) => {
+            // Generate QR code logic here if needed
+            console.log('User details for QR:', fullUser);
+          },
+          error: (err) => console.error('Error fetching user details:', err)
+        });
     }
   }
 
-  // Generate and display QR code
-  generateAndShowQRCode(userId: string) {
-    const url = `${this.apiUrl}/api/v1/qrcodes/${userId}/registration`;
-
-    this.http.get<QRCodeResponse>(url)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (qrResponse) => {
-          this.selectedQRCode = qrResponse;
-          this.showQRModal = true;
-        },
-        error: (error) => {
-          console.error('❌ Error generating QR code:', error);
-          alert('Failed to generate QR code. Please try again later.');
-        }
-      });
-  }
-
-  // Handle QR code button click in table
-  onQRCodeClick(member: Member) {
-    this.generateAndShowQRCode(member.id);
-  }
-
-  // Download QR code
-  downloadQRCode() {
-    if (!this.selectedQRCode) return;
-
-    // Convert base64 to blob
-    const base64Data = this.selectedQRCode.qrCodeImage.replace(/^data:image\/png;base64,/, '');
-    const byteCharacters = atob(base64Data);
-    const byteNumbers = new Array(byteCharacters.length);
-
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: 'image/png' });
-
-    // Create download link
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `qr-code-${this.selectedQRCode.userId}.png`;
-    link.click();
-
-    window.URL.revokeObjectURL(url);
-  }
-
-  closeQRModal() {
-    this.showQRModal = false;
-    this.selectedQRCode = null;
-  }
-
-  // Other existing methods...
   transformUserToMember(user: any): Member {
     return {
       id: user.userId || user.id,
       name: user.name,
       phone: user.phoneNumber,
       type: this.formatUserType(user.type),
-      region: user.region,
+      region: this.formatRegionName(user.region),
       primaryCrop: this.getPrimaryCrop(user),
       status: this.formatStatus(user.status),
       email: user.email,
@@ -297,9 +301,45 @@ export class MemberListComponent implements OnInit, OnDestroy {
 
   getPrimaryCrop(user: any): string {
     if (user.farmerDetails?.cropTypes && user.farmerDetails.cropTypes.length > 0) {
-      return user.farmerDetails.cropTypes[0];
+      return this.formatCropName(user.farmerDetails.cropTypes[0]);
+    }
+    if (user.cooperativeDetails) {
+      return 'Mixed';
     }
     return 'N/A';
+  }
+
+  formatCropName(crop: string): string {
+    const cropMap: { [key: string]: string } = {
+      'COCOA': 'Cocoa',
+      'COFFEE': 'Coffee',
+      'MAIZE': 'Maize',
+      'CASSAVA': 'Cassava',
+      'RICE': 'Rice',
+      'COTTON': 'Cotton',
+      'PALM_OIL': 'Palm Oil',
+      'PLANTAINS': 'Plantains',
+      'BANANAS': 'Bananas',
+      'BEANS': 'Beans'
+    };
+    return cropMap[crop] || crop;
+  }
+
+  formatRegionName(region: string): string {
+    if (!region) return 'N/A';
+    const regionMap: { [key: string]: string } = {
+      'ADAMAOUA': 'Adamaoua',
+      'CENTRE': 'Centre',
+      'EST': 'East',
+      'EXTREME_NORD': 'Far North',
+      'LITTORAL': 'Littoral',
+      'NORD': 'North',
+      'NORD_OUEST': 'Northwest',
+      'OUEST': 'West',
+      'SUD': 'South',
+      'SUD_OUEST': 'Southwest'
+    };
+    return regionMap[region] || region;
   }
 
   formatUserType(type: string): string {
@@ -339,22 +379,6 @@ export class MemberListComponent implements OnInit, OnDestroy {
     return name.substring(0, 2).toUpperCase();
   }
 
-  parseRegion(region: string): any {
-    const regionMap: any = {
-      'ADAMAOUA': 'ADAMAOUA',
-      'CENTRE': 'CENTRE',
-      'EST': 'EST',
-      'EXTREME_NORD': 'EXTREME_NORD',
-      'LITTORAL': 'LITTORAL',
-      'NORD': 'NORD',
-      'NORD_OUEST': 'NORD_OUEST',
-      'OUEST': 'OUEST',
-      'SUD': 'SUD',
-      'SUD_OUEST': 'SUD_OUEST'
-    };
-    return regionMap[region] || region;
-  }
-
   applyLocalFilters() {
     this.filteredMembers = this.members.filter(member => {
       const matchesCrop = this.selectedCrop === 'All' || member.primaryCrop === this.selectedCrop;
@@ -367,7 +391,7 @@ export class MemberListComponent implements OnInit, OnDestroy {
     this.paginatedMembers = this.filteredMembers;
   }
 
-  // Navigation and filters
+  // Navigation
   previousPage() {
     if (this.currentPage > 1) {
       this.currentPage--;
@@ -382,6 +406,7 @@ export class MemberListComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Filters
   onStatusChange() {
     this.currentPage = 1;
     this.loadMembers();
@@ -436,7 +461,6 @@ export class MemberListComponent implements OnInit, OnDestroy {
 
   onMemberDeleted(member: Member) {
     console.log('Member deleted:', member);
-
     this.userService.deleteUser(member.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -456,7 +480,36 @@ export class MemberListComponent implements OnInit, OnDestroy {
 
   onExport() {
     console.log('Exporting members...');
-    // Implementation for export
+    this.userService.exportUsers('CSV', {
+      status: this.selectedStatus !== 'All' ? this.selectedStatus : undefined,
+      region: this.selectedRegion !== 'All' ? this.selectedRegion : undefined
+    }).pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `members_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (error) => console.error('Export failed:', error)
+    });
+  }
+
+  // QR Code
+  onQRCodeClick(member: Member) {
+    console.log('Generate QR for:', member);
+    // Implement QR generation
+  }
+
+  closeQRModal() {
+    this.showQRModal = false;
+    this.selectedQRCode = null;
+  }
+
+  downloadQRCode() {
+    // Implement download
   }
 
   // Statistics
