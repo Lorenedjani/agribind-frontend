@@ -1,49 +1,100 @@
 // src/app/modules/cooperative/production/production.component.ts
-// DELETE ALL CONTENT AND REPLACE WITH THIS
 
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ViewEncapsulation } from '@angular/core';
 import { CooperativeSidebarComponent } from "../../../../shared/cooperative-sidebar/cooperative-sidebar.component";
-import {
-  ProductionService,
-  ProductionRecord,
-  ProductionDashboardMetrics,
-  CreateProductionRequest,
-  PageResponse
-} from '../../../core/services/production.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { UserService } from '../../../core/services/user.service';
+import { MockProductionService } from '../../../core/services/production.service.mock';
+import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
+import { Subject, of, Observable } from 'rxjs';
+
+interface ProductionRecord {
+  productionId: string;
+  farmerId: string;
+  farmerName: string;
+  cropType: string;
+  quantity: number;
+  qualityGrade: string;
+  warehouse: string;
+  deliveryDate: string;
+  valueXaf: number;
+  status: string;
+}
+
+interface FarmerSearchResult {
+  userId: string;
+  name: string;
+  phoneNumber: string;
+  agriculturalType: string;
+  cropTypes: string[];
+  landArea: number;
+}
+
+interface DashboardMetrics {
+  totalProduction: string;
+  totalProductionPercent: string;
+  activeFarmers: number;
+  activeFarmersParticipation: string;
+  gradeAProduction: string;
+  gradeAPercent: string;
+  thisMonthDeliveries: string;
+  thisMonthChange: string;
+}
+
+interface CreateProductionRequest {
+  farmerId: string;
+  cropType: string;
+  quantity: number;
+  qualityGrade: string;
+  warehouse: string;
+  deliveryDate: string;
+}
+
+interface ApiUserResponse {
+  content: any[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+}
 
 @Component({
   selector: 'app-production',
   standalone: true,
   imports: [CommonModule, FormsModule, CooperativeSidebarComponent],
   templateUrl: './production.component.html',
-   encapsulation: ViewEncapsulation.None,
+  encapsulation: ViewEncapsulation.None,
   styleUrls: ['./production.component.scss']
 })
 export class ProductionComponent implements OnInit {
-  user = { name: 'Emmanuel Njoya', role: 'Manager', initials: 'EN' };
+  // User info from auth service
+  user = {
+    name: '',
+    role: '',
+    initials: '',
+    cooperativeId: ''
+  };
 
   // Dashboard metrics
-  metrics: ProductionDashboardMetrics | null = null;
-  totalProduction = '287.5 MT';
-  totalProductionPercent = '+15.2% vs last cycle';
-  activeFarmers = 245;
-  activeFarmersParticipation = '81.7% participation rate';
-  gradeAProduction = '168.3 MT';
-  gradeAPercent = '58.5% premium quality';
-  thisMonthDeliveries = '42.8 MT';
-  thisMonthChange = '+8.3% vs last month';
+  totalProduction = '0 MT';
+  totalProductionPercent = '0%';
+  activeFarmers = 0;
+  activeFarmersParticipation = '0%';
+  gradeAProduction = '0 MT';
+  gradeAPercent = '0%';
+  thisMonthDeliveries = '0 MT';
+  thisMonthChange = '0%';
 
   // Filter options
   searchQuery = '';
   selectedCrop = 'All Crops';
   selectedGrade = 'All Grades';
-  cropTypes: string[] = ['All Crops'];
-  qualityGrades: string[] = ['All Grades'];
+  cropTypes: string[] = ['All Crops', 'COCOA', 'COFFEE', 'MAIZE', 'CASSAVA', 'RICE', 'COTTON'];
+  qualityGrades: string[] = ['All Grades', 'GRADE_A', 'GRADE_B', 'GRADE_C'];
   warehouses: string[] = [];
-  farmers: string[] = [];
 
   // Production data
   productionRecords: ProductionRecord[] = [];
@@ -52,7 +103,7 @@ export class ProductionComponent implements OnInit {
 
   // Pagination
   currentPage = 1;
-  pageSize = 20;
+  pageSize = 10;
   totalPages = 1;
 
   // Modals
@@ -65,9 +116,16 @@ export class ProductionComponent implements OnInit {
     cropType: 'COCOA',
     quantity: 0,
     qualityGrade: 'GRADE_A',
-    warehouse: 'Douala Warehouse',
+    warehouse: '',
     deliveryDate: new Date().toISOString().split('T')[0]
   };
+
+  // Farmer search
+  farmerSearchTerm = '';
+  searchedFarmers: FarmerSearchResult[] = [];
+  selectedFarmer: FarmerSearchResult | null = null;
+  showFarmerDropdown = false;
+  private farmerSearchSubject = new Subject<string>();
 
   // Export options
   exportFormat = 'csv';
@@ -75,21 +133,133 @@ export class ProductionComponent implements OnInit {
   exportStartDate = '';
   exportEndDate = '';
 
-  constructor(private productionService: ProductionService) {}
+  constructor(
+    private authService: AuthService,
+    private userService: UserService,
+    private productionService: MockProductionService
+  ) {}
 
   ngOnInit(): void {
-    this.loadDashboardMetrics();
-    this.loadProductions();
-    this.loadCropTypes();
-    this.loadQualityGrades();
+    this.loadCurrentUser();
+    this.setupFarmerSearch();
     this.loadWarehouses();
-    this.loadFarmers();
+  }
+
+  loadCurrentUser(): void {
+    const currentUser = this.authService.getCurrentUser();
+
+    if (currentUser) {
+      this.user = {
+        name: currentUser.username || currentUser.email || 'User',
+        role: this.formatRole(currentUser.role),
+        initials: this.getInitials(currentUser.username || currentUser.email || 'User'),
+        cooperativeId: currentUser.cooperativeId || ''
+      };
+
+      // Load dashboard data after getting user info
+      this.loadDashboardMetrics();
+      this.loadProductions();
+    } else {
+      console.error('No user logged in');
+    }
+  }
+
+  formatRole(role: string): string {
+    const roleMap: { [key: string]: string } = {
+      'COOPERATIVE': 'Cooperative Manager',
+      'FARMER': 'Farmer',
+      'GOVERNMENT': 'Government Official'
+    };
+    return roleMap[role] || role;
+  }
+
+  getInitials(name: string): string {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  }
+
+  setupFarmerSearch(): void {
+    this.farmerSearchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap((term: string) => {
+        if (term.length < 2) {
+          return of([] as FarmerSearchResult[]);
+        }
+        return this.searchFarmers(term).pipe(
+          catchError(() => of([] as FarmerSearchResult[]))
+        );
+      })
+    ).subscribe({
+      next: (farmers: FarmerSearchResult[]) => {
+        this.searchedFarmers = farmers;
+        this.showFarmerDropdown = farmers.length > 0;
+      },
+      error: (error) => {
+        console.error('Search error:', error);
+        this.searchedFarmers = [];
+        this.showFarmerDropdown = false;
+      }
+    });
+  }
+
+  onFarmerSearchInput(event: Event): void {
+    const term = (event.target as HTMLInputElement).value;
+    this.farmerSearchTerm = term;
+    this.farmerSearchSubject.next(term);
+  }
+
+  searchFarmers(searchTerm: string): Observable<FarmerSearchResult[]> {
+    return this.userService.getUsers(0, 20, {
+      type: 'FARMER',
+      searchTerm: searchTerm,
+      status: 'ACTIVE'
+    }).pipe(
+      switchMap((response: any) => {
+        if (!response || !response.content) {
+          return of([] as FarmerSearchResult[]);
+        }
+
+        const farmers: FarmerSearchResult[] = response.content.map((user: any) => ({
+          userId: user.userId || '',
+          name: user.name || 'Unknown Farmer',
+          phoneNumber: user.phoneNumber || 'N/A',
+          agriculturalType: user.farmerDetails?.agriculturalType || '',
+          cropTypes: user.farmerDetails?.cropTypes || [],
+          landArea: user.farmerDetails?.totalLandArea || 0
+        }));
+
+        return of(farmers);
+      }),
+      catchError((error) => {
+        console.error('Error searching farmers:', error);
+        return of([] as FarmerSearchResult[]);
+      })
+    );
+  }
+
+  selectFarmer(farmer: FarmerSearchResult): void {
+    this.selectedFarmer = farmer;
+    this.farmerSearchTerm = farmer.name;
+    this.newProduction.farmerId = farmer.userId;
+    this.showFarmerDropdown = false;
+  }
+
+  clearFarmerSelection(): void {
+    this.selectedFarmer = null;
+    this.farmerSearchTerm = '';
+    this.newProduction.farmerId = '';
+    this.searchedFarmers = [];
+    this.showFarmerDropdown = false;
   }
 
   loadDashboardMetrics(): void {
     this.productionService.getDashboardMetrics().subscribe({
-      next: (metrics: ProductionDashboardMetrics) => {
-        this.metrics = metrics;
+      next: (metrics: DashboardMetrics) => {
         this.totalProduction = metrics.totalProduction;
         this.totalProductionPercent = metrics.totalProductionPercent;
         this.activeFarmers = metrics.activeFarmers;
@@ -99,8 +269,22 @@ export class ProductionComponent implements OnInit {
         this.thisMonthDeliveries = metrics.thisMonthDeliveries;
         this.thisMonthChange = metrics.thisMonthChange;
       },
-      error: (error: any) => console.error('Error loading metrics:', error)
+      error: (error: any) => {
+        console.error('Error loading metrics:', error);
+        this.useMockMetrics();
+      }
     });
+  }
+
+  useMockMetrics(): void {
+    this.totalProduction = '287.5 MT';
+    this.totalProductionPercent = '+15.2% vs last cycle';
+    this.activeFarmers = 245;
+    this.activeFarmersParticipation = '81.7% participation';
+    this.gradeAProduction = '168.3 MT';
+    this.gradeAPercent = '58.5% premium';
+    this.thisMonthDeliveries = '42.8 MT';
+    this.thisMonthChange = '+8.3% vs last month';
   }
 
   loadProductions(): void {
@@ -120,55 +304,20 @@ export class ProductionComponent implements OnInit {
     }
 
     this.productionService.getProductions(params).subscribe({
-      next: (response: PageResponse<ProductionRecord>) => {
-        this.productionRecords = response.content;
-        this.filteredProduction = response.content.map((record: ProductionRecord) => this.transformRecord(record));
-        this.totalPages = response.totalPages;
+      next: (response: any) => {
+        this.productionRecords = response.content || [];
+        this.filteredProduction = this.productionRecords.map((record: ProductionRecord) =>
+          this.transformRecord(record)
+        );
+        this.totalPages = response.totalPages || 1;
         this.updatePaginatedData();
       },
-      error: (error: any) => console.error('Error loading productions:', error)
+      error: (error: any) => {
+        console.error('Error loading productions:', error);
+        this.filteredProduction = [];
+        this.paginatedProduction = [];
+      }
     });
-  }
-
-  loadCropTypes(): void {
-    this.productionService.getAvailableCropTypes().subscribe({
-      next: (crops: string[]) => {
-        this.cropTypes = ['All Crops', ...crops];
-      },
-      error: (error: any) => console.error('Error loading crop types:', error)
-    });
-  }
-
-  loadQualityGrades(): void {
-    this.productionService.getQualityGrades().subscribe({
-      next: (grades: string[]) => {
-        this.qualityGrades = ['All Grades', ...grades];
-      },
-      error: (error: any) => console.error('Error loading grades:', error)
-    });
-  }
-
-  loadWarehouses(): void {
-    this.productionService.getWarehouses().subscribe({
-      next: (warehouses: string[]) => {
-        this.warehouses = warehouses;
-      },
-      error: (error: any) => console.error('Error loading warehouses:', error)
-    });
-  }
-
-  loadFarmers(): void {
-    // This would typically come from the user service
-    this.farmers = [
-      'Kwame Osei (M001)',
-      'Arna Boateng (M002)',
-      'Yaw Mensah (M003)',
-      'Akosua Darko (M004)',
-      'Kofi Asante (M005)',
-      'Abena Owusu (M006)',
-      'Kwabena Amoah (M007)',
-      'Efua Agyeman (M008)'
-    ];
   }
 
   transformRecord(record: ProductionRecord): any {
@@ -176,19 +325,49 @@ export class ProductionComponent implements OnInit {
       id: record.productionId,
       date: new Date(record.deliveryDate).toLocaleDateString('en-GB'),
       farmer: record.farmerName,
-      crop: this.productionService.getCropDisplayName(record.cropType),
+      crop: this.getCropDisplayName(record.cropType),
       quantity: record.quantity + ' MT',
-      grade: this.productionService.getGradeDisplayName(record.qualityGrade),
-      gradeClass: this.productionService.getGradeClass(record.qualityGrade),
+      grade: this.getGradeDisplayName(record.qualityGrade),
+      gradeClass: this.getGradeClass(record.qualityGrade),
       warehouse: record.warehouse,
-      value: this.productionService.formatValue(record.valueXaf),
+      value: this.formatValue(record.valueXaf),
       status: this.getStatusDisplayName(record.status),
-      statusClass: this.productionService.getStatusClass(record.status)
+      statusClass: this.getStatusClass(record.status)
     };
   }
 
+  getCropDisplayName(crop: string): string {
+    const cropMap: Record<string, string> = {
+      'COCOA': 'Cocoa',
+      'COFFEE': 'Coffee',
+      'MAIZE': 'Maize',
+      'CASSAVA': 'Cassava',
+      'RICE': 'Rice',
+      'COTTON': 'Cotton'
+    };
+    return cropMap[crop] || crop;
+  }
+
+  getGradeDisplayName(grade: string): string {
+    const gradeMap: Record<string, string> = {
+      'GRADE_A': 'Grade A',
+      'GRADE_B': 'Grade B',
+      'GRADE_C': 'Grade C'
+    };
+    return gradeMap[grade] || grade;
+  }
+
+  getGradeClass(grade: string): string {
+    const classMap: Record<string, string> = {
+      'GRADE_A': 'grade-a',
+      'GRADE_B': 'grade-b',
+      'GRADE_C': 'grade-c'
+    };
+    return classMap[grade] || '';
+  }
+
   getStatusDisplayName(status: string): string {
-    const statusMap: { [key: string]: string } = {
+    const statusMap: Record<string, string> = {
       'PENDING': 'Pending',
       'VERIFIED': 'Verified',
       'REJECTED': 'Rejected',
@@ -196,6 +375,37 @@ export class ProductionComponent implements OnInit {
       'SOLD': 'Sold'
     };
     return statusMap[status] || status;
+  }
+
+  getStatusClass(status: string): string {
+    const classMap: Record<string, string> = {
+      'PENDING': 'pending',
+      'VERIFIED': 'verified',
+      'REJECTED': 'rejected',
+      'PROCESSED': 'processed',
+      'SOLD': 'sold'
+    };
+    return classMap[status] || '';
+  }
+
+  formatValue(value: number): string {
+    return `${value.toLocaleString()} XAF`;
+  }
+
+  loadWarehouses(): void {
+    this.productionService.getWarehouses().subscribe({
+      next: (warehouses: string[]) => {
+        this.warehouses = warehouses;
+        if (warehouses.length > 0) {
+          this.newProduction.warehouse = warehouses[0];
+        }
+      },
+      error: (error: any) => {
+        console.error('Error loading warehouses:', error);
+        this.warehouses = ['Douala Warehouse', 'Yaoundé Warehouse', 'Garoua Warehouse'];
+        this.newProduction.warehouse = this.warehouses[0];
+      }
+    });
   }
 
   updatePaginatedData(): void {
@@ -211,21 +421,22 @@ export class ProductionComponent implements OnInit {
 
   closeRecordModal(): void {
     this.showRecordModal = false;
+    this.clearFarmerSelection();
   }
 
   submitProduction(): void {
     if (!this.isFormValid()) {
-      alert('Please fill in all required fields');
+      alert('Please fill in all required fields and select a farmer');
       return;
     }
 
-    // Extract farmer ID from selection (format: "Name (ID)")
-    const farmerMatch = this.newProduction.farmerId.match(/\(([^)]+)\)/);
-    const farmerId = farmerMatch ? farmerMatch[1] : this.newProduction.farmerId;
-
     const request: CreateProductionRequest = {
-      ...this.newProduction,
-      farmerId: farmerId
+      farmerId: this.newProduction.farmerId,
+      cropType: this.newProduction.cropType,
+      quantity: this.newProduction.quantity,
+      qualityGrade: this.newProduction.qualityGrade,
+      warehouse: this.newProduction.warehouse,
+      deliveryDate: this.newProduction.deliveryDate
     };
 
     this.productionService.createProduction(request).subscribe({
@@ -238,7 +449,7 @@ export class ProductionComponent implements OnInit {
       },
       error: (error: any) => {
         console.error('Error recording production:', error);
-        alert('Failed to record production. Please try again.');
+        alert('Failed to record production: ' + (error.message || 'Please try again.'));
       }
     });
   }
@@ -260,9 +471,10 @@ export class ProductionComponent implements OnInit {
       cropType: 'COCOA',
       quantity: 0,
       qualityGrade: 'GRADE_A',
-      warehouse: 'Douala Warehouse',
+      warehouse: this.warehouses[0] || '',
       deliveryDate: new Date().toISOString().split('T')[0]
     };
+    this.clearFarmerSelection();
   }
 
   onExport(): void {
@@ -275,7 +487,6 @@ export class ProductionComponent implements OnInit {
 
   performExport(): void {
     console.log('Exporting data in format:', this.exportFormat);
-    // Export functionality would be implemented here
     alert('Export functionality coming soon!');
     this.closeExportModal();
   }

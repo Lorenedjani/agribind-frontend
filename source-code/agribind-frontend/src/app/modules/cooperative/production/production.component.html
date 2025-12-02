@@ -4,10 +4,8 @@
   <!-- Top Bar -->
   <header class="top-bar">
     <div class="page-title">
-      <h3>Production</h3>
+      <h3>Production Management</h3>
     </div>
-
-    <button *ngIf="searchQuery" class="btn-clear" (click)="searchQuery = ''">×</button>
 
     <div class="top-bar-actions">
       <button class="notification-btn" title="Notifications">🔔</button>
@@ -77,6 +75,7 @@
           class="search-input"
           placeholder="Search by farmer, crop, or production ID..."
           [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearchChange()"
         />
       </div>
       <div class="button-group">
@@ -89,13 +88,13 @@
     <section class="filters">
       <div class="filter-group">
         <label for="cropSelect">Crop Type</label>
-        <select id="cropSelect" [(ngModel)]="selectedCrop" class="filter-select" aria-label="Filter by Crop Type">
+        <select id="cropSelect" [(ngModel)]="selectedCrop" (ngModelChange)="onFilterChange()" class="filter-select">
           <option *ngFor="let crop of cropTypes" [value]="crop">{{ crop }}</option>
         </select>
       </div>
       <div class="filter-group">
         <label for="gradeSelect">Quality Grade</label>
-        <select id="gradeSelect" [(ngModel)]="selectedGrade" class="filter-select" aria-label="Filter by Quality Grade">
+        <select id="gradeSelect" [(ngModel)]="selectedGrade" (ngModelChange)="onFilterChange()" class="filter-select">
           <option *ngFor="let grade of qualityGrades" [value]="grade">{{ grade }}</option>
         </select>
       </div>
@@ -130,7 +129,7 @@
           <td><span class="status-badge" [ngClass]="record.statusClass">{{ record.status }}</span></td>
         </tr>
         <tr *ngIf="filteredProduction.length === 0">
-          <td colspan="9" class="no-data">No data matches the filters.</td>
+          <td colspan="9" class="no-data">No production records found.</td>
         </tr>
         </tbody>
       </table>
@@ -154,13 +153,50 @@
 
       <div class="modal-body">
         <form>
+          <!-- Farmer Search with Autocomplete -->
           <div class="form-row">
             <div class="form-group full-width">
-              <label for="farmerSelect">Farmer *</label>
-              <select id="farmerSelect" [(ngModel)]="newProduction.farmerId" name="farmerId" required class="form-input">
-                <option value="" disabled>Select a farmer</option>
-                <option *ngFor="let farmer of farmers" [value]="farmer">{{ farmer }}</option>
-              </select>
+              <label for="farmerSearch">Search Farmer *</label>
+              <div class="farmer-search-wrapper">
+                <input
+                  type="text"
+                  id="farmerSearch"
+                  class="form-input"
+                  placeholder="Type farmer name or phone number..."
+                  [(ngModel)]="farmerSearchTerm"
+                  (input)="onFarmerSearchInput($event)"
+                  name="farmerSearch"
+                  autocomplete="off"
+                />
+                <button 
+                  type="button" 
+                  class="clear-farmer-btn" 
+                  *ngIf="selectedFarmer"
+                  (click)="clearFarmerSelection()"
+                  title="Clear selection">
+                  ×
+                </button>
+                
+                <!-- Farmer Dropdown -->
+                <div class="farmer-dropdown" *ngIf="showFarmerDropdown && searchedFarmers.length > 0">
+                  <div 
+                    class="farmer-item" 
+                    *ngFor="let farmer of searchedFarmers"
+                    (click)="selectFarmer(farmer)">
+                    <div class="farmer-name">{{ farmer.name }}</div>
+                    <div class="farmer-details">
+                      {{ farmer.phoneNumber }} • {{ farmer.agriculturalType }} • {{ farmer.landArea }} ha
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Selected Farmer Info -->
+                <div class="selected-farmer-info" *ngIf="selectedFarmer">
+                  <span class="info-label">Selected:</span>
+                  <span class="info-value">{{ selectedFarmer.name }}</span>
+                  <span class="info-detail">{{ selectedFarmer.phoneNumber }}</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -171,9 +207,9 @@
                 <option value="COCOA">Cocoa</option>
                 <option value="COFFEE">Coffee</option>
                 <option value="MAIZE">Maize</option>
-                <option value="PALM_OIL">Palm Oil</option>
-                <option value="COTTON">Cotton</option>
                 <option value="CASSAVA">Cassava</option>
+                <option value="RICE">Rice</option>
+                <option value="COTTON">Cotton</option>
               </select>
             </div>
 
@@ -229,7 +265,12 @@
 
       <div class="modal-footer">
         <button class="btn btn-outline" (click)="closeRecordModal()">Cancel</button>
-        <button class="btn btn-primary" (click)="submitProduction()">Record Production</button>
+        <button 
+          class="btn btn-primary" 
+          (click)="submitProduction()"
+          [disabled]="!isFormValid()">
+          Record Production
+        </button>
       </div>
     </div>
   </div>
@@ -315,7 +356,7 @@
           </div>
 
           <div class="export-info">
-            <p><strong>{{ filteredProduction.length }}</strong> records will be exported with current filters</p>
+            <p><strong>{{ filteredProduction.length }}</strong> records will be exported</p>
           </div>
         </form>
       </div>
