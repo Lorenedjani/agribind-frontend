@@ -160,12 +160,13 @@ export class MemberListComponent implements OnInit, OnDestroy {
       });
   }
 
-// CRITICAL FIX: member-list.component.ts - Updated onMemberAdded method
+// CRITICAL FIX: member-list.component.ts - onMemberAdded method
+// Replace the existing onMemberAdded method with this corrected version
 
 onMemberAdded(newMember: any) {
   console.log('➕ Member added event received:', newMember);
 
-  // ✅ Transform to CreateUserCommand format matching backend exactly
+  // ✅ CRITICAL FIX: Properly map all fields from frontend to backend
   const createCommand: any = {
     type: newMember.type, // 'FARMER' or 'COOPERATIVE'
     name: newMember.name,
@@ -173,12 +174,12 @@ onMemberAdded(newMember: any) {
     phoneNumber: newMember.phoneNumber,
 
     // ✅ RESIDENTIAL ADDRESS (where they live)
-    region: newMember.region,
+    region: newMember.region || null,
     department: newMember.department || null,
     district: newMember.district || null,
     village: newMember.village || null,
 
-    // ✅ FARM GPS COORDINATES (where their farm is located)
+    // ✅ CRITICAL: GPS Coordinates (farm location)
     gpsCoordinates: newMember.gpsCoordinates || null,
 
     preferredLanguage: newMember.preferredLanguage || 'fr'
@@ -186,19 +187,19 @@ onMemberAdded(newMember: any) {
 
   // ✅ Add FARMER-specific fields
   if (newMember.type === 'FARMER') {
-    createCommand.agriculturalType = newMember.agriculturalType;
+    createCommand.agriculturalType = newMember.agriculturalType || null;
     createCommand.cropTypes = newMember.cropTypes || [];
-    createCommand.livestockTypes = []; // Empty array if not provided
-    createCommand.landArea = newMember.landArea;
-    createCommand.cooperativeId = null; // Set if farmer belongs to a cooperative
+    createCommand.livestockTypes = newMember.livestockTypes || [];
+    createCommand.landArea = newMember.landArea || null;
+    createCommand.cooperativeId = newMember.cooperativeId || null;
   }
 
   // ✅ Add COOPERATIVE-specific fields
   if (newMember.type === 'COOPERATIVE') {
-    createCommand.cooperativeType = newMember.cooperativeType;
-    createCommand.legalRegistrationNumber = newMember.legalRegistrationNumber;
-    createCommand.establishmentYear = newMember.establishmentYear;
-    createCommand.contactPerson = newMember.contactPerson;
+    createCommand.cooperativeType = newMember.cooperativeType || null;
+    createCommand.legalRegistrationNumber = newMember.legalRegistrationNumber || null;
+    createCommand.establishmentYear = newMember.establishmentYear || null;
+    createCommand.contactPerson = newMember.contactPerson || null;
   }
 
   console.log('🚀 Sending createUser command:', createCommand);
@@ -210,47 +211,54 @@ onMemberAdded(newMember: any) {
       next: (user: any) => {
         console.log('✅ Member created successfully:', user);
 
-        // Show success message with user details
-        const successMessage = `✅ ${user.name} has been registered successfully!\n\n` +
+        // ✅ Show detailed success message
+        const successMessage = `✅ ${user.name} registered successfully!\n\n` +
           `User ID: ${user.userId}\n` +
-          `Registration Number: ${user.registrationNumber || 'N/A'}\n` +
+          `Registration #: ${user.registrationNumber || 'N/A'}\n` +
           `Phone: ${user.phoneNumber}\n` +
           (user.email ? `Email: ${user.email}\n` : '') +
-          `\nCredentials have been sent via ${user.email ? 'SMS and Email' : 'SMS'}.`;
+          `\nCredentials sent via ${user.email ? 'SMS & Email' : 'SMS'}.`;
 
         alert(successMessage);
 
-        // Reload the member list
+        // Reload members list
         this.loadMembers();
         this.isLoading = false;
       },
       error: (error) => {
         console.error('❌ Error creating member:', error);
 
-        // Enhanced error messages
-        let errorMessage = 'Failed to create member. ';
+        // ✅ Enhanced error handling
+        let errorMessage = 'Failed to create member.\n\n';
 
         if (error.error?.message) {
           errorMessage += error.error.message;
         } else if (error.status === 400) {
-          errorMessage += 'Invalid data provided. Please check all required fields.';
+          errorMessage += 'Invalid data. Please check all required fields.';
         } else if (error.status === 409) {
           errorMessage += 'Phone number or email already exists.';
         } else if (error.status === 403) {
-          errorMessage += 'You do not have permission to create members.';
+          errorMessage += 'Permission denied.';
+        } else if (error.status === 500) {
+          errorMessage += 'Server error. Please try again or contact support.';
         } else if (error.status === 0) {
-          errorMessage += 'Cannot connect to server. Please check your connection.';
+          errorMessage += 'Cannot connect to server. Check your internet connection.';
         } else {
-          errorMessage += 'Please try again.';
+          errorMessage += 'Unknown error occurred. Please try again.';
         }
 
         this.errorMessage = errorMessage;
         this.isLoading = false;
         alert('❌ ' + errorMessage);
+
+        // ✅ Log full error for debugging
+        console.error('Full error object:', error);
+        if (error.error) {
+          console.error('Error details:', error.error);
+        }
       }
     });
 }
-
 // ✅ ADD THIS: Enhanced error formatting
 private formatErrorMessage(error: any): string {
   if (error.error?.message) {

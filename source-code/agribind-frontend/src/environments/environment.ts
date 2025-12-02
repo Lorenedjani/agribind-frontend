@@ -3,7 +3,7 @@ export const environment = {
   production: false,
   apiUrl: 'http://localhost:8080', // ✅ API Gateway URL
   googleMapsApiKey: 'AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg',
-  
+
   // Service URLs (via API Gateway)
   services: {
     userManagement: 'http://localhost:8080/user-management',

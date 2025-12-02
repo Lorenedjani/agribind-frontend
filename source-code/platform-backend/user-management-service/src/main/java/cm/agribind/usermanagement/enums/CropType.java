@@ -1,3 +1,6 @@
+// CRITICAL FIX: CropType.java
+// Replace the entire enum with this updated version
+
 package cm.agribind.usermanagement.enums;
 
 public enum CropType {
@@ -10,13 +13,14 @@ public enum CropType {
     POTATOES,
     CASSAVA,
     YAMS,
-    PLANTAINS,
+    PLANTAIN,      // ✅ ADDED - was missing
+    PLANTAINS,     // ✅ ADDED - plural form
 
     // Cash Crops
     COCOA,
     COFFEE,
     COTTON,
-    BANANAS,
+    BANANAS,       // ✅ Already existed
     PALM_OIL,
     RUBBER,
     TEA,
