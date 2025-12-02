@@ -1,0 +1,203 @@
+<!-- ========================================
+     FILE: src/main/resources/templates/email/notification.html
+     PURPOSE: Email notification template
+     ======================================== -->
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agribind Notification</title>
+    <style>
+        body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #2d5f3f 0%, #1a4028 100%);
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header img {
+            max-width: 150px;
+            margin-bottom: 15px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 30px 20px;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .content h2 {
+            color: #2d5f3f;
+            font-size: 20px;
+            margin-top: 0;
+        }
+        .message-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #2d5f3f;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .alert-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .alert-critical {
+            background-color: #dc3545;
+            color: white;
+        }
+        .alert-warning {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .alert-info {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #2d5f3f;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+        .button:hover {
+            background-color: #234a31;
+        }
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .details-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .details-table td:first-child {
+            font-weight: 600;
+            color: #666;
+            width: 40%;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #2d5f3f;
+            text-decoration: none;
+        }
+        .social-links {
+            margin: 15px 0;
+        }
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="header">
+            <img th:src="@{${logoUrl}}" src="logo.png" alt="Agribind Logo" />
+            <h1>Agribind Cooperative</h1>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Greeting -->
+            <p>Bonjour <strong th:text="${recipientName}">Member</strong>,</p>
+
+            <!-- Alert Badge (if applicable) -->
+            <div th:if="${alertPriority}">
+                <span class="alert-badge"
+                      th:classappend="${alertPriority == 'CRITICAL' ? 'alert-critical' : (alertPriority == 'WARNING' ? 'alert-warning' : 'alert-info')}">
+                    <span th:text="${alertPriority}">Priority</span>
+                </span>
+            </div>
+
+            <!-- Title -->
+            <h2 th:text="${notificationTitle}">Important Notification</h2>
+
+            <!-- Message Box -->
+            <div class="message-box">
+                <p th:utext="${messageContent}">
+                    Your notification message will appear here.
+                </p>
+            </div>
+
+            <!-- Details Table (if applicable) -->
+            <table class="details-table" th:if="${detailsMap}">
+                <tr th:each="detail : ${detailsMap}">
+                    <td th:text="${detail.key}">Label</td>
+                    <td th:text="${detail.value}">Value</td>
+                </tr>
+            </table>
+
+            <!-- Call to Action Button -->
+            <div style="text-align: center;">
+                <a th:href="@{${actionUrl}}" href="#" class="button" th:if="${actionUrl}">
+                    <span th:text="${actionButtonText}">View Details</span>
+                </a>
+            </div>
+
+            <!-- Additional Information -->
+            <p style="margin-top: 30px; color: #666; font-size: 14px;">
+                Si vous avez des questions, veuillez contacter notre équipe de support.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>Agribind Cameroon Cooperative</strong></p>
+            <p>Yaoundé, Cameroun | Tél: +237 6XX XXX XXX</p>
+            <p>Email: support@agribind.cm</p>
+
+            <div class="social-links">
+                <a href="https://facebook.com/agribind">Facebook</a> |
+                <a href="https://twitter.com/agribind">Twitter</a> |
+                <a href="https://instagram.com/agribind">Instagram</a>
+            </div>
+
+            <p style="font-size: 12px; color: #999; margin-top: 15px;">
+                © <span th:text="${#dates.year(#dates.createNow())}">2025</span> Agribind. Tous droits réservés.
+            </p>
+
+            <p style="font-size: 11px; color: #999;">
+                Vous recevez cet email car vous êtes membre de la coopérative Agribind.
+                <br/>
+                <a href="#" style="color: #999;">Se désabonner</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

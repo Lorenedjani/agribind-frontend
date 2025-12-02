@@ -1,6 +1,7 @@
 // ProductionRecord.java - Plain Java version
-package com.agriplatform.production.domain;
+package com.agribind.production_monitoring.model;
 
+import com.agribind.production_monitoring.model.ProductType;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -237,4 +238,28 @@ public class ProductionRecord {
                 ", maturityStatus=" + maturityStatus +
                 '}';
     }
+
+    // In ProductionRecord.java, add these methods:
+    public BigDecimal getUnitPrice() {
+        return unitPrice;
+    }
+
+    public void setUnitPrice(BigDecimal unitPrice) {
+        this.unitPrice = unitPrice;
+    }
+
+    public BigDecimal getValueXaf() {
+        return valueXaf;
+    }
+
+    public void setValueXaf(BigDecimal valueXaf) {
+        this.valueXaf = valueXaf;
+    }
+
+    // And add these fields to the entity:
+    @Column(name = "unit_price", precision = 15, scale = 2)
+    private BigDecimal unitPrice;
+
+    @Column(name = "value_xaf", precision = 15, scale = 2)
+    private BigDecimal valueXaf;
 }

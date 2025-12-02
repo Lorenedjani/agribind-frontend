@@ -25,19 +25,6 @@ public class ProductionMonitoringService {
     private final ProductionAggregateRepository productionAggregateRepository;
     private final FarmerContributionRepository farmerContributionRepository;
     private final MaturityUpdateRepository maturityUpdateRepository;
-    // ... other repositories
-
-    // Add constructor manually
-    public ProductionMonitoringService(
-            ProductionRecordRepository productionRecordRepository,
-            ProductionAggregateRepository productionAggregateRepository,
-            FarmerContributionRepository farmerContributionRepository,
-            MaturityUpdateRepository maturityUpdateRepository) {
-        this.productionRecordRepository = productionRecordRepository;
-        this.productionAggregateRepository = productionAggregateRepository;
-        this.farmerContributionRepository = farmerContributionRepository;
-        this.maturityUpdateRepository = maturityUpdateRepository;
-    }
 
     /**
      * Record new production entry from a farmer
@@ -62,6 +49,19 @@ public class ProductionMonitoringService {
         record.setLocationLongitude(dto.getLocationLongitude());
         record.setNotes(dto.getNotes());
 
+        // Set price information
+        record.setUnitPrice(dto.getUnitPrice());
+        record.setValueXaf(dto.getValueXaf());
+
+        // Validate price calculation
+        BigDecimal calculatedValue = dto.getUnitPrice().multiply(dto.getQuantity());
+        if (calculatedValue.compareTo(dto.getValueXaf()) != 0) {
+            log.warn("Price mismatch detected. Calculated: {}, Provided: {}",
+                    calculatedValue, dto.getValueXaf());
+            // Use calculated value to ensure accuracy
+            record.setValueXaf(calculatedValue);
+        }
+
         ProductionRecord savedRecord = productionRecordRepository.save(record);
 
         // Update farmer contribution
@@ -70,7 +70,8 @@ public class ProductionMonitoringService {
         // Update aggregate statistics
         updateProductionAggregates(savedRecord);
 
-        log.info("Production recorded successfully with ID: {}", savedRecord.getId());
+        log.info("Production recorded successfully with ID: {}, Value: {} XAF",
+                savedRecord.getId(), savedRecord.getValueXaf());
         return savedRecord;
     }
 
@@ -116,28 +117,38 @@ public class ProductionMonitoringService {
     ) {
         log.info("Getting production aggregate for cooperative: {}, product: {}", cooperativeId, productName);
 
-        // Calculate total quantity
-        Double totalQuantity = productionRecordRepository.sumQuantityByProductAndDateRange(
-                cooperativeId, productName, startDate, endDate
-        );
+        // Get production records for the period
+        List<ProductionRecord> records = productionRecordRepository.findByCooperativeIdAndDateRange(
+                        cooperativeId, startDate, endDate
+                ).stream()
+                .filter(r -> r.getProductName().equals(productName))
+                .collect(Collectors.toList());
+
+        // Calculate total quantity and value
+        BigDecimal totalQuantity = records.stream()
+                .map(ProductionRecord::getQuantity)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalValue = records.stream()
+                .map(ProductionRecord::getValueXaf)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Count unique farmers
-        Integer totalFarmers = productionRecordRepository.countDistinctFarmersByProduct(
-                cooperativeId, productName, startDate, endDate
-        );
+        Integer totalFarmers = (int) records.stream()
+                .map(ProductionRecord::getFarmerId)
+                .distinct()
+                .count();
 
         // Get top contributors
         List<FarmerContribution> contributions = farmerContributionRepository.findTopContributors(
                 cooperativeId, productName, PageRequest.of(0, 10)
         );
 
-        BigDecimal total = totalQuantity != null ? BigDecimal.valueOf(totalQuantity) : BigDecimal.ZERO;
-
         List<FarmerContributionSummary> topContributors = contributions.stream()
                 .map(fc -> {
-                    Double percentage = total.compareTo(BigDecimal.ZERO) > 0
-                            ? fc.getQuantityContributed().divide(total, 4, RoundingMode.HALF_UP)
-                                    .multiply(BigDecimal.valueOf(100)).doubleValue()
+                    Double percentage = totalQuantity.compareTo(BigDecimal.ZERO) > 0
+                            ? fc.getQuantityContributed().divide(totalQuantity, 4, RoundingMode.HALF_UP)
+                            .multiply(BigDecimal.valueOf(100)).doubleValue()
                             : 0.0;
 
                     return FarmerContributionSummary.builder()
@@ -153,8 +164,8 @@ public class ProductionMonitoringService {
         return ProductionAggregateDTO.builder()
                 .cooperativeId(cooperativeId)
                 .productName(productName)
-                .totalQuantity(total)
-                .totalFarmers(totalFarmers != null ? totalFarmers : 0)
+                .totalQuantity(totalQuantity)
+                .totalFarmers(totalFarmers)
                 .topContributors(topContributors)
                 .periodDescription(startDate + " to " + endDate)
                 .build();

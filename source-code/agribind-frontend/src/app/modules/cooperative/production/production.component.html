@@ -1,151 +1,323 @@
-<div class="wrapper">
-  <app-cooperative-sidebar></app-cooperative-sidebar>
+<div class="production-wrapper">
+  <!-- Mobile Menu Toggle -->
+  <button class="mobile-menu-toggle" (click)="toggleSidebar()" *ngIf="isMobile">
+    ☰
+  </button>
 
-  <!-- Top Bar -->
-  <header class="top-bar">
-    <div class="page-title">
-      <h3>Production Management</h3>
-    </div>
+  <div class="sidebar-container" [class.sidebar-open]="!isSidebarCollapsed">
+    <app-cooperative-sidebar></app-cooperative-sidebar>
+  </div>
 
-    <div class="top-bar-actions">
-      <button class="notification-btn" title="Notifications">🔔</button>
-
-      <div class="user-info" title="{{ user.name }}">
-        <div class="avatar">{{ user.initials }}</div>
-        <div class="user-details">
-          <span class="user-name">{{ user.name }}</span>
-          <small>{{ user.role }}</small>
+  <main class="main-content" [class.sidebar-collapsed]="isSidebarCollapsed">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="page-title">
+        <h3>
+          Production Management
+          <span class="cooperative-name" *ngIf="user.cooperativeName">• {{ user.cooperativeName }}</span>
+        </h3>
+        <div class="last-updated">
+          <span>Updated just now</span>
+          <button class="refresh-btn" (click)="loadProductions()" title="Refresh">↻</button>
         </div>
       </div>
-    </div>
-  </header>
 
-  <main class="main-content">
+      <div class="top-bar-actions">
+        <button class="notification-btn" title="Notifications">
+          🔔
+          <span class="notification-badge"></span>
+        </button>
 
-    <!-- Cards Overview -->
-    <section class="cards-overview">
-      <div class="card">
-        <div class="card-content">
-          <h2>{{ totalProduction }}</h2>
-          <p class="green-text">{{ totalProductionPercent }}</p>
-          <p class="card-title">Total Production (Current Cycle)</p>
+        <div class="user-info" (click)="toggleSidebar()" title="{{ user.name }}">
+          <div class="avatar">{{ user.initials }}</div>
+          <div class="user-details">
+            <span class="user-name">{{ user.name }}</span>
+            <small>{{ user.role }}</small>
+          </div>
         </div>
-        <div class="icon-box green">📦</div>
       </div>
+    </header>
 
-      <div class="card">
-        <div class="card-content">
-          <h2>{{ activeFarmers }}</h2>
-          <p class="green-text">{{ activeFarmersParticipation }}</p>
-          <p class="card-title">Active Farmers Delivering</p>
+    <!-- Dashboard Metrics -->
+    <section class="dashboard-metrics">
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-content">
+            <div class="metric-value">{{ totalProduction }}</div>
+            <div class="metric-change positive">{{ totalProductionPercent }}</div>
+            <p class="metric-title">Total Production (Current Cycle)</p>
+          </div>
+          <div class="metric-icon icon-primary">📦</div>
         </div>
-        <div class="icon-box green">📈</div>
-      </div>
 
-      <div class="card">
-        <div class="card-content">
-          <h2>{{ gradeAProduction }}</h2>
-          <p class="yellow-text">{{ gradeAPercent }}</p>
-          <p class="card-title">Grade A Production</p>
+        <div class="metric-card">
+          <div class="metric-content">
+            <div class="metric-value">{{ activeFarmers }}</div>
+            <div class="metric-change positive">{{ activeFarmersParticipation }}</div>
+            <p class="metric-title">Active Farmers Delivering</p>
+          </div>
+          <div class="metric-icon icon-success">👨‍🌾</div>
         </div>
-        <div class="icon-box yellow">🔑</div>
-      </div>
 
-      <div class="card">
-        <div class="card-content">
-          <h2>{{ thisMonthDeliveries }}</h2>
-          <p class="green-text">{{ thisMonthChange }}</p>
-          <p class="card-title">This Month Deliveries</p>
+        <div class="metric-card">
+          <div class="metric-content">
+            <div class="metric-value">{{ gradeAProduction }}</div>
+            <div class="metric-change neutral">{{ gradeAPercent }}</div>
+            <p class="metric-title">Grade A Production</p>
+          </div>
+          <div class="metric-icon icon-warning">⭐</div>
         </div>
-        <div class="icon-box green">📅</div>
+
+        <div class="metric-card">
+          <div class="metric-content">
+            <div class="metric-value total-value">{{ dashboardMetrics.totalValueXAF }}</div>
+            <div class="metric-change positive">{{ thisMonthChange }}</div>
+            <p class="metric-title">Total Value (This Month)</p>
+          </div>
+          <div class="metric-icon icon-info">💰</div>
+        </div>
       </div>
     </section>
 
-    <!-- Top Filters: Search + Buttons -->
-    <section class="top-filters">
-      <div class="search-wrapper">
-        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"
-             stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-             viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="7" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <input
-          type="text"
-          class="search-input"
-          placeholder="Search by farmer, crop, or production ID..."
-          [(ngModel)]="searchQuery"
-          (ngModelChange)="onSearchChange()"
-        />
-      </div>
-      <div class="button-group">
-        <button class="btn btn-primary" (click)="onRecordProduction()">+ Record Production</button>
-        <button class="btn btn-outline" (click)="onExport()">Export</button>
-      </div>
-    </section>
+    <!-- Filters Section -->
+    <section class="filters-section">
+      <div class="filters-header">
+        <div class="header-left">
+          <div class="search-wrapper">
+            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"
+                 stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="7" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Search by farmer, crop, or production ID..."
+              [(ngModel)]="searchQuery"
+              (ngModelChange)="onSearchChange()"
+            />
+          </div>
 
-    <!-- Dropdown Filters -->
-    <section class="filters">
-      <div class="filter-group">
-        <label for="cropSelect">Crop Type</label>
-        <select id="cropSelect" [(ngModel)]="selectedCrop" (ngModelChange)="onFilterChange()" class="filter-select">
-          <option *ngFor="let crop of cropTypes" [value]="crop">{{ crop }}</option>
-        </select>
+          <button class="mobile-filter-toggle" (click)="toggleFilterModal()" *ngIf="isMobile">
+            <span>Filters</span>
+            <span>⚙️</span>
+          </button>
+        </div>
+
+        <div class="header-right">
+          <button class="btn btn-primary" (click)="onRecordProduction()">+ Record Production</button>
+          <button class="btn btn-outline" (click)="onExport()">Export</button>
+        </div>
       </div>
-      <div class="filter-group">
-        <label for="gradeSelect">Quality Grade</label>
-        <select id="gradeSelect" [(ngModel)]="selectedGrade" (ngModelChange)="onFilterChange()" class="filter-select">
-          <option *ngFor="let grade of qualityGrades" [value]="grade">{{ grade }}</option>
-        </select>
+
+      <div class="filters-body" [class.mobile-open]="showFilterModal">
+        <div class="filters-grid">
+          <div class="filter-group">
+            <label for="cropSelect">Crop Type</label>
+            <select id="cropSelect" [(ngModel)]="selectedCrop" (ngModelChange)="onFilterChange()" class="form-control">
+              <option *ngFor="let crop of cropTypes" [value]="crop">{{ crop === 'All Crops' ? crop : getCropDisplayName(crop) }}</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="gradeSelect">Quality Grade</label>
+            <select id="gradeSelect" [(ngModel)]="selectedGrade" (ngModelChange)="onFilterChange()" class="form-control">
+              <option *ngFor="let grade of qualityGrades" [value]="grade">{{ grade === 'All Grades' ? grade : getGradeDisplayName(grade) }}</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="statusSelect">Maturity Status</label>
+            <select id="statusSelect" [(ngModel)]="filterState.selectedStatus" (ngModelChange)="onFilterChange()" class="form-control">
+              <option *ngFor="let status of maturityStatuses" [value]="status.value">{{ status.label }}</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="dateRangeSelect">Date Range</label>
+            <select id="dateRangeSelect" [(ngModel)]="selectedDateRange" (ngModelChange)="applyDateFilter()" class="form-control">
+              <option *ngFor="let range of dateRangeOptions" [value]="range.value">{{ range.label }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="filter-actions">
+          <div class="active-filters">
+            <span class="filter-tag" *ngIf="selectedCrop !== 'All Crops'">
+              Crop: {{ getCropDisplayName(selectedCrop) }}
+              <button (click)="selectedCrop = 'All Crops'; onFilterChange()">×</button>
+            </span>
+            <span class="filter-tag" *ngIf="selectedGrade !== 'All Grades'">
+              Grade: {{ getGradeDisplayName(selectedGrade) }}
+              <button (click)="selectedGrade = 'All Grades'; onFilterChange()">×</button>
+            </span>
+            <span class="filter-tag" *ngIf="filterState.selectedStatus !== 'ALL'">
+              Status: {{ getStatusDisplayName(filterState.selectedStatus) }}
+              <button (click)="filterState.selectedStatus = 'ALL'; onFilterChange()">×</button>
+            </span>
+            <span class="filter-tag" *ngIf="searchQuery">
+              Search: "{{ searchQuery }}"
+              <button (click)="searchQuery = ''; onSearchChange()">×</button>
+            </span>
+          </div>
+
+          <div class="filter-buttons">
+            <button class="btn btn-ghost" (click)="clearFilters()">Clear All</button>
+            <button class="btn btn-primary" (click)="applyFilters()">Apply Filters</button>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- Production Table -->
     <section class="table-section">
-      <table>
-        <thead>
-        <tr>
-          <th>Production ID</th>
-          <th>Date</th>
-          <th>Farmer</th>
-          <th>Crop</th>
-          <th>Quantity</th>
-          <th>Grade</th>
-          <th>Warehouse</th>
-          <th>Value (XAF)</th>
-          <th>Status</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let record of paginatedProduction">
-          <td>{{ record.id }}</td>
-          <td>{{ record.date }}</td>
-          <td>{{ record.farmer }}</td>
-          <td>{{ record.crop }}</td>
-          <td>{{ record.quantity }}</td>
-          <td><span class="badge" [ngClass]="record.gradeClass">{{ record.grade }}</span></td>
-          <td>{{ record.warehouse }}</td>
-          <td>{{ record.value }}</td>
-          <td><span class="status-badge" [ngClass]="record.statusClass">{{ record.status }}</span></td>
-        </tr>
-        <tr *ngIf="filteredProduction.length === 0">
-          <td colspan="9" class="no-data">No production records found.</td>
-        </tr>
-        </tbody>
-      </table>
+      <div class="table-wrapper">
+        <div class="table-header">
+          <div class="table-title">
+            <h4>Production Records</h4>
+            <span class="record-count">{{ filteredProductionLength }} records found</span>
+          </div>
 
-      <!-- Pagination Controls -->
-      <div class="pagination">
-        <button (click)="previousPage()" [disabled]="currentPage === 1">← Prev</button>
-        <span>Page {{ currentPage }} of {{ totalPages }}</span>
-        <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next →</button>
+          <div class="table-controls">
+            <div class="page-size-selector">
+              <label>Show:</label>
+              <select [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange($event)">
+                <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+              </select>
+            </div>
+
+            <div class="view-toggle">
+              <button class="active">Table</button>
+              <button>Cards</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable">Production ID</th>
+                <th class="sortable">Date</th>
+                <th>Farmer</th>
+                <th>Crop</th>
+                <th class="sortable">Quantity</th>
+                <th>Grade</th>
+                <th>Warehouse</th>
+                <th class="sortable">Unit Price</th>
+                <th class="sortable">Total Value (XAF)</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Loading State -->
+              <tr *ngIf="isLoading" class="loading-row">
+                <td colspan="11">
+                  <div class="loading-spinner"></div>
+                  <p>Loading production records...</p>
+                </td>
+              </tr>
+
+              <!-- Empty State -->
+              <tr *ngIf="!isLoading && filteredProductionLength === 0" class="empty-state">
+                <td colspan="11">
+                  <div class="empty-icon">📊</div>
+                  <h4>No production records found</h4>
+                  <p>Try adjusting your filters or record a new production entry.</p>
+                  <button class="btn btn-primary" (click)="onRecordProduction()">Record New Production</button>
+                </td>
+              </tr>
+
+              <!-- Production Records-->
+              <tr *ngFor="let record of paginatedProduction">
+                <td>
+                  <span class="production-id">{{ record.id }}</span>
+                </td>
+                <td>{{ record.date }}</td>
+                <td>
+                  <div class="farmer-info">
+                    <span class="farmer-name">{{ record.farmer }}</span>
+                    <span class="farmer-id">{{ record.rawRecord.farmerId }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="crop-badge" [ngClass]="'crop-' + record.rawRecord.productName.toLowerCase()">
+                    {{ record.crop }}
+                  </span>
+                </td>
+                <td>{{ record.quantity }}</td>
+                <td>
+                  <span class="grade-badge" [ngClass]="record.gradeClass">{{ record.grade }}</span>
+                </td>
+                <td>{{ record.warehouse }}</td>
+                <td>
+                  <span class="value-display">{{ record.unitPrice }}</span>
+                </td>
+                <td>
+                  <span class="value-display large-value">{{ record.value }}</span>
+                </td>
+                <td>
+                  <span class="status-badge" [ngClass]="record.statusClass">{{ record.status }}</span>
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button title="View Details" (click)="showRecordDetails(record)">
+                      👁️
+                    </button>
+                    <button *ngIf="record.rawRecord.maturityStatus !== 'HARVESTED'"
+                            class="status-update"
+                            [ngClass]="record.rawRecord.maturityStatus.toLowerCase()"
+                            (click)="updateRecordStatus(record.id, 'HARVESTED')"
+                            title="Mark as Harvested">
+                      ✅
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-container" *ngIf="!isLoading && filteredProductionLength > 0">
+          <div class="pagination-info">
+            Showing <span class="results-count">{{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, filteredProductionLength) }}</span>
+            of <span class="results-count">{{ filteredProductionLength }}</span> records
+          </div>
+
+          <div class="pagination-controls">
+            <button class="pagination-button"
+                    (click)="previousPage()"
+                    [disabled]="currentPage === 1">
+              ←
+            </button>
+
+            <ng-container *ngFor="let page of getPaginationArray()">
+              <button *ngIf="page !== '...'"
+                      class="pagination-button"
+                      [class.active]="currentPage === page"
+                      (click)="goToPage(page as number)">
+                {{ page }}
+              </button>
+              <span *ngIf="page === '...'" class="pagination-button ellipsis">...</span>
+            </ng-container>
+
+            <button class="pagination-button"
+                    (click)="nextPage()"
+                    [disabled]="currentPage === totalPages">
+              →
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   </main>
 
   <!-- Record Production Modal -->
   <div class="modal-overlay" *ngIf="showRecordModal" (click)="closeRecordModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-content modal-lg" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>Record New Production</h2>
         <button class="modal-close" (click)="closeRecordModal()">×</button>
@@ -154,110 +326,230 @@
       <div class="modal-body">
         <form>
           <!-- Farmer Search with Autocomplete -->
-          <div class="form-row">
-            <div class="form-group full-width">
-              <label for="farmerSearch">Search Farmer *</label>
-              <div class="farmer-search-wrapper">
+          <div class="form-group">
+            <label for="farmerSearch">Search Farmer <span class="required">*</span></label>
+            <div class="farmer-search-wrapper">
+              <div class="search-input-wrapper">
                 <input
+                  #farmerSearchInput
                   type="text"
                   id="farmerSearch"
-                  class="form-input"
+                  class="form-control"
                   placeholder="Type farmer name or phone number..."
                   [(ngModel)]="farmerSearchTerm"
                   (input)="onFarmerSearchInput($event)"
                   name="farmerSearch"
                   autocomplete="off"
                 />
-                <button 
-                  type="button" 
-                  class="clear-farmer-btn" 
+                <button
+                  type="button"
+                  class="clear-farmer-btn"
                   *ngIf="selectedFarmer"
                   (click)="clearFarmerSelection()"
                   title="Clear selection">
                   ×
                 </button>
-                
-                <!-- Farmer Dropdown -->
-                <div class="farmer-dropdown" *ngIf="showFarmerDropdown && searchedFarmers.length > 0">
-                  <div 
-                    class="farmer-item" 
-                    *ngFor="let farmer of searchedFarmers"
-                    (click)="selectFarmer(farmer)">
-                    <div class="farmer-name">{{ farmer.name }}</div>
-                    <div class="farmer-details">
-                      {{ farmer.phoneNumber }} • {{ farmer.agriculturalType }} • {{ farmer.landArea }} ha
-                    </div>
-                  </div>
+              </div>
+
+              <!-- Farmer Dropdown -->
+              <div class="farmer-dropdown" *ngIf="showFarmerDropdown">
+                <div *ngIf="isSearchingFarmers" class="loading-state">
+                  <div class="spinner"></div>
+                  <p>Searching farmers...</p>
                 </div>
 
-                <!-- Selected Farmer Info -->
-                <div class="selected-farmer-info" *ngIf="selectedFarmer">
-                  <span class="info-label">Selected:</span>
-                  <span class="info-value">{{ selectedFarmer.name }}</span>
-                  <span class="info-detail">{{ selectedFarmer.phoneNumber }}</span>
+                <div *ngIf="!isSearchingFarmers && searchedFarmers.length === 0" class="empty-state">
+                  <p>No farmers found. Try a different search term.</p>
+                </div>
+
+                <div *ngFor="let farmer of searchedFarmers"
+                     class="farmer-item"
+                     [class.selected]="selectedFarmer?.userId === farmer.userId"
+                     (click)="selectFarmer(farmer)">
+                  <div class="farmer-name">{{ farmer.name }}</div>
+                  <div class="farmer-details">
+                    <span>📞 {{ farmer.phoneNumber }}</span>
+                    <span>🌱 {{ farmer.agriculturalType }}</span>
+                    <span>📍 {{ farmer.landArea }} ha</span>
+                  </div>
                 </div>
               </div>
+
+              <!-- Selected Farmer Info -->
+              <div class="selected-farmer-info" *ngIf="selectedFarmer">
+                <div class="info-header">
+                  <div class="farmer-name">{{ selectedFarmer.name }}</div>
+                  <button class="btn btn-sm btn-outline" (click)="clearFarmerSelection()">Change</button>
+                </div>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <div class="label">Phone</div>
+                    <div class="value">{{ selectedFarmer.phoneNumber }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="label">Farm Type</div>
+                    <div class="value">{{ selectedFarmer.agriculturalType }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="label">Land Area</div>
+                    <div class="value">{{ selectedFarmer.landArea }} ha</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="label">Crops</div>
+                    <div class="value">{{ selectedFarmer.cropTypes.join(', ') }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="form-hint" *ngIf="!selectedFarmer && !isSearchingFarmers">
+              Start typing to search for farmers
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="cropInput">Crop Type *</label>
-              <select id="cropInput" [(ngModel)]="newProduction.cropType" name="cropType" required class="form-input">
+              <label for="productName">Crop Type <span class="required">*</span></label>
+              <select
+                id="productName"
+                [(ngModel)]="newProduction.productName"
+                name="productName"
+                required
+                class="form-control"
+                (ngModelChange)="onProductionFormChange()">
                 <option value="COCOA">Cocoa</option>
                 <option value="COFFEE">Coffee</option>
                 <option value="MAIZE">Maize</option>
                 <option value="CASSAVA">Cassava</option>
                 <option value="RICE">Rice</option>
                 <option value="COTTON">Cotton</option>
+                <option value="BANANA">Banana</option>
+                <option value="POTATO">Potato</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label for="quantityInput">Quantity (MT) *</label>
+              <label for="quantity">Quantity (MT) <span class="required">*</span></label>
               <input
                 type="number"
-                id="quantityInput"
+                id="quantity"
                 [(ngModel)]="newProduction.quantity"
                 name="quantity"
                 min="0.1"
                 step="0.1"
                 required
-                class="form-input"
+                class="form-control"
                 placeholder="e.g., 2.5"
+                (ngModelChange)="onProductionFormChange()"
               />
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="gradeInput">Quality Grade *</label>
-              <select id="gradeInput" [(ngModel)]="newProduction.qualityGrade" name="qualityGrade" required class="form-input">
-                <option value="GRADE_A">Grade A</option>
-                <option value="GRADE_B">Grade B</option>
-                <option value="GRADE_C">Grade C</option>
+              <label for="qualityGrade">Quality Grade <span class="required">*</span></label>
+              <select
+                id="qualityGrade"
+                [(ngModel)]="newProduction.qualityGrade"
+                name="qualityGrade"
+                required
+                class="form-control"
+                (ngModelChange)="onProductionFormChange()">
+                <option value="GRADE_A">Grade A (Premium)</option>
+                <option value="GRADE_B">Grade B (Standard)</option>
+                <option value="GRADE_C">Grade C (Basic)</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label for="warehouseInput">Warehouse *</label>
-              <select id="warehouseInput" [(ngModel)]="newProduction.warehouse" name="warehouse" required class="form-input">
-                <option *ngFor="let warehouse of warehouses" [value]="warehouse">{{ warehouse }}</option>
+              <label for="warehouse">Warehouse <span class="required">*</span></label>
+              <select
+                id="warehouse"
+                [(ngModel)]="newProduction.warehouse"
+                name="warehouse"
+                required
+                class="form-control">
+                <option *ngFor="let warehouse of warehouses" [value]="warehouse.name">{{ warehouse.name }} - {{ warehouse.location }}</option>
               </select>
             </div>
           </div>
 
           <div class="form-row">
-            <div class="form-group full-width">
-              <label for="dateInput">Delivery Date *</label>
+            <div class="form-group">
+              <label for="productionDate">Production Date <span class="required">*</span></label>
               <input
                 type="date"
-                id="dateInput"
-                [(ngModel)]="newProduction.deliveryDate"
-                name="deliveryDate"
+                id="productionDate"
+                [(ngModel)]="newProduction.productionDate"
+                name="productionDate"
                 required
-                class="form-input"
+                class="form-control"
               />
+            </div>
+
+            <div class="form-group">
+              <label for="maturityStatus">Maturity Status <span class="required">*</span></label>
+              <select
+                id="maturityStatus"
+                [(ngModel)]="newProduction.maturityStatus"
+                name="maturityStatus"
+                required
+                class="form-control">
+                <option value="IMMATURE">Immature</option>
+                <option value="MATURE">Mature</option>
+                <option value="READY_FOR_HARVEST">Ready for Harvest</option>
+                <option value="HARVESTED">Harvested</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="notes">Notes (Optional)</label>
+            <textarea
+              id="notes"
+              [(ngModel)]="newProduction.notes"
+              name="notes"
+              class="form-control"
+              rows="3"
+              placeholder="Add any additional notes about this production..."
+            ></textarea>
+          </div>
+
+          <!-- Price Calculator -->
+          <div class="price-calculator">
+            <div class="calculator-header">
+              <h4>Price Calculation</h4>
+              <button type="button" class="calculator-toggle">ℹ️ How is this calculated?</button>
+            </div>
+            <div class="calculator-body">
+              <div class="price-row">
+                <span class="price-label">Unit Price (per MT):</span>
+                <span class="price-value">{{ formatValue(newProduction.unitPrice) }}</span>
+              </div>
+              <div class="price-row">
+                <span class="price-label">Quantity:</span>
+                <span class="price-value">{{ newProduction.quantity }} MT</span>
+              </div>
+              <div class="price-row total-row">
+                <span class="price-label">Total Value:</span>
+                <span class="price-value total">{{ formatValue(newProduction.valueXaf) }}</span>
+              </div>
+
+              <div class="price-breakdown">
+                <div class="breakdown-row">
+                  <span class="breakdown-label">
+                    <span>Crop:</span>
+                    <span class="crop-badge crop-cocoa">{{ getCropDisplayName(newProduction.productName) }}</span>
+                  </span>
+                  <span class="breakdown-value">{{ getCropDisplayName(newProduction.productName) }}</span>
+                </div>
+                <div class="breakdown-row">
+                  <span class="breakdown-label">
+                    <span>Grade:</span>
+                    <span class="grade-badge" [ngClass]="getGradeClass(newProduction.qualityGrade)">{{ getGradeDisplayName(newProduction.qualityGrade) }}</span>
+                  </span>
+                  <span class="breakdown-value">{{ formatValue(getUnitPrice(newProduction.productName, newProduction.qualityGrade)) }}/MT</span>
+                </div>
+              </div>
             </div>
           </div>
         </form>
@@ -265,11 +557,12 @@
 
       <div class="modal-footer">
         <button class="btn btn-outline" (click)="closeRecordModal()">Cancel</button>
-        <button 
-          class="btn btn-primary" 
+        <button
+          class="btn btn-primary"
           (click)="submitProduction()"
-          [disabled]="!isFormValid()">
-          Record Production
+          [disabled]="!isFormValid() || isLoading">
+          <span *ngIf="!isLoading">Record Production</span>
+          <span *ngIf="isLoading" class="btn-loading">Processing...</span>
         </button>
       </div>
     </div>
@@ -277,7 +570,7 @@
 
   <!-- Export Modal -->
   <div class="modal-overlay" *ngIf="showExportModal" (click)="closeExportModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-content modal-sm" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>Export Production Data</h2>
         <button class="modal-close" (click)="closeExportModal()">×</button>
@@ -285,7 +578,7 @@
 
       <div class="modal-body">
         <form>
-          <div class="form-group full-width">
+          <div class="form-group">
             <label>Export Format</label>
             <div class="radio-group">
               <label class="radio-option">
@@ -305,14 +598,14 @@
               <label class="radio-option">
                 <input type="radio" name="format" value="pdf" [(ngModel)]="exportFormat" />
                 <span class="radio-label">
-                  <strong>PDF</strong>
-                  <small>Portable Document Format (Report)</small>
+                  <strong>PDF Report</strong>
+                  <small>Portable Document Format with formatting</small>
                 </span>
               </label>
             </div>
           </div>
 
-          <div class="form-group full-width">
+          <div class="form-group">
             <label>Date Range</label>
             <div class="radio-group">
               <label class="radio-option">
@@ -320,6 +613,13 @@
                 <span class="radio-label">
                   <strong>All Data</strong>
                   <small>Export all production records</small>
+                </span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="dateRange" value="thisMonth" [(ngModel)]="exportDateRange" />
+                <span class="radio-label">
+                  <strong>This Month</strong>
+                  <small>Current month's production only</small>
                 </span>
               </label>
               <label class="radio-option">
@@ -334,29 +634,30 @@
 
           <div class="form-row" *ngIf="exportDateRange === 'custom'">
             <div class="form-group">
-              <label for="startDate">Start Date</label>
+              <label for="exportStartDate">Start Date</label>
               <input
                 type="date"
-                id="startDate"
+                id="exportStartDate"
                 [(ngModel)]="exportStartDate"
-                name="startDate"
-                class="form-input"
+                name="exportStartDate"
+                class="form-control"
               />
             </div>
             <div class="form-group">
-              <label for="endDate">End Date</label>
+              <label for="exportEndDate">End Date</label>
               <input
                 type="date"
-                id="endDate"
+                id="exportEndDate"
                 [(ngModel)]="exportEndDate"
-                name="endDate"
-                class="form-input"
+                name="exportEndDate"
+                class="form-control"
               />
             </div>
           </div>
 
           <div class="export-info">
-            <p><strong>{{ filteredProduction.length }}</strong> records will be exported</p>
+            <p><strong>{{ filteredProductionLength }}</strong> records will be exported</p>
+            <small>Estimated file size: {{ (filteredProductionLength * 0.5).toFixed(1) }} KB</small>
           </div>
         </form>
       </div>
@@ -364,6 +665,20 @@
       <div class="modal-footer">
         <button class="btn btn-outline" (click)="closeExportModal()">Cancel</button>
         <button class="btn btn-primary" (click)="performExport()">Export Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Record Detail Modal -->
+  <div class="modal-overlay" *ngIf="showDetailModal" (click)="closeDetailModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Production Details</h2>
+        <button class="modal-close" (click)="closeDetailModal()">×</button>
+      </div>
+
+      <div class="modal-body" *ngIf="selectedRecord">
+        <!-- Add detail view content here -->
       </div>
     </div>
   </div>

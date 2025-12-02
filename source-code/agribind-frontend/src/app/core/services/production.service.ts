@@ -1,131 +1,157 @@
+// production.service.ts - Updated to match Java backend
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface ProductionRecord {
-  productionId: string;
+  id?: string;
   farmerId: string;
-  farmerName: string;
-  cropType: string;
+  cooperativeId: string;
+  productType: string; // 'CROP' | 'LIVESTOCK'
+  productName: string; // e.g., 'COCOA', 'MAIZE'
   quantity: number;
-  qualityGrade: string;
-  warehouse: string;
-  deliveryDate: string;
+  unit: string; // e.g., 'MT' for Metric Ton
+  qualityGrade?: string;
+  maturityStatus: string; // 'IMMATURE' | 'MATURE' | 'READY_FOR_HARVEST' | 'HARVESTED'
+  productionDate: string;
+  harvestDate?: string;
+  locationLatitude?: number;
+  locationLongitude?: number;
+  notes?: string;
+  unitPrice: number;
   valueXaf: number;
-  status: string;
+  createdAt?: string;
+  updatedAt?: string;
+  syncStatus?: string;
 }
 
-export interface ProductionDashboardMetrics {
-  totalProduction: string;
-  totalProductionPercent: string;
-  activeFarmers: number;
-  activeFarmersParticipation: string;
-  gradeAProduction: string;
-  gradeAPercent: string;
-  thisMonthDeliveries: string;
-  thisMonthChange: string;
+export interface ProductionAggregateDTO {
+  cooperativeId: string;
+  cooperativeName: string;
+  productName: string;
+  productType: string;
+  totalQuantity: number;
+  unit: string;
+  totalFarmers: number;
+  topContributors: FarmerContributionSummary[];
+  periodDescription: string;
+}
+
+export interface FarmerContributionSummary {
+  farmerId: string;
+  farmerName: string;
+  farmerRegistrationNumber: string;
+  quantityContributed: number;
+  unit: string;
+  contributionCount: number;
+  percentageOfTotal: number;
+}
+
+export interface ProductionDashboardDTO {
+  cooperativeId: string;
+  cooperativeName: string;
+  productionByType: ProductionAggregateDTO[];
+  farmersByProduct: { [key: string]: number };
+  totalActiveFarmers: number;
+  reportPeriod: string;
+  statistics: { [key: string]: any };
 }
 
 export interface CreateProductionRequest {
   farmerId: string;
-  cropType: string;
+  cooperativeId: string;
+  productType: string;
+  productName: string;
   quantity: number;
-  qualityGrade: string;
-  warehouse: string;
-  deliveryDate: string;
+  unit: string;
+  qualityGrade?: string;
+  maturityStatus: string;
+  productionDate: string;
+  unitPrice: number;
+  valueXaf: number;
+  harvestDate?: string;
+  locationLatitude?: number;
+  locationLongitude?: number;
+  notes?: string;
 }
 
-export interface PageResponse<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  currentPage: number;
-  size: number;
+export interface MaturityUpdateDTO {
+  productionRecordId: string;
+  newStatus: string;
+  farmerId: string;
+  notes?: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductionService {
-  private apiUrl = '/api/production';
+  private baseUrl = '/api/v1/production';
 
   constructor(private http: HttpClient) {}
 
-  getDashboardMetrics(): Observable<ProductionDashboardMetrics> {
-    return this.http.get<ProductionDashboardMetrics>(`${this.apiUrl}/dashboard`);
-  }
-
-  getProductions(params: any = {}): Observable<PageResponse<ProductionRecord>> {
-    let httpParams = new HttpParams();
-
-    Object.keys(params).forEach(key => {
-      if (params[key] !== undefined && params[key] !== null) {
-        httpParams = httpParams.set(key, params[key].toString());
-      }
-    });
-
-    return this.http.get<PageResponse<ProductionRecord>>(this.apiUrl, { params: httpParams });
-  }
-
+  // Record new production
   createProduction(request: CreateProductionRequest): Observable<ProductionRecord> {
-    return this.http.post<ProductionRecord>(this.apiUrl, request);
+    return this.http.post<ProductionRecord>(`${this.baseUrl}/record`, request);
   }
 
-  getAvailableCropTypes(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/crops`);
+  // Get production aggregate
+  getProductionAggregate(
+    cooperativeId: string,
+    productName: string,
+    startDate: string,
+    endDate: string
+  ): Observable<ProductionAggregateDTO> {
+    const params = new HttpParams()
+      .set('startDate', startDate)
+      .set('endDate', endDate);
+
+    return this.http.get<ProductionAggregateDTO>(
+      `${this.baseUrl}/aggregate/${cooperativeId}/${productName}`,
+      { params }
+    );
   }
 
-  getQualityGrades(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/grades`);
+  // Get production dashboard
+  getDashboard(cooperativeId: string, startDate: string, endDate: string): Observable<ProductionDashboardDTO> {
+    const params = new HttpParams()
+      .set('startDate', startDate)
+      .set('endDate', endDate);
+
+    return this.http.get<ProductionDashboardDTO>(
+      `${this.baseUrl}/dashboard/${cooperativeId}`,
+      { params }
+    );
   }
 
-  getWarehouses(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/warehouses`);
+  // Get farmer production history
+  getFarmerHistory(farmerId: string): Observable<ProductionRecord[]> {
+    return this.http.get<ProductionRecord[]>(`${this.baseUrl}/farmer/${farmerId}/history`);
   }
 
-  // Helper methods for display
-  getCropDisplayName(cropType: string): string {
-    const cropMap: { [key: string]: string } = {
-      'COCOA': 'Cocoa',
-      'COFFEE': 'Coffee',
-      'MAIZE': 'Maize',
-      'CASSAVA': 'Cassava',
-      'RICE': 'Rice',
-      'COTTON': 'Cotton'
-    };
-    return cropMap[cropType] || cropType;
+  // Update maturity status
+  updateMaturityStatus(update: MaturityUpdateDTO): Observable<ProductionRecord> {
+    return this.http.put<ProductionRecord>(`${this.baseUrl}/maturity`, update);
   }
 
-  getGradeDisplayName(grade: string): string {
-    const gradeMap: { [key: string]: string } = {
-      'GRADE_A': 'Grade A',
-      'GRADE_B': 'Grade B',
-      'GRADE_C': 'Grade C'
-    };
-    return gradeMap[grade] || grade;
+  // Get products by maturity status
+  getProductsByMaturityStatus(
+    cooperativeId: string,
+    productName: string,
+    status: string
+  ): Observable<ProductionRecord[]> {
+    const params = new HttpParams()
+      .set('productName', productName)
+      .set('status', status);
+
+    return this.http.get<ProductionRecord[]>(
+      `${this.baseUrl}/cooperative/${cooperativeId}/maturity`,
+      { params }
+    );
   }
 
-  getGradeClass(grade: string): string {
-    const classMap: { [key: string]: string } = {
-      'GRADE_A': 'grade-a',
-      'GRADE_B': 'grade-b',
-      'GRADE_C': 'grade-c'
-    };
-    return classMap[grade] || '';
-  }
-
-  getStatusClass(status: string): string {
-    const classMap: { [key: string]: string } = {
-      'PENDING': 'status-pending',
-      'VERIFIED': 'status-verified',
-      'REJECTED': 'status-rejected',
-      'PROCESSED': 'status-processed',
-      'SOLD': 'status-sold'
-    };
-    return classMap[status] || '';
-  }
-
-  formatValue(value: number): string {
-    return `${value.toLocaleString()} XAF`;
+  // Health check
+  healthCheck(): Observable<{ success: boolean; message: string }> {
+    return this.http.get<{ success: boolean; message: string }>(`${this.baseUrl}/health`);
   }
 }
