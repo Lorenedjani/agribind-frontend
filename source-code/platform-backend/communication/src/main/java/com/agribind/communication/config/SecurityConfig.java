@@ -7,6 +7,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Security Configuration for Communication Service
+ * Updated to use the latest Spring Security 6.x+ non-deprecated API
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -14,12 +18,29 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf().disable()
-            .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and()
+            // Disable CSRF for stateless API
+            .csrf(csrf -> csrf.disable())
+
+            // Configure session management as stateless
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+
+            // Configure authorization rules
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll()
+                // Public endpoints
+                .requestMatchers(
+                    "/api/communications/health",
+                    "/index.html",
+                    "/actuator/**",
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html"
+                ).permitAll()
+
+                // All other endpoints require authentication
+                .requestMatchers("/api/communications/**").authenticated()
+                .anyRequest().authenticated()
             );
 
         return http.build();

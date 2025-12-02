@@ -1,5 +1,6 @@
 package com.agribind.communication.service;
 
+import com.agribind.communication.dto.BulkSmsResult;
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;

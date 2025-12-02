@@ -12,13 +12,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
 public class CommunicationService {
 
-    private static final Logger log = LoggerFactory.getLogger(CommunicationService.class); // Fixed logger class
+    private static final Logger log = LoggerFactory.getLogger(CommunicationService.class);
 
     private final MessageRepository messageRepository;
     private final AlertRepository alertRepository;
@@ -30,23 +29,24 @@ public class CommunicationService {
     private final AudioMessageService audioMessageService;
     private final MemberService memberService;
 
-    public CommunicationService(MessageRepository messageRepository,
-                           AlertRepository alertRepository,
-                           ResourceRequestRepository resourceRequestRepository,
-                           MessageTemplateRepository messageTemplateRepository,
-                           CommunicationStatsRepository statsRepository,
-                           TwilioSmsService twilioSmsService,
-                           AudioMessageService audioMessageService,
-                           MemberService memberService) {
-    this.messageRepository = messageRepository;
-    this.alertRepository = alertRepository;
-    this.resourceRequestRepository = resourceRequestRepository;
-    this.messageTemplateRepository = messageTemplateRepository;
-    this.statsRepository = statsRepository;
-    this.twilioSmsService = twilioSmsService;
-    this.audioMessageService = audioMessageService;
-    this.memberService = memberService;
-}
+    public CommunicationService(
+            MessageRepository messageRepository,
+            AlertRepository alertRepository,
+            ResourceRequestRepository resourceRequestRepository,
+            MessageTemplateRepository messageTemplateRepository,
+            CommunicationStatsRepository statsRepository,
+            TwilioSmsService twilioSmsService,
+            AudioMessageService audioMessageService,
+            MemberService memberService) {
+        this.messageRepository = messageRepository;
+        this.alertRepository = alertRepository;
+        this.resourceRequestRepository = resourceRequestRepository;
+        this.messageTemplateRepository = messageTemplateRepository;
+        this.statsRepository = statsRepository;
+        this.twilioSmsService = twilioSmsService;
+        this.audioMessageService = audioMessageService;
+        this.memberService = memberService;
+    }
 
     // ==================== SMS Operations ====================
 
@@ -66,15 +66,17 @@ public class CommunicationService {
             request.getSpecificZone()
         );
 
-        // Create message record
+        // Create message record - MANUAL CREATION
         Message message = new Message();
-        message.setContent(request.getContent());
+        message.setType(MessageType.SMS);
+        message.setPriority(request.getPriority());
+        message.setContent(content);
         message.setTargetAudience(request.getTargetAudience());
         message.setSpecificZone(request.getSpecificZone());
-        message.setStatus(MessageStatus.SCHEDULED);
-        message.setPriority(request.getPriority());
         message.setScheduledAt(request.getScheduledAt());
-        message.setCreatedAt(LocalDateTime.now());
+        message.setTotalRecipients(phoneNumbers.size());
+        message.setEstimatedCost(twilioSmsService.calculateEstimatedCost(phoneNumbers.size()));
+        message.setStatus(MessageStatus.SENDING);
 
         message = messageRepository.save(message);
 
@@ -86,7 +88,7 @@ public class CommunicationService {
             sendSmsAsync(messageId, phoneNumbers, finalContent);
         }
 
-        // Replace builder with direct object creation
+        // Manual response creation
         SmsMessageResponse response = new SmsMessageResponse();
         response.setId(message.getId());
         response.setContent(message.getContent());
@@ -94,7 +96,6 @@ public class CommunicationService {
         response.setEstimatedCost(message.getEstimatedCost());
         response.setStatus(message.getStatus());
         response.setCreatedAt(message.getCreatedAt());
-
         return response;
     }
 
@@ -139,7 +140,7 @@ public class CommunicationService {
                 request.getSpecificZone()
             );
 
-            // Create message record - replace builder with direct object creation
+            // Create message record - MANUAL CREATION
             Message message = new Message();
             message.setType(MessageType.AUDIO);
             message.setPriority(request.getPriority());
@@ -150,13 +151,12 @@ public class CommunicationService {
             message.setTotalRecipients(recipientCount);
             message.setStatus(MessageStatus.SENT);
             message.setSentAt(LocalDateTime.now());
-            message.setCreatedAt(LocalDateTime.now());
 
             message = messageRepository.save(message);
 
             updateStatistics();
 
-            // Replace builder with direct object creation
+            // Manual response creation
             AudioMessageResponse response = new AudioMessageResponse();
             response.setId(message.getId());
             response.setTitle(message.getTitle());
@@ -165,7 +165,6 @@ public class CommunicationService {
             response.setRecipientCount(message.getTotalRecipients());
             response.setStatus(message.getStatus());
             response.setCreatedAt(message.getCreatedAt());
-
             return response;
 
         } catch (Exception e) {
@@ -189,7 +188,7 @@ public class CommunicationService {
         // Generate alert ID
         String alertId = generateAlertId();
 
-        // Create alert - replace builder with direct object creation
+        // Create alert - MANUAL CREATION
         Alert alert = new Alert();
         alert.setAlertId(alertId);
         alert.setType(request.getType());
@@ -200,15 +199,14 @@ public class CommunicationService {
         alert.setRecipientCount(recipientCount);
         alert.setStatus(AlertStatus.ACTIVE);
         alert.setDeliveryRate(0.0);
-        alert.setCreatedAt(LocalDateTime.now());
 
         alert = alertRepository.save(alert);
 
         // Send alert through specified channels
-        final Long alertId_final = alert.getId();
-        sendAlertAsync(alertId_final, request);
+        final Long alertIdFinal = alert.getId();
+        sendAlertAsync(alertIdFinal, request);
 
-        // Replace builder with direct object creation
+        // Manual response creation
         AlertResponse response = new AlertResponse();
         response.setId(alert.getId());
         response.setAlertId(alert.getAlertId());
@@ -220,7 +218,6 @@ public class CommunicationService {
         response.setDeliveryRate(alert.getDeliveryRate());
         response.setStatus(alert.getStatus());
         response.setCreatedAt(alert.getCreatedAt());
-
         return response;
     }
 
@@ -235,9 +232,10 @@ public class CommunicationService {
 
         for (String channel : request.getChannels()) {
             if ("SMS".equals(channel)) {
-                CompletableFuture<BulkSmsResult> result =
-                    twilioSmsService.sendBulkSms(phoneNumbers, request.getContent());
-                result.thenAccept(r -> successCount += r.getSuccessCount());
+                twilioSmsService.sendBulkSms(phoneNumbers, request.getContent())
+                    .thenAccept(result -> {
+                        // Update with result
+                    });
             }
             // Add PUSH and AUDIO implementations here
         }
@@ -245,7 +243,8 @@ public class CommunicationService {
         // Update alert delivery rate
         Alert alert = alertRepository.findById(alertId).orElse(null);
         if (alert != null) {
-            double deliveryRate = (double) successCount / alert.getRecipientCount() * 100;
+            double deliveryRate = phoneNumbers.isEmpty() ? 0.0 :
+                (double) successCount / alert.getRecipientCount() * 100;
             alert.setDeliveryRate(deliveryRate);
             alert.setStatus(AlertStatus.SENT);
             alert.setSentAt(LocalDateTime.now());
@@ -268,7 +267,7 @@ public class CommunicationService {
     public ResourceRequestResponse createResourceRequest(ResourceRequestDto dto) {
         String requestId = generateResourceRequestId();
 
-        // Replace builder with direct object creation
+        // Manual creation
         ResourceRequest request = new ResourceRequest();
         request.setRequestId(requestId);
         request.setResourceName(dto.getResourceName());
@@ -278,7 +277,6 @@ public class CommunicationService {
         request.setRequestedBy(dto.getRequestedBy());
         request.setRequestedByZone(dto.getRequestedByZone());
         request.setStatus(RequestStatus.PENDING);
-        request.setRequestDate(LocalDateTime.now());
 
         request = resourceRequestRepository.save(request);
 
@@ -305,12 +303,11 @@ public class CommunicationService {
 
     @Transactional
     public MessageTemplateDto createTemplate(MessageTemplateDto dto) {
-        // Replace builder with direct object creation
+        // Manual creation
         MessageTemplate template = new MessageTemplate();
         template.setName(dto.getName());
         template.setContent(dto.getContent());
         template.setVariables(dto.getVariables());
-        template.setCreatedAt(LocalDateTime.now());
 
         template = messageTemplateRepository.save(template);
         return mapToTemplateDto(template);
@@ -334,7 +331,7 @@ public class CommunicationService {
         CommunicationStats stats = statsRepository.findTopByOrderByStatDateDesc()
             .orElseGet(this::createDefaultStats);
 
-        // Replace builder with direct object creation
+        // Manual response creation
         CommunicationStatsResponse response = new CommunicationStatsResponse();
         response.setTotalMessagesSent(stats.getTotalMessagesSent());
         response.setMessagesSentThisWeek(stats.getMessagesSentThisWeek());
@@ -348,7 +345,6 @@ public class CommunicationService {
         response.setActiveLoansAmount(stats.getActiveLoansAmount());
         response.setLowStockAlerts(stats.getLowStockAlerts());
         response.setLastUpdated(stats.getStatDate());
-
         return response;
     }
 
@@ -356,20 +352,20 @@ public class CommunicationService {
     public void updateStatistics() {
         LocalDateTime weekStart = LocalDateTime.now().minusDays(7);
 
-        // Use the builder we added to CommunicationStats
-        CommunicationStats stats = CommunicationStats.builder()
-            .totalMessagesSent(messageRepository.count().intValue())
-            .messagesSentThisWeek(messageRepository.countMessagesThisWeek(weekStart))
-            .audioMessagesTotal(messageRepository.countAudioMessages())
-            .audioLanguagesSupported(5) // French, English, Fulfulde, Ewondo, Duala
-            .activeAlerts(alertRepository.countActiveAlerts())
-            .criticalAlerts(alertRepository.countCriticalAlerts())
-            .deliveryRate(calculateDeliveryRate())
-            .deliveryRateChange(1.2)
-            .activeMembers(memberService.getActiveMemberCount())
-            .activeLoansAmount(68.5) // From loans service
-            .lowStockAlerts(18) // From inventory service
-            .build();
+        // Manual stats creation
+        CommunicationStats stats = new CommunicationStats();
+        stats.setTotalMessagesSent((int) messageRepository.count());
+        stats.setMessagesSentThisWeek(messageRepository.countMessagesThisWeek(weekStart));
+        stats.setAudioMessagesTotal(messageRepository.countAudioMessages());
+        stats.setAudioLanguagesSupported(5); // French, English, Fulfulde, Ewondo, Duala
+        stats.setActiveAlerts(alertRepository.countActiveAlerts());
+        stats.setCriticalAlerts(alertRepository.countCriticalAlerts());
+        stats.setDeliveryRate(calculateDeliveryRate());
+        stats.setDeliveryRateChange(1.2);
+        stats.setActiveMembers(memberService.getActiveMemberCount());
+        stats.setActiveLoansAmount(68.5); // From loans service
+        stats.setLowStockAlerts(18); // From inventory service
+        stats.setStatDate(LocalDateTime.now());
 
         statsRepository.save(stats);
     }
@@ -379,30 +375,31 @@ public class CommunicationService {
         if (sentMessages.isEmpty()) return 94.5;
 
         long totalSent = sentMessages.stream()
-            .mapToLong(Message::getDeliveredCount)
+            .mapToInt(Message::getDeliveredCount)
             .sum();
         long totalRecipients = sentMessages.stream()
-            .mapToLong(Message::getTotalRecipients)
+            .mapToInt(Message::getTotalRecipients)
             .sum();
 
         return totalRecipients > 0 ? (double) totalSent / totalRecipients * 100 : 94.5;
     }
 
     private CommunicationStats createDefaultStats() {
-        return CommunicationStats.builder()
-            .totalMessagesSent(1247)
-            .messagesSentThisWeek(45)
-            .audioMessagesTotal(87)
-            .audioLanguagesSupported(5)
-            .activeAlerts(23)
-            .criticalAlerts(12)
-            .deliveryRate(94.5)
-            .deliveryRateChange(1.2)
-            .activeMembers(245)
-            .activeLoansAmount(68.5)
-            .lowStockAlerts(18)
-            .statDate(LocalDateTime.now())
-            .build();
+        // Manual default stats creation
+        CommunicationStats stats = new CommunicationStats();
+        stats.setTotalMessagesSent(1247);
+        stats.setMessagesSentThisWeek(45);
+        stats.setAudioMessagesTotal(87);
+        stats.setAudioLanguagesSupported(5);
+        stats.setActiveAlerts(23);
+        stats.setCriticalAlerts(12);
+        stats.setDeliveryRate(94.5);
+        stats.setDeliveryRateChange(1.2);
+        stats.setActiveMembers(245);
+        stats.setActiveLoansAmount(68.5);
+        stats.setLowStockAlerts(18);
+        stats.setStatDate(LocalDateTime.now());
+        return stats;
     }
 
     // ==================== Helper Methods ====================
@@ -418,7 +415,7 @@ public class CommunicationService {
     }
 
     private AlertResponse mapToAlertResponse(Alert alert) {
-        // Replace builder with direct object creation
+        // Manual mapping
         AlertResponse response = new AlertResponse();
         response.setId(alert.getId());
         response.setAlertId(alert.getAlertId());
@@ -434,7 +431,7 @@ public class CommunicationService {
     }
 
     private ResourceRequestResponse mapToResourceRequestResponse(ResourceRequest request) {
-        // Replace builder with direct object creation
+        // Manual mapping
         ResourceRequestResponse response = new ResourceRequestResponse();
         response.setId(request.getId());
         response.setRequestId(request.getRequestId());
@@ -448,7 +445,7 @@ public class CommunicationService {
     }
 
     private MessageTemplateDto mapToTemplateDto(MessageTemplate template) {
-        // Replace builder with direct object creation
+        // Manual mapping
         MessageTemplateDto dto = new MessageTemplateDto();
         dto.setId(template.getId());
         dto.setName(template.getName());

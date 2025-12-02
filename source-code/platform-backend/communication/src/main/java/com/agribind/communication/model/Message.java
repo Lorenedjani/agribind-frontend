@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.agribind.communication.dto.AlertResponse.Builder;
+
 @Entity
 @Table(name = "messages")
 public class Message {
@@ -116,4 +118,9 @@ public class Message {
 
     public LocalDateTime getSentAt() { return sentAt; }
     public void setSentAt(LocalDateTime sentAt) { this.sentAt = sentAt; }
+
+	public Message() {
+		//TODO Auto-generated constructor stub
+	}
+
 }

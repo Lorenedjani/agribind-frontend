@@ -1,4 +1,4 @@
-package com.agribind.communication.service;
+package com.agribind.communication.dto;
 
 import java.util.List;
 
