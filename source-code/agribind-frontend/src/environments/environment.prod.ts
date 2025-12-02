@@ -7,7 +7,7 @@ export const environment = {
   services: {
     userManagement: 'https://api.agribind.cm/user-management',
     auth: 'https://api.agribind.cm/auth',
-    production: 'https://api.agribind.cm/production',
+    productionApiUrl: 'https://api.agribind.cm/production/api/v1',
     notification: 'https://api.agribind.cm/notification'
   }
 };
