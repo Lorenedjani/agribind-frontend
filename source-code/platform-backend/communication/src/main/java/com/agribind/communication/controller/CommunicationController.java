@@ -4,20 +4,35 @@ import com.agribind.communication.dto.*;
 import com.agribind.communication.service.AudioMessageService;
 import com.agribind.communication.service.CommunicationService;
 import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
 
 @RestController
 @RequestMapping("/api/communications")
 @CrossOrigin(origins = "*")
 public class CommunicationController {
+
+    @Autowired
+    private DataSource dataSource;
 
     private static final Logger log = LoggerFactory.getLogger(CommunicationController.class);
 
@@ -211,6 +226,75 @@ public class CommunicationController {
     @GetMapping("/health")
     public ResponseEntity<String> healthCheck() {
         return ResponseEntity.ok("Communication Service is running");
+    }
+
+    @GetMapping("/health/db")
+    public ResponseEntity<Map<String, Object>> databaseHealthCheck() {
+        Map<String, Object> health = new HashMap<>();
+
+        try {
+            // Test database connection
+            try (Connection connection = dataSource.getConnection()) {
+                boolean isValid = connection.isValid(5); // 5 second timeout
+                health.put("database", "connected");
+                health.put("valid", isValid);
+
+                // Get database metadata
+                DatabaseMetaData metaData = connection.getMetaData();
+                health.put("databaseProductName", metaData.getDatabaseProductName());
+                health.put("databaseProductVersion", metaData.getDatabaseProductVersion());
+                health.put("driverName", metaData.getDriverName());
+                health.put("driverVersion", metaData.getDriverVersion());
+
+                // Check if tables exist
+                health.put("migrationStatus", "complete");
+
+                return ResponseEntity.ok(health);
+            }
+        } catch (SQLException e) {
+            health.put("database", "disconnected");
+            health.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(health);
+        }
+    }
+
+    @GetMapping("/health/migrations")
+    public ResponseEntity<Map<String, Object>> migrationStatus() {
+        Map<String, Object> status = new HashMap<>();
+
+        try (Connection connection = dataSource.getConnection()) {
+            // Check if flyway_schema_history table exists
+            DatabaseMetaData metaData = connection.getMetaData();
+            ResultSet tables = metaData.getTables(null, null, "flyway_schema_history", null);
+
+            if (tables.next()) {
+                // Table exists, get migration info
+                Statement stmt = connection.createStatement();
+                ResultSet rs = stmt.executeQuery(
+                    "SELECT version, description, success FROM flyway_schema_history " +
+                    "ORDER BY installed_rank DESC LIMIT 5"
+                );
+
+                List<Map<String, Object>> migrations = new ArrayList<>();
+                while (rs.next()) {
+                    Map<String, Object> migration = new HashMap<>();
+                    migration.put("version", rs.getString("version"));
+                    migration.put("description", rs.getString("description"));
+                    migration.put("success", rs.getBoolean("success"));
+                    migrations.add(migration);
+                }
+
+                status.put("migrations", migrations);
+                status.put("totalMigrations", migrations.size());
+            } else {
+                status.put("migrations", "flyway_schema_history table not found");
+            }
+
+            return ResponseEntity.ok(status);
+        } catch (SQLException e) {
+            status.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(status);
+        }
     }
 
     // ==================== Helper Methods ====================
