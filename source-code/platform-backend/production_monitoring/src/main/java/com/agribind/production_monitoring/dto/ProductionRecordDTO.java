@@ -3,11 +3,17 @@ package com.agribind.production_monitoring.dto;
 import com.agribind.production_monitoring.model.MaturityStatus;
 import com.agribind.production_monitoring.model.ProductType;
 import jakarta.validation.constraints.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+@Setter
+@Getter
 public class ProductionRecordDTO {
 
+    // Getters and setters
     private Long id;
 
     @NotNull(message = "Farmer ID is required")
@@ -51,46 +57,13 @@ public class ProductionRecordDTO {
     @Size(max = 1000)
     private String notes;
 
-    // Manual getters and setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    // NEW: Price fields
+    @NotNull(message = "Unit price is required")
+    @DecimalMin(value = "0.01", message = "Unit price must be greater than 0")
+    private BigDecimal unitPrice;
 
-    public Long getFarmerId() { return farmerId; }
-    public void setFarmerId(Long farmerId) { this.farmerId = farmerId; }
+    @NotNull(message = "Total value is required")
+    @DecimalMin(value = "0.01", message = "Total value must be greater than 0")
+    private BigDecimal valueXaf;
 
-    public Long getCooperativeId() { return cooperativeId; }
-    public void setCooperativeId(Long cooperativeId) { this.cooperativeId = cooperativeId; }
-
-    public ProductType getProductType() { return productType; }
-    public void setProductType(ProductType productType) { this.productType = productType; }
-
-    public String getProductName() { return productName; }
-    public void setProductName(String productName) { this.productName = productName; }
-
-    public BigDecimal getQuantity() { return quantity; }
-    public void setQuantity(BigDecimal quantity) { this.quantity = quantity; }
-
-    public String getUnit() { return unit; }
-    public void setUnit(String unit) { this.unit = unit; }
-
-    public String getQualityGrade() { return qualityGrade; }
-    public void setQualityGrade(String qualityGrade) { this.qualityGrade = qualityGrade; }
-
-    public MaturityStatus getMaturityStatus() { return maturityStatus; }
-    public void setMaturityStatus(MaturityStatus maturityStatus) { this.maturityStatus = maturityStatus; }
-
-    public LocalDate getProductionDate() { return productionDate; }
-    public void setProductionDate(LocalDate productionDate) { this.productionDate = productionDate; }
-
-    public LocalDate getHarvestDate() { return harvestDate; }
-    public void setHarvestDate(LocalDate harvestDate) { this.harvestDate = harvestDate; }
-
-    public Double getLocationLatitude() { return locationLatitude; }
-    public void setLocationLatitude(Double locationLatitude) { this.locationLatitude = locationLatitude; }
-
-    public Double getLocationLongitude() { return locationLongitude; }
-    public void setLocationLongitude(Double locationLongitude) { this.locationLongitude = locationLongitude; }
-
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
 }
