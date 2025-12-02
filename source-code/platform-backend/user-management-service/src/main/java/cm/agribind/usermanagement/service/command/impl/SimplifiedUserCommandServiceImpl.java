@@ -23,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.Year;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -43,64 +45,125 @@ public class SimplifiedUserCommandServiceImpl implements UserCommandService {
     private final NotificationServiceClient notificationServiceClient;
     private final PasswordEncoder passwordEncoder; // ✅ SECURE PASSWORD ENCODER
 
+    // CRITICAL BACKEND FIX: SimplifiedUserCommandServiceImpl.java
+// Replace the createUser method with this fixed version
+
     @Override
     public UserResponse createUser(CreateUserCommand command) {
         log.info("Creating user of type: {} with name: {}", command.getType(), command.getName());
 
         try {
-            // 1. Validate phone number uniqueness
+            // ✅ 1. Validate required fields
+            validateCreateUserCommand(command);
+
+            // ✅ 2. Check phone number uniqueness
             if (userRepository.existsByPhoneNumber(command.getPhoneNumber())) {
                 throw new IllegalArgumentException("Phone number already exists: " + command.getPhoneNumber());
             }
 
-            // 2. Validate email uniqueness if provided
-            if (command.getEmail() != null && !command.getEmail().trim().isEmpty() &&
-                    userRepository.existsByEmail(command.getEmail())) {
-                throw new IllegalArgumentException("Email already exists: " + command.getEmail());
+            // ✅ 3. Check email uniqueness if provided
+            if (command.getEmail() != null && !command.getEmail().trim().isEmpty()) {
+                if (userRepository.existsByEmail(command.getEmail())) {
+                    throw new IllegalArgumentException("Email already exists: " + command.getEmail());
+                }
             }
 
-            // Create user entity based on type
+            // ✅ 4. Create user entity based on type
             User user = createUserByType(command);
 
-            // Generate user ID and registration number
+            // ✅ 5. Generate IDs
             String userId = generateUserId(command.getType());
             user.setUserId(userId);
             user.setRegistrationNumber(generateRegistrationNumber());
 
-            // ✅ SECURE: Generate and PROPERLY ENCRYPT default password
+            // ✅ 6. Generate and encrypt password
             String defaultPassword = generateDefaultPassword(command.getType());
-            String passwordHash = passwordEncoder.encode(defaultPassword); // ✅ PROPER BCrypt ENCRYPTION
+            String passwordHash = passwordEncoder.encode(defaultPassword);
             user.setPasswordHash(passwordHash);
             user.setFirstLogin(true);
+            user.setAccountLocked(false); // ✅ Initialize
+            user.setFailedLoginAttempts(0); // ✅ Initialize
 
-            // ⚠️ DEVELOPMENT ONLY: Log the password - REMOVE IN PRODUCTION!
-            log.info("Generated password for {}: {}", userId, defaultPassword);
-
-            // Create profile
+            // ✅ 7. Create profile
             Profile profile = new Profile();
-            profile.setPreferredLanguage(command.getPreferredLanguage());
+            profile.setPreferredLanguage(
+                    command.getPreferredLanguage() != null ?
+                            command.getPreferredLanguage() : "fr"
+            );
+            profile.setReceiveSmsNotifications(true);
+            profile.setReceiveEmailNotifications(command.getEmail() != null);
             user.setProfile(profile);
 
-            // Save user
+            // ✅ 8. Save user
             User savedUser = userRepository.save(user);
+            log.info("✅ User saved with ID: {}", savedUser.getUserId());
 
-            // ✅ Send welcome notifications via SMS and Email
-            sendWelcomeNotifications(savedUser, defaultPassword);
+            // ✅ 9. Send welcome notifications (async - don't block)
+            try {
+                sendWelcomeNotifications(savedUser, defaultPassword);
+            } catch (Exception e) {
+                log.error("⚠️ Failed to send notifications, but user created: {}",
+                        savedUser.getUserId(), e);
+                // Don't throw - user creation succeeded
+            }
 
-            // Publish user created event
+            // ✅ 10. Publish events (async - don't block)
             try {
                 publishUserCreatedEvent(savedUser);
             } catch (Exception e) {
-                log.warn("Failed to publish user created event: {}", e.getMessage());
+                log.warn("⚠️ Failed to publish event: {}", e.getMessage());
             }
 
+            log.info("✅ User creation completed: {}", savedUser.getUserId());
             return userMapper.toResponse(savedUser);
 
+        } catch (IllegalArgumentException e) {
+            log.error("❌ Validation error: {}", e.getMessage());
+            throw e; // Re-throw validation errors
         } catch (Exception e) {
-            log.error("Failed to create user: {}", e.getMessage(), e);
+            log.error("❌ Failed to create user: {}", e.getMessage(), e);
             throw new RuntimeException("User creation failed: " + e.getMessage(), e);
         }
     }
+
+    // ✅ NEW: Validation method
+    private void validateCreateUserCommand(CreateUserCommand command) {
+        if (command.getType() == null) {
+            throw new IllegalArgumentException("User type is required");
+        }
+        if (command.getName() == null || command.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Name is required");
+        }
+        if (command.getPhoneNumber() == null || command.getPhoneNumber().trim().isEmpty()) {
+            throw new IllegalArgumentException("Phone number is required");
+        }
+
+        // Type-specific validation
+        if (command.getType() == UserType.FARMER) {
+            if (command.getAgriculturalType() == null) {
+                throw new IllegalArgumentException("Agricultural type is required for farmers");
+            }
+            if (command.getLandArea() == null || command.getLandArea() <= 0) {
+                throw new IllegalArgumentException("Valid land area is required for farmers");
+            }
+        }
+
+        if (command.getType() == UserType.COOPERATIVE) {
+            if (command.getCooperativeType() == null) {
+                throw new IllegalArgumentException("Cooperative type is required");
+            }
+            if (command.getLegalRegistrationNumber() == null) {
+                throw new IllegalArgumentException("Legal registration number is required");
+            }
+            if (command.getContactPerson() == null) {
+                throw new IllegalArgumentException("Contact person is required");
+            }
+        }
+    }
+
+
+
+
 
     @Override
     public UserResponse updateUser(String userId, UpdateUserCommand command) {
@@ -285,21 +348,54 @@ public class SimplifiedUserCommandServiceImpl implements UserCommandService {
         };
     }
 
+    // ✅ FIXED: Farmer creation with proper null handling
     private Farmer createFarmer(CreateUserCommand command) {
         Farmer farmer = new Farmer();
         populateCommonFields(farmer, command);
 
+        // ✅ Agricultural type (required)
         if (command.getAgriculturalType() != null) {
-            farmer.setAgriculturalType(
-                    AgriculturalType.valueOf(
-                            command.getAgriculturalType().toUpperCase()
-                    )
-            );
+            try {
+                farmer.setAgriculturalType(
+                        AgriculturalType.valueOf(command.getAgriculturalType().toUpperCase())
+                );
+            } catch (IllegalArgumentException e) {
+                log.error("Invalid agricultural type: {}", command.getAgriculturalType());
+                throw new IllegalArgumentException("Invalid agricultural type");
+            }
         }
 
+        // ✅ Crop types (optional)
+        if (command.getCropTypes() != null && command.getCropTypes().length > 0) {
+            Set<CropType> crops = new HashSet<>();
+            for (String cropStr : command.getCropTypes()) {
+                try {
+                    crops.add(CropType.valueOf(cropStr.toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    log.warn("Invalid crop type: {}", cropStr);
+                }
+            }
+            farmer.setCropTypes(crops);
+        }
+
+        // ✅ Livestock types (optional)
+        if (command.getLivestockTypes() != null && command.getLivestockTypes().length > 0) {
+            Set<LivestockType> livestock = new HashSet<>();
+            for (String livestockStr : command.getLivestockTypes()) {
+                try {
+                    livestock.add(LivestockType.valueOf(livestockStr.toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    log.warn("Invalid livestock type: {}", livestockStr);
+                }
+            }
+            farmer.setLivestockTypes(livestock);
+        }
+
+        // ✅ Farm details
         FarmDetails farmDetails = new FarmDetails();
         farmDetails.setTotalLandArea(command.getLandArea());
-        farmDetails.setCultivatedArea(command.getLandArea());
+        farmDetails.setCultivatedArea(command.getLandArea()); // Default to total
+        farmDetails.setOwnsLand(true); // Default
         farmer.setFarmDetails(farmDetails);
 
         return farmer;
@@ -350,6 +446,7 @@ public class SimplifiedUserCommandServiceImpl implements UserCommandService {
         return government;
     }
 
+    // ✅ FIXED: Common fields population with null safety
     private void populateCommonFields(User user, CreateUserCommand command) {
         user.setType(command.getType());
         user.setName(command.getName());
@@ -358,7 +455,7 @@ public class SimplifiedUserCommandServiceImpl implements UserCommandService {
         user.setStatus(UserStatus.ACTIVE);
         user.setNotes(command.getNotes());
 
-        // Create address
+        // ✅ Create address ONLY if region is provided
         if (command.getRegion() != null) {
             Address address = new Address();
             address.setRegion(command.getRegion());

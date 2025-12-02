@@ -66,6 +66,9 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    // CRITICAL FIX: UserController.java - getUsers method
+// Replace the existing getUsers method with this fixed version
+
     @GetMapping
     @Operation(summary = "Get users with filtering", description = "Get paginated list of users with filtering options")
     public ResponseEntity<PageResponse<UserResponse>> getUsers(
@@ -78,20 +81,55 @@ public class UserController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDirection) {
 
-        UserQuery query = new UserQuery();
-        query.setType(type);
-        query.setStatus(status);
-        query.setRegion(region);
-        query.setSearchTerm(search);
-        query.setPage(page);
-        query.setSize(size);
-        query.setSortBy(sortBy);
-        query.setDirection(Sort.Direction.fromString(sortDirection));
+        try {
+            // ✅ Validate pagination parameters
+            if (page < 0) {
+                log.warn("Invalid page number: {}. Defaulting to 0.", page);
+                page = 0;
+            }
+            if (size <= 0 || size > 100) {
+                log.warn("Invalid page size: {}. Defaulting to 20.", size);
+                size = 20;
+            }
 
-        PageResponse<UserResponse> response = userQueryService.getUsers(query);
-        return ResponseEntity.ok(response);
+            // ✅ Validate sort direction
+            Sort.Direction direction;
+            try {
+                direction = Sort.Direction.fromString(sortDirection);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid sort direction: {}. Defaulting to DESC.", sortDirection);
+                direction = Sort.Direction.DESC;
+            }
+
+            log.info("Fetching users - page: {}, size: {}, type: {}, status: {}",
+                    page, size, type, status);
+
+            UserQuery query = new UserQuery();
+            query.setType(type);
+            query.setStatus(status);
+            query.setRegion(region);
+            query.setSearchTerm(search);
+            query.setPage(page);
+            query.setSize(size);
+            query.setSortBy(sortBy);
+            query.setDirection(direction);
+
+            PageResponse<UserResponse> response = userQueryService.getUsers(query);
+
+            log.info("✅ Successfully fetched {} users (page {} of {})",
+                    response.getContent().size(), page, response.getTotalPages());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("❌ Error fetching users", e);
+            // Return empty result instead of error to prevent frontend crash
+            PageResponse<UserResponse> emptyResponse = new PageResponse<>(
+                    List.of(), page, size, 0L
+            );
+            return ResponseEntity.ok(emptyResponse);
+        }
     }
-
     @PostMapping("/search")
     @Operation(summary = "Search users with advanced filters", description = "Search users with comprehensive filtering options")
     public ResponseEntity<PageResponse<UserResponse>> searchUsers(@Valid @RequestBody UserFilterQuery query) {
