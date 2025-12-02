@@ -9,9 +9,9 @@ spring:
     active: default  # ✅ Use 'default' profile to disable mock
 
   datasource:
-    url: jdbc:mysql://localhost:3307/auth_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3306/auth_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
     username: root
-    password: ISI3Eng!2025
+    password:
 
   jpa:
     hibernate:
@@ -21,7 +21,9 @@ spring:
 # ✅ CRITICAL: Service URLs - ADD MISSING NOTIFICATION SERVICE
 services:
   user-management: http://localhost:8082
-  notification: http://localhost:8083  # ✅ ADD THIS LINE
+  notification: http://localhost:8083
+  communication: http://localhost:8084
+  inventory: http://localhost:8085  # ✅ ADD THIS LINE
 
 # ✅ ADD MISSING PASSWORD RESET CONFIGURATION
 password-reset:

@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8082
 
 spring:
   application:
@@ -36,6 +36,22 @@ spring:
             - Path=/api/notifications/**
           filters:
             #StripPrefix=0
+            - name: RequestLoggingFilter
+
+        # Add this NEW route for Communication Service
+        - id: communication-service
+          uri: lb://communication  # 'communication' matches the spring.application.name
+          predicates:
+            - Path=/api/communications/**, /api/messages/**, /api/alerts/**, /api/sms/**, /api/audio/**  # Add your communication endpoints
+          filters:
+            - name: RequestLoggingFilter
+
+        # Add this NEW route for Inventory Service
+        - id: inventory-service
+          uri: lb://inventory-service  # 'communication' matches the spring.application.name
+          predicates:
+            - Path=/api/inventory/**  # Add your communication endpoints
+          filters:
             - name: RequestLoggingFilter
 
       default-filters:

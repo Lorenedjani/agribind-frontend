@@ -34,6 +34,7 @@
         <module>user-management-service</module>
         <module>auth-service1</module>
         <module>notification-service</module>
+        <module>communication</module>
     </modules>
 
     <dependencyManagement>
