@@ -1,33 +1,37 @@
-# Build stage
-FROM eclipse-temurin:17-jdk AS build
+# Multi-stage build optimized for Render
+FROM maven:3.9.6-eclipse-temurin-17-alpine AS build
 
 WORKDIR /app
 
-# Copy project files
+# First, copy only the pom.xml to download dependencies (caching layer)
 COPY pom.xml .
-COPY src src
+RUN mvn dependency:go-offline -B
 
-# Build the application
+# Then copy source code and build
+COPY src src
 RUN mvn clean package -DskipTests
 
 # Runtime stage
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:17-alpine
 
 WORKDIR /app
 
-# Copy the built jar
+# Copy the built jar from the build stage
 COPY --from=build /app/target/communication-*.jar app.jar
 
 # Create directories for uploads and logs
 RUN mkdir -p /tmp/uploads/audio /tmp/logs
 
-# Set non-root user for security
-RUN groupadd -r spring && useradd -r -g spring spring
+# Create non-root user for security
+RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
+
+# Expose port (Render will use PORT environment variable)
+EXPOSE ${PORT:-8084}
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-  CMD curl --fail http://localhost:8084/api/communications/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-8084}/api/communications/health || exit 1
 
 # Run the application
 ENTRYPOINT ["java", "-jar", "-Djava.security.egd=file:/dev/./urandom", "-Dspring.profiles.active=prod", "/app/app.jar"]
