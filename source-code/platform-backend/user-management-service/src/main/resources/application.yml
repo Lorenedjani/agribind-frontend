@@ -1,14 +1,14 @@
 server:
-  port: 8083
+  port: 8084
 
 spring:
   application:
     name: user-management-service
 
   datasource:
-    url: jdbc:mysql://localhost:3306/agribind_users?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3307/agribind_users?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
-    password:
+    password: ISI3Eng!2025
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 20

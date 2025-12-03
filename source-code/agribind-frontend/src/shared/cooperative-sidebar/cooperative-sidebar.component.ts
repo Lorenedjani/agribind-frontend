@@ -16,12 +16,18 @@ export class CooperativeSidebarComponent {
   @Output() closeSidebar = new EventEmitter<void>();
 
   constructor(
-    private router: Router,
+    public router: Router,
     private authService: AuthService
   ) {}
 
   onClose(): void {
     this.closeSidebar.emit();
+  }
+
+  onNavigate(route: string): void {
+    console.log('🧭 Navigating to:', route);
+    this.router.navigate([route]);
+    this.closeSidebar.emit(); // Close sidebar on mobile after navigation
   }
 
   onLogout(): void {
