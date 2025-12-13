@@ -1,5 +1,5 @@
 # Stage 1: Build with parent context
-FROM maven:3.8.4-openjdk-11 AS builder
+FROM maven:3.9-eclipse-temurin-11 AS builder
 
 WORKDIR /workspace
 
@@ -19,7 +19,7 @@ COPY src ./eureka-server/src
 RUN mvn clean package -pl eureka-server -am -DskipTests
 
 # Stage 2: Runtime
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:11-jre
 WORKDIR /app
 
 # Copy the built jar
