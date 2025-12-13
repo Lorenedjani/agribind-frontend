@@ -2,7 +2,7 @@ FROM maven:3.9-eclipse-temurin-11 AS builder
 WORKDIR /app
 
 # Copy the standalone POM
-COPY pom.xml pom.xml
+COPY pom.xml .
 COPY src ./src
 
 # Build with the standalone POM
