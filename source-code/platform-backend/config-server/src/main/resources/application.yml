@@ -36,44 +36,29 @@ spring:
   application:
     name: config-server
   config:
-    activate:
-      on-profile: default
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:native}  # Use 'native' or 'git' profile
+    # NEW SYNTAX: Use import instead of profiles.active
+    import: optional:file:./config/
 
-  # Profile: 'native' - Embedded config (for quick start)
   cloud:
     config:
       server:
         native:
-          search-locations: classpath:/config,file:/config/
-    # Enable bootstrap for older Spring Cloud versions (if needed)
-    # bootstrap:
-    #   enabled: true
+          search-locations: classpath:/config/,file:./config/,file:/config/
+          order: -1
+
+# Default logging
+logging:
+  level:
+    org.springframework.cloud.config: INFO
+    org.springframework.boot.env: INFO
 
 ---
-# Profile: 'git' - Git backend (recommended for production)
-spring:
-  config:
-    activate:
-      on-profile: git
-  cloud:
-    config:
-      server:
-        git:
-          uri: ${CONFIG_GIT_URI:https://github.com/yourusername/config-repo.git}
-          default-label: ${CONFIG_GIT_BRANCH:Lorene}
-          search-paths: '{application}'
-          clone-on-start: true
-          force-pull: true
-          timeout: 10
-
----
-# Profile: 'prod' - Production settings with Eureka
+# Production profile with Eureka
 spring:
   config:
     activate:
       on-profile: prod
+
   cloud:
     config:
       server:
@@ -99,8 +84,20 @@ management:
     health:
       show-details: always
 
-# Logging
-logging:
-  level:
-    org.springframework.cloud.config: DEBUG
-    org.springframework.boot.env: INFO
+---
+# Git backend profile
+spring:
+  config:
+    activate:
+      on-profile: git
+
+  cloud:
+    config:
+      server:
+        git:
+          uri: ${CONFIG_GIT_URI:https://github.com/yourusername/config-repo.git}
+          default-label: ${CONFIG_GIT_BRANCH:Lorene}
+          search-paths: '{application}'
+          clone-on-start: true
+          force-pull: true
+          timeout: 10
