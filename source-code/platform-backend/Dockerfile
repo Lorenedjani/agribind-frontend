@@ -4,15 +4,15 @@ FROM maven:3.9-eclipse-temurin-17 AS builder
 # 1. First, create and build the parent POM structure
 WORKDIR /app
 
-# Copy the parent pom.xml (critical - must exist at root)
-COPY eureka-server/pom.xml .
+# CRITICAL FIX: Copy the PARENT pom.xml from project root
+# Your project structure shows the parent is at a higher level
+COPY ../../pom.xml ./pom.xml
 
-# Download dependencies first (cache layer)
+# Download dependencies for parent project first
 RUN mvn dependency:go-offline -N
 
-# Copy eureka-server module
+# Copy eureka-server module pom.xml
 COPY eureka-server/pom.xml eureka-server/pom.xml
-RUN mvn dependency:go-offline -pl eureka-server
 
 # Copy all source code
 COPY eureka-server/src eureka-server/src
