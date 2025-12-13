@@ -35,6 +35,9 @@ server:
 spring:
   application:
     name: config-server
+  config:
+    activate:
+      on-profile: default
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:native}  # Use 'native' or 'git' profile
 
@@ -51,7 +54,9 @@ spring:
 ---
 # Profile: 'git' - Git backend (recommended for production)
 spring:
-  profiles: git
+  config:
+    activate:
+      on-profile: git
   cloud:
     config:
       server:
@@ -66,10 +71,11 @@ spring:
 ---
 # Profile: 'prod' - Production settings with Eureka
 spring:
+  config:
+    activate:
+      on-profile: prod
   cloud:
     config:
-      activate:
-        on-profile: prod
       server:
         bootstrap: true
 
