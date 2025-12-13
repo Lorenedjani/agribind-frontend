@@ -1,5 +1,5 @@
 server:
-  port: 8761
+  port: ${PORT:8761}
 
 spring:
   application:
@@ -7,7 +7,7 @@ spring:
 
 eureka:
   instance:
-    hostname: localhost
+    hostname: ${EUREKA_HOSTNAME:localhost} #${RENDER_SERVICE_NAME}.onrender.com
     prefer-ip-address: false
   client:
     register-with-eureka: false

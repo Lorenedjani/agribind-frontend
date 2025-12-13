@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  eureka-server:
+    build: .
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      - EUREKA_PASSWORD=${EUREKA_PASSWORD:admin1234}
+      - EUREKA_HOST=eureka-server
+    networks:
+      - eureka-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  eureka-network:
+    driver: bridge
