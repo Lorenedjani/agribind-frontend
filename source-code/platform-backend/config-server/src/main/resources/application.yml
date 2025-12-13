@@ -1,30 +1,99 @@
+#server:
+#  port: 8888
+
+#spring:
+#  application:
+#    name: config-server
+#  cloud:
+#    config:
+#      server:
+#        git:
+#          uri: file://${user.home}/config-repo
+#          default-label: main
+#          clone-on-start: true
+#        native:
+#          search-locations: classpath:/config
+#  profiles:
+#    active: native
+
+#eureka:
+#  client:
+#    service-url:
+#      defaultZone: http://localhost:8761/eureka/
+#  instance:
+#    prefer-ip-address: true
+
+#management:
+#  endpoints:
+ #   web:
+ #     exposure:
+  #      include: "*"
+
 server:
-  port: 8888
+  port: ${PORT:8888}
 
 spring:
   application:
     name: config-server
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:native}  # Use 'native' or 'git' profile
+
+  # Profile: 'native' - Embedded config (for quick start)
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: classpath:/config,file:/config/
+    # Enable bootstrap for older Spring Cloud versions (if needed)
+    # bootstrap:
+    #   enabled: true
+
+---
+# Profile: 'git' - Git backend (recommended for production)
+spring:
+  profiles: git
   cloud:
     config:
       server:
         git:
-          uri: file://${user.home}/config-repo
-          default-label: main
+          uri: ${CONFIG_GIT_URI:https://github.com/yourusername/config-repo.git}
+          default-label: ${CONFIG_GIT_BRANCH:main}
+          search-paths: '{application}'
           clone-on-start: true
-        native:
-          search-locations: classpath:/config
-  profiles:
-    active: native
+          force-pull: true
+          timeout: 10
+
+---
+# Profile: 'prod' - Production settings with Eureka
+spring:
+  profiles: prod
+  cloud:
+    config:
+      server:
+        bootstrap: true
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_URL:https://agribind-frontend-795v.onrender.com/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
   instance:
-    prefer-ip-address: true
+    hostname: ${RENDER_SERVICE_NAME:localhost}.onrender.com
+    prefer-ip-address: false
+    instance-id: ${spring.application.name}:${server.port}
 
 management:
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: health,info,env,busrefresh
+  endpoint:
+    health:
+      show-details: always
+
+# Logging
+logging:
+  level:
+    org.springframework.cloud.config: DEBUG
+    org.springframework.boot.env: INFO
