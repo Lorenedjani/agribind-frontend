@@ -7,7 +7,7 @@ spring:
 
 eureka:
   instance:
-    hostname: ${EUREKA_HOSTNAME:localhost} #${RENDER_SERVICE_NAME}.onrender.com
+    hostname: ${RENDER_SERVICE_NAME}.onrender.com # ${EUREKA_HOSTNAME:localhost}
     prefer-ip-address: false
   client:
     register-with-eureka: false

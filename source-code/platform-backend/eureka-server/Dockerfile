@@ -1,23 +1,30 @@
-# Build stage
-FROM maven:3.9-eclipse-temurin-17 AS build
+# Stage 1: Build with parent context
+FROM maven:3.8.4-openjdk-11 AS builder
+
+WORKDIR /workspace
+
+# Copy parent POM first
+COPY ../pom.xml ./pom.xml
+
+# Copy this module's POM
+COPY pom.xml ./eureka-server/pom.xml
+
+# Download dependencies for the entire project
+RUN mvn dependency:go-offline -B -N
+
+# Copy source code
+COPY src ./eureka-server/src
+
+# Build only the eureka-server module
+RUN mvn clean package -pl eureka-server -am -DskipTests
+
+# Stage 2: Runtime
+FROM openjdk:11-jre-slim
 WORKDIR /app
-COPY pom.xml .
-RUN mvn dependency:go-offline
-COPY src ./src
-RUN mvn clean package -DskipTests
 
-# Runtime stage
-FROM eclipse-temurin:17-jre-alpine
-WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+# Copy the built jar
+COPY --from=builder /workspace/eureka-server/target/*.jar app.jar
 
-# Add health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8761/actuator/health || exit 1
+EXPOSE ${PORT:-8761}
 
-# Non-root user for security
-RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
-
-EXPOSE 8761
 ENTRYPOINT ["java", "-jar", "app.jar"]
