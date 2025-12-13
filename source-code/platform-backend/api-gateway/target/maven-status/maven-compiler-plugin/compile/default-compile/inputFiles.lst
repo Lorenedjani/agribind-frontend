@@ -1,1 +1,8 @@
-C:\Users\ismae\Documents\Tutored Project s1\Agribind-Platform\source-code\platform-backend\api-gateway\src\main\java\com\agribind\api_gateway\ApiGatewayApplication.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\api-gateway\src\main\java\com\agribind\api_gateway\config\CorsConfig.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\api-gateway\src\main\java\com\agribind\api_gateway\filter\JwtAuthenticationFilter.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\api-gateway\src\main\java\com\agribind\api_gateway\config\RateLimitConfig.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\api-gateway\src\main\java\com\agribind\api_gateway\controller\FallbackController.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\api-gateway\src\main\java\com\agribind\api_gateway\filter\GlobalLoggingFilter.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\api-gateway\src\main\java\com\agribind\api_gateway\config\SecurityConfig.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\api-gateway\src\main\java\com\agribind\api_gateway\filter\RequestLoggingFilter.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\api-gateway\src\main\java\com\agribind\api_gateway\ApiGatewayApplication.java

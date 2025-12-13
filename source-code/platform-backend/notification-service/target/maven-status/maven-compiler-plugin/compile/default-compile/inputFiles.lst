@@ -1,11 +1,18 @@
-C:\Users\ismae\Documents\Tutored Project s1\notification-service\src\main\java\com\agribind\notification_service\controller\NotificationController.java
-C:\Users\ismae\Documents\Tutored Project s1\notification-service\src\main\java\com\agribind\notification_service\model\NotificationRequest.java
-C:\Users\ismae\Documents\Tutored Project s1\notification-service\src\main\java\com\agribind\notification_service\consumer\RabbitMQNotificationConsumer.java
-C:\Users\ismae\Documents\Tutored Project s1\notification-service\src\main\java\com\agribind\notification_service\producer\RabbitMQNotificationProducer.java
-C:\Users\ismae\Documents\Tutored Project s1\notification-service\src\main\java\com\agribind\notification_service\config\KafkaConfig.java
-C:\Users\ismae\Documents\Tutored Project s1\notification-service\src\main\java\com\agribind\notification_service\NotificationServiceApplication.java
-C:\Users\ismae\Documents\Tutored Project s1\notification-service\src\main\java\com\agribind\notification_service\service\NotificationService.java
-C:\Users\ismae\Documents\Tutored Project s1\notification-service\src\main\java\com\agribind\notification_service\config\RabbitMQConfig.java
-C:\Users\ismae\Documents\Tutored Project s1\notification-service\src\main\java\com\agribind\notification_service\consumer\KafkaNotificationConsumer.java
-C:\Users\ismae\Documents\Tutored Project s1\notification-service\src\main\java\com\agribind\notification_service\producer\KafkaNotificationProducer.java
-C:\Users\ismae\Documents\Tutored Project s1\notification-service\src\main\java\com\agribind\notification_service\model\NotificationResponse.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\model\NotificationResponse.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\consumer\KafkaNotificationConsumer.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\model\NotificationRequest.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\producer\KafkaNotificationProducer.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\controller\SmsController.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\producer\RabbitMQNotificationProducer.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\service\EmailService.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\NotificationServiceApplication.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\config\RabbitMQConfig.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\controller\EmailController.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\service\WelcomeNotificationService.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\controller\WelcomeNotificationController.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\controller\NotificationController.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\consumer\RabbitMQNotificationConsumer.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\config\KafkaConfig.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\service\NotificationService.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\config\KafkaProducerConfig.java
+C:\Users\ismae\OneDrive\Documents\GitHub\agribind-frontend\source-code\platform-backend\notification-service\src\main\java\com\agribind\notification_service\service\SmsService.java

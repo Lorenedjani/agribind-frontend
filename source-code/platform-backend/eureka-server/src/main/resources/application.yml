@@ -1,24 +1,107 @@
+#server:
+#  port: ${PORT:8761}
+
+#spring:
+#  application:
+#    name: eureka-server
+
+#eureka:
+#  instance:
+#    hostname: ${RENDER_SERVICE_NAME}.onrender.com # ${EUREKA_HOSTNAME:localhost}
+#    prefer-ip-address: false
+#  client:
+ #   register-with-eureka: false
+#    fetch-registry: false
+#    service-url:
+#      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+#  server:
+#    enable-self-preservation: false
+#    eviction-interval-timer-in-ms: 10000
+
+#logging:
+#  level:
+#    com.netflix.eureka: INFO
+#    com.netflix.discovery: INFO
+
+
+#new settings
 server:
   port: ${PORT:8761}
+
+  # Add HTTPS support (Render terminates SSL, but still good practice)
+  forward-headers-strategy: framework
+  tomcat:
+    relaxed-query-chars: ['|', '{', '}', '[', ']']
+    use-relative-redirects: true
 
 spring:
   application:
     name: eureka-server
 
+  # Handle proxy headers correctly for Render
+  cloud:
+    loadbalancer:
+      use-x-forwarded-headers: true
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
 eureka:
   instance:
-    hostname: ${RENDER_SERVICE_NAME}.onrender.com # ${EUREKA_HOSTNAME:localhost}
-    prefer-ip-address: false
+    hostname: ${RENDER_SERVICE_NAME:localhost}.onrender.com
+    # IMPORTANT: Use secure settings for cloud deployment
+    secure-port-enabled: true
+    non-secure-port-enabled: false
+    status-page-url: https://${eureka.instance.hostname}:${server.port}/actuator/info
+    health-check-url: https://${eureka.instance.hostname}:${server.port}/actuator/health
+    home-page-url: https://${eureka.instance.hostname}:${server.port}/
+    # Use IP address for internal communication
+    prefer-ip-address: true
+    ip-address: ${EUREKA_INSTANCE_IP_ADDRESS:localhost}
+    instance-id: ${spring.application.name}:${server.port}
+
   client:
     register-with-eureka: false
     fetch-registry: false
+    # CRITICAL FIX: Changed from http:// to https://
     service-url:
-      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+      defaultZone: https://${eureka.instance.hostname}:${server.port}/eureka/
+    healthcheck:
+      enabled: true
+
   server:
-    enable-self-preservation: false
-    eviction-interval-timer-in-ms: 10000
+    # Keep these settings for development, but adjust for production
+    enable-self-preservation: ${EUREKA_SELF_PRESERVATION:false}
+    eviction-interval-timer-in-ms: ${EUREKA_EVICTION_INTERVAL:10000}
+    # Add response cache settings for better performance
+    response-cache-update-interval-ms: 30000
+    use-read-only-response-cache: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      base-path: /actuator
+      path-mapping:
+        health: health
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    readinessstate:
+      enabled: true
+    livenessstate:
+      enabled: true
 
 logging:
   level:
     com.netflix.eureka: INFO
     com.netflix.discovery: INFO
+    org.springframework.cloud: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: ./logs/eureka-server.log
