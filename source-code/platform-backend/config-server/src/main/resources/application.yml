@@ -57,7 +57,7 @@ spring:
       server:
         git:
           uri: ${CONFIG_GIT_URI:https://github.com/yourusername/config-repo.git}
-          default-label: ${CONFIG_GIT_BRANCH:main}
+          default-label: ${CONFIG_GIT_BRANCH:Lorene}
           search-paths: '{application}'
           clone-on-start: true
           force-pull: true
@@ -66,9 +66,10 @@ spring:
 ---
 # Profile: 'prod' - Production settings with Eureka
 spring:
-  profiles: prod
   cloud:
     config:
+      activate:
+        on-profile: prod
       server:
         bootstrap: true
 
