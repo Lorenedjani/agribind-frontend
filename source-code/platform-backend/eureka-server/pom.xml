@@ -9,7 +9,7 @@
     <groupId>cm.agribind</groupId>
     <artifactId>agribind-platform</artifactId>
     <version>1.0.0</version>
-    <relativePath>../pom.xml</relativePath>
+    <relativePath/>  <!--relativePath../pom.xml-->
   </parent>
 
   <artifactId>eureka-server</artifactId>
