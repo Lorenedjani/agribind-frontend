@@ -1,9 +1,11 @@
--- V2__Create_profile_tables.sql (for older PostgreSQL)
+-- V2__Create_profile_tables.sql
+-- Create profiles table with idempotent checks
 
--- Step 1: Create gender_enum type
+-- Step 1: Create gender_enum type only if it doesn't exist
 CREATE TYPE gender_enum AS ENUM ('MALE', 'FEMALE', 'OTHER');
 
--- Step 2: Create profiles table
+
+-- Step 2: Create profiles table if it doesn't exist
 CREATE TABLE IF NOT EXISTS profiles (
                                         id BIGSERIAL PRIMARY KEY,
                                         bio VARCHAR(500),
@@ -24,18 +26,8 @@ CREATE TABLE IF NOT EXISTS profiles (
                                         version BIGINT DEFAULT 0
 );
 
--- Step 3: Create index with existence check
-DO $$
-    BEGIN
-        IF NOT EXISTS (
-            SELECT 1 FROM pg_indexes
-            WHERE schemaname = current_schema()
-              AND tablename = 'profiles'
-              AND indexname = 'idx_created_at'
-        ) THEN
-            CREATE INDEX idx_created_at ON profiles(created_at);
-        END IF;
-    END $$;
+-- Step 3: Create index ONLY if it doesn't exist - use IF NOT EXISTS
+CREATE INDEX IF NOT EXISTS idx_created_at ON profiles(created_at);
 
 -- Step 4: Create or replace the trigger function
 CREATE OR REPLACE FUNCTION update_profiles_updated_at()
@@ -46,7 +38,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Step 5: Create the trigger
+-- Step 5: Create the trigger (drop if exists first)
 DROP TRIGGER IF EXISTS update_profiles_updated_at ON profiles;
 CREATE TRIGGER update_profiles_updated_at
     BEFORE UPDATE ON profiles
