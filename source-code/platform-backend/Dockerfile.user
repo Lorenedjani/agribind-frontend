@@ -21,6 +21,12 @@ FROM eclipse-temurin:17-jre-alpine AS runtime
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
+# Create /app directory and set permissions
+RUN mkdir -p /app && chown -R spring:spring /app
+
+# Set working directory
+WORKDIR /app
+
 # Create log directory
 RUN mkdir -p /app/logs && chown -R spring:spring /app/logs
 
