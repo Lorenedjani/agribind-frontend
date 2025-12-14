@@ -1,36 +1,42 @@
-# Use the SAME unified Dockerfile approach
-ARG SERVICE_NAME=user-management-service
-
+# Multi-stage build for efficiency
 FROM maven:3.9-eclipse-temurin-17 AS builder
 
 WORKDIR /app
 
-# Copy parent POM (from your agribind-platform)
+# 1. Install parent POM (critical for multi-module builds)
 COPY pom.xml .
 RUN mvn clean install -N -DskipTests
 
-# Build user-management-service
-COPY user-management-service/pom.xml user-management-service/pom.xml
+# 2. Build user-management-service module
+COPY user-management-service/pom.xml user-management-service/
 COPY user-management-service/src user-management-service/src
 
 WORKDIR /app/user-management-service
 RUN mvn clean package -DskipTests
 
-
+# 3. Runtime stage
 FROM eclipse-temurin:17-jre-alpine AS runtime
 
-# 1. Create the user and group first (as root)
+# Create user and directory as ROOT first
 RUN addgroup -S spring && adduser -S spring -G spring
 
-# 2. As root, create the directory and set its ownership
+# Create app directory and set ownership
 RUN mkdir -p /app && chown -R spring:spring /app
 
-# 3. ONLY NOW switch to the non-root user for security
+# Switch to non-root user for security
 USER spring:spring
 
-# 4. Set the working directory (now owned by 'spring')
+# Set working directory
 WORKDIR /app
 
-# ... copy JAR file and define ENTRYPOINT
-COPY --from=builder /app/user-management-service/target/*.jar app.jar
-ENTRYPOINT ["java", "-Xmx512m", "-jar", "/app.jar"]
+# CRITICAL FIX: Copy from correct location
+# The JAR is in /app/user-management-service/target/ in builder stage
+COPY --chown=spring:spring --from=builder /app/user-management-service/target/*.jar app.jar
+
+EXPOSE 8084
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8084/actuator/health || exit 1
+
+# Use absolute path to the JAR
+ENTRYPOINT ["java", "-Xmx512m", "-jar", "app.jar"]
