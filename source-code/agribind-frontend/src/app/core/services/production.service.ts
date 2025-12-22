@@ -2,6 +2,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface ProductionRecord {
   id?: string;
@@ -86,7 +87,7 @@ export interface MaturityUpdateDTO {
   providedIn: 'root'
 })
 export class ProductionService {
-  private baseUrl = '/api/v1/production';
+  private baseUrl = `${environment.services.productionApiUrl}/production`;
 
   constructor(private http: HttpClient) {}
 
@@ -148,6 +149,41 @@ export class ProductionService {
       `${this.baseUrl}/cooperative/${cooperativeId}/maturity`,
       { params }
     );
+  }
+
+  // Get all production records for a cooperative with pagination
+  getProductionRecords(
+    cooperativeId: string,
+    page: number = 0,
+    size: number = 10,
+    productName?: string,
+    qualityGrade?: string,
+    searchTerm?: string
+  ): Observable<any> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    
+    if (productName) params = params.set('productName', productName);
+    if (qualityGrade) params = params.set('qualityGrade', qualityGrade);
+    if (searchTerm) params = params.set('searchTerm', searchTerm);
+
+    return this.http.get<any>(`${this.baseUrl}/cooperative/${cooperativeId}`, { params });
+  }
+
+  // Get production record by ID
+  getProductionRecordById(id: string): Observable<ProductionRecord> {
+    return this.http.get<ProductionRecord>(`${this.baseUrl}/${id}`);
+  }
+
+  // Update production record
+  updateProductionRecord(id: string, request: CreateProductionRequest): Observable<ProductionRecord> {
+    return this.http.put<ProductionRecord>(`${this.baseUrl}/${id}`, request);
+  }
+
+  // Delete production record
+  deleteProductionRecord(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
   // Health check

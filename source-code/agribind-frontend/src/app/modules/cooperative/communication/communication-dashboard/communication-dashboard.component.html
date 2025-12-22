@@ -1,0 +1,721 @@
+<div class="communications-center">
+  <!-- Header -->
+  <div class="header">
+    <div class="title-section">
+      <h1 class="title">Communications Center</h1>
+      <p class="subtitle">Multi-channel messaging, alerts, and resource request management</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="filterHistory()">
+        <i class="fas fa-filter"></i>
+        <span>Filter History</span>
+      </button>
+      <button class="btn-secondary" (click)="exportData()">
+        <i class="fas fa-download"></i>
+        <span>Export</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Metrics Container -->
+  <div class="metrics-container">
+    <!-- First Row -->
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-content">
+          <span class="metric-label">Total Messages Sent</span>
+          <div class="metric-value">{{dashboardMetrics.totalMessages.value}}</div>
+          <span class="metric-change positive">{{dashboardMetrics.totalMessages.change}}</span>
+        </div>
+        <div class="metric-badge green">
+          <i class="fas fa-comment"></i>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-content">
+          <span class="metric-label">Audio Messages</span>
+          <div class="metric-value">{{dashboardMetrics.audioMessages.value}}</div>
+          <span class="metric-info">{{dashboardMetrics.audioMessages.info}}</span>
+        </div>
+        <div class="metric-badge yellow">
+          <i class="fas fa-microphone"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Second Row -->
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-content">
+          <span class="metric-label">Active Alerts</span>
+          <div class="metric-value">{{dashboardMetrics.activeAlerts.value}}</div>
+          <span class="metric-status critical">{{dashboardMetrics.activeAlerts.status}}</span>
+        </div>
+        <div class="metric-badge orange">
+          <i class="fas fa-bell"></i>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-content">
+          <span class="metric-label">Delivery Rate</span>
+          <div class="metric-value">{{dashboardMetrics.deliveryRate.value}}</div>
+          <span class="metric-change positive">{{dashboardMetrics.deliveryRate.change}}</span>
+        </div>
+        <div class="metric-badge green-check">
+          <i class="fas fa-check"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <button *ngFor="let btn of actionButtons" 
+            class="action-btn" 
+            [class.active]="btn.active"
+            (click)="onActionButtonClick(btn.name)">
+      <i [class]="btn.icon"></i>
+      <span>{{btn.name}}</span>
+    </button>
+  </div>
+
+  <!-- Audio Section -->
+  <div class="audio-section" *ngIf="isAudioSectionActive">
+    <div class="section-header">
+      <i class="fas fa-headphones"></i>
+      <h2>Multilingual Audio Messages</h2>
+    </div>
+
+    <!-- Language Selection -->
+    <div class="language-selection">
+      <div class="language-header">
+        <i class="fas fa-users"></i>
+        <span>Select Language</span>
+      </div>
+      <div class="language-buttons">
+        <button *ngFor="let lang of languages" 
+                class="language-btn" 
+                [class.selected]="lang.selected"
+                (click)="selectLanguage(lang.name)">
+          <i [class]="lang.icon"></i>
+          <span>{{lang.name}}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Recording Area -->
+    <div class="recording-area">
+      <div class="recording-content">
+        <i class="fas fa-microphone recording-icon"></i>
+        <h3>Record Audio Message</h3>
+        <p>Click to start recording or upload an audio file</p>
+        <div class="recording-actions">
+          <button class="btn-record" (click)="openAudioModal()">
+            <i class="fas fa-microphone"></i>
+            <span>Start Recording</span>
+          </button>
+          <button class="btn-upload" (click)="uploadFile()">
+            <i class="fas fa-plus"></i>
+            <span>Upload File</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Audio Messages -->
+    <div class="recent-messages">
+      <h3 class="section-title">
+        <i class="fas fa-clock"></i>
+        <span>Recent Audio Messages</span>
+      </h3>
+
+      <div class="message-list">
+        <!-- Dynamic messages -->
+        <div *ngFor="let message of recentMessages" 
+             class="message-item" 
+             [class.playing]="message.isPlaying">
+          <div class="message-icon">
+            <i class="fas fa-microphone"></i>
+          </div>
+          <div class="message-details">
+            <h4 class="message-title">{{message.title}}</h4>
+            <div class="message-meta">
+              <span>{{message.language}}</span>
+              <span>•</span>
+              <span>{{message.duration}} min</span>
+              <span>•</span>
+              <span>{{message.listeners}} listeners</span>
+              <span>•</span>
+              <span>{{formatMessageDate(message.date)}}</span>
+            </div>
+          </div>
+          <div class="message-actions">
+            <button class="btn-action primary" (click)="playMessage(message)">
+              <i class="fas" [class.fa-play]="!message.isPlaying" [class.fa-pause]="message.isPlaying"></i>
+              {{message.isPlaying ? 'Pause' : 'Play'}}
+            </button>
+            <button class="btn-action" (click)="viewMessageStats(message)">
+              <i class="fas fa-chart-bar"></i>
+              Stats
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts Section -->
+  <div class="alerts-section" *ngIf="isAlertsSectionActive">
+    <div class="section-header">
+      <i class="fas fa-bell"></i>
+      <h2>Alerts Management</h2>
+      <button class="btn-create-alert" (click)="openAlertModal()">
+        <i class="fas fa-plus"></i>
+        <span>Create Alert</span>
+      </button>
+    </div>
+
+    <!-- Alert Stats -->
+    <div class="alert-stats">
+      <div class="alert-stat-card">
+        <div class="stat-content">
+          <div class="stat-label">Total Alerts</div>
+          <div class="stat-value">{{alertStats.total}}</div>
+        </div>
+        <div class="stat-icon total">
+          <i class="fas fa-bell"></i>
+        </div>
+      </div>
+      
+      <div class="alert-stat-card">
+        <div class="stat-content">
+          <div class="stat-label">Active</div>
+          <div class="stat-value">{{alertStats.active}}</div>
+        </div>
+        <div class="stat-icon active">
+          <i class="fas fa-exclamation-circle"></i>
+        </div>
+      </div>
+      
+      <div class="alert-stat-card">
+        <div class="stat-content">
+          <div class="stat-label">Sent</div>
+          <div class="stat-value">{{alertStats.sent}}</div>
+        </div>
+        <div class="stat-icon sent">
+          <i class="fas fa-paper-plane"></i>
+        </div>
+      </div>
+      
+      <div class="alert-stat-card">
+        <div class="stat-content">
+          <div class="stat-label">Critical</div>
+          <div class="stat-value">{{alertStats.critical}}</div>
+        </div>
+        <div class="stat-icon critical">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert Filters -->
+    <!-- In the alert-filters section, update the filter buttons -->
+<div class="alert-filters">
+  <div class="filter-group">
+    <div class="filter-label">
+      <i class="fas fa-filter"></i>
+      <span>Filter Alerts</span>
+    </div>
+    <div class="filter-buttons">
+      <button 
+        class="filter-btn" 
+        [class.active]="alertStatusFilter === 'all'"
+        (click)="setStatusFilter('all')">
+        All
+      </button>
+      <button 
+        class="filter-btn" 
+        [class.active]="alertStatusFilter === 'active'"
+        (click)="setStatusFilter('active')">
+        Active
+      </button>
+      <button 
+        class="filter-btn" 
+        [class.active]="alertStatusFilter === 'sent'"
+        (click)="setStatusFilter('sent')">
+        Sent
+      </button>
+    </div>
+  </div>
+  
+  <div class="search-box">
+    <i class="fas fa-search"></i>
+    <input 
+      type="text" 
+      placeholder="Search alerts by ID, title, type, priority, region..."
+      [(ngModel)]="alertSearchQuery"
+      (input)="onSearch()">
+  </div>
+</div>
+
+    <!-- Alerts Table -->
+    <div class="alerts-table-container">
+      <div class="alerts-table">
+        <div class="table-header">
+          <div class="table-row">
+            <div class="table-cell header-cell">ID</div>
+            <div class="table-cell header-cell">Type</div>
+            <div class="table-cell header-cell">Priority</div>
+            <div class="table-cell header-cell">Title</div>
+            <div class="table-cell header-cell">Recipients</div>
+            <div class="table-cell header-cell">Channels</div>
+            <div class="table-cell header-cell">Delivery Rate</div>
+            <div class="table-cell header-cell">Date</div>
+            <div class="table-cell header-cell">Status</div>
+            <div class="table-cell header-cell actions-header">Actions</div>
+          </div>
+        </div>
+        
+        <div class="table-body">
+
+          
+          
+
+          
+          
+          <!-- Dynamic alerts -->
+          <div *ngFor="let alert of filteredAlerts" class="table-row">
+            <div class="table-cell">
+              <div class="cell-content">
+                <span class="alert-id">{{alert.id}}</span>
+              </div>
+            </div>
+            
+            <div class="table-cell type-cell">
+              <div class="cell-content">
+                <div class="type-container">
+                  <i [class]="getAlertIcon(alert.type)" class="alert-icon"></i>
+                  <span class="type-text">{{capitalizeFirst(alert.type)}}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="table-cell">
+              <div class="cell-content">
+                <span 
+                  class="priority-badge" 
+                  [ngClass]="getPriorityClass(alert.priority)">
+                  {{capitalizeFirst(alert.priority)}}
+                </span>
+              </div>
+            </div>
+            
+            <div class="table-cell title-cell">
+              <div class="cell-content">
+                <div class="alert-title">{{alert.title}}</div>
+                <div class="alert-description">{{alert.description}}</div>
+              </div>
+            </div>
+            
+            <div class="table-cell recipients-cell">
+              <div class="cell-content">
+                <div class="recipients-count">{{alert.recipients}}</div>
+                <div class="recipients-label">farmers</div>
+              </div>
+            </div>
+            
+            <div class="table-cell channels-cell">
+              <div class="cell-content">
+                <div class="channels-list">
+                  <span *ngFor="let channel of alert.channels" class="channel-tag">
+                    {{channel.toUpperCase()}}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="table-cell delivery-cell">
+              <div class="cell-content">
+                <div class="delivery-container">
+                  <div class="delivery-rate">{{alert.deliveryRate}}%</div>
+                  <div class="delivery-bar">
+                    <div class="delivery-progress" [style.width.%]="alert.deliveryRate"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="table-cell date-cell">
+              <div class="cell-content">
+                <span class="date-text">{{formatAlertDate(alert.date)}}</span>
+              </div>
+            </div>
+            
+            <div class="table-cell status-cell">
+              <div class="cell-content">
+                <span 
+                  class="status-badge" 
+                  [ngClass]="getStatusClass(alert.status)">
+                  {{capitalizeFirst(alert.status)}}
+                </span>
+              </div>
+            </div>
+            
+            <div class="table-cell actions-cell">
+              <div class="cell-content">
+                <div class="actions-container">
+                  <button class="action-btn view-btn" (click)="viewAlertDetails(alert)" title="View Details">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="action-btn send-btn" 
+                          (click)="updateAlertStatus(alert.id, 'sent')"
+                          [disabled]="alert.status === 'sent'"
+                          title="Send Alert">
+                    <i class="fas fa-paper-plane"></i>
+                  </button>
+                  <button class="action-btn delete-btn" (click)="deleteAlert(alert.id)" title="Delete Alert">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div *ngIf="filteredAlerts.length === 0" class="empty-state">
+            <i class="fas fa-bell-slash"></i>
+            <h3>No alerts found</h3>
+            <p>Try changing your filters or create a new alert</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Alert Modal -->
+  <div class="modal-overlay" *ngIf="showAlertModal" (click)="closeAlertModal()">
+    <div class="modal-content alert-modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-section">
+          <h2 class="modal-title">
+            <i class="fas fa-bell"></i>
+            Create New Alert
+          </h2>
+          <p class="modal-subtitle">Send urgent notifications to farmers via multiple channels</p>
+        </div>
+        <button class="modal-close" (click)="closeAlertModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="modal-form-section">
+          <label class="form-label">Alert Type</label>
+          <div class="type-selection">
+            <div class="type-options">
+              <div class="type-option" 
+                   [class.active]="newAlert.type === 'weather'"
+                   (click)="newAlert.type = 'weather'">
+                <i class="fas fa-cloud-rain"></i>
+                <span>Weather Alert</span>
+              </div>
+              <div class="type-option" 
+                   [class.active]="newAlert.type === 'payment'"
+                   (click)="newAlert.type = 'payment'">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Payment Reminder</span>
+              </div>
+              <div class="type-option" 
+                   [class.active]="newAlert.type === 'crop'"
+                   (click)="newAlert.type = 'crop'">
+                <i class="fas fa-seedling"></i>
+                <span>Crop Advisory</span>
+              </div>
+              <div class="type-option" 
+                   [class.active]="newAlert.type === 'market'"
+                   (click)="newAlert.type = 'market'">
+                <i class="fas fa-chart-line"></i>
+                <span>Market Price</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-form-section">
+          <label class="form-label">Priority Level</label>
+          <div class="priority-selection">
+            <div class="priority-options">
+              <div class="priority-option low" 
+                   [class.active]="newAlert.priority === 'low'"
+                   (click)="newAlert.priority = 'low'">
+                <i class="fas fa-info-circle"></i>
+                <span>Low</span>
+              </div>
+              <div class="priority-option warning" 
+                   [class.active]="newAlert.priority === 'warning'"
+                   (click)="newAlert.priority = 'warning'">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Warning</span>
+              </div>
+              <div class="priority-option critical" 
+                   [class.active]="newAlert.priority === 'critical'"
+                   (click)="newAlert.priority = 'critical'">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Critical</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-form-section">
+          <label class="form-label">Alert Title</label>
+          <input 
+            type="text" 
+            class="form-input" 
+            placeholder="e.g., Heavy Rainfall Warning"
+            [(ngModel)]="newAlert.title"
+            maxlength="100">
+          <div class="char-count">{{newAlert.title.length || 0}}/100</div>
+        </div>
+        
+        <div class="modal-form-section">
+          <label class="form-label">Alert Message</label>
+          <textarea 
+            class="form-textarea" 
+            placeholder="Provide detailed information about the alert..."
+            rows="4"
+            [(ngModel)]="newAlert.message"
+            maxlength="500"></textarea>
+          <div class="char-count">{{(newAlert.message ? newAlert.message.length : 0)}}/500</div>
+        </div>
+        
+        <div class="modal-form-section">
+          <label class="form-label">Target Audience</label>
+          <div class="audience-selection">
+            <select class="form-select" [(ngModel)]="newAlert.audience">
+              <option value="all">All Farmers (300)</option>
+              <option value="region1">North Region (150)</option>
+              <option value="region2">South Region (120)</option>
+              <option value="region3">East Region (80)</option>
+              <option value="region4">West Region (100)</option>
+              <option value="custom">Custom Selection</option>
+            </select>
+            <div class="audience-hint">
+              <i class="fas fa-info-circle"></i>
+              <span>This alert will reach {{getAudienceCount()}} farmers</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-form-section">
+          <label class="form-label">Communication Channels</label>
+          <div class="channels-selection">
+            <div class="channels-options">
+              <div class="channel-option" 
+                   [class.selected]="channel.selected"
+                   *ngFor="let channel of communicationChannels"
+                   (click)="toggleChannel(channel)">
+                <i [class]="channel.icon"></i>
+                <span>{{channel.name}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-form-section">
+          <div class="checkbox-option">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="newAlert.requiresAck"
+                class="checkbox-input">
+              <span class="checkmark"></span>
+              <span class="checkbox-text">Requires farmer acknowledgment</span>
+            </label>
+            <div class="checkbox-hint">
+              <i class="fas fa-info-circle"></i>
+              <span>Farmers must confirm they've received and understood the alert</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-form-section">
+          <label class="form-label">Alert Expiry (Optional)</label>
+          <div class="expiry-section">
+            <input 
+              type="date" 
+              class="form-input expiry-date"
+              [(ngModel)]="newAlert.expiryDate"
+              [min]="today">
+            <div class="expiry-hint">
+              <i class="fas fa-clock"></i>
+              <span>Alert will be automatically archived after this date</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeAlertModal()">
+          Cancel
+        </button>
+        <button class="btn-send" (click)="sendAlertFromModal()">
+          <i class="fas fa-paper-plane"></i>
+          Send Alert
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio Recording Modal -->
+  <div class="modal-overlay" *ngIf="showAudioModal" (click)="closeAudioModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <i class="fas fa-microphone"></i>
+          Record Audio Message
+        </h2>
+        <button class="modal-close" (click)="closeAudioModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <!-- Language Selection -->
+        <div class="modal-section">
+          <label class="section-label">
+            <i class="fas fa-language"></i>
+            Message Language
+          </label>
+          <div class="language-selector">
+            <select 
+              class="language-dropdown" 
+              [value]="modalData.selectedLanguage"
+              (change)="modalData.selectedLanguage = $any($event.target).value"
+            >
+              <option value="French">French</option>
+              <option value="English">English</option>
+              <option value="Fulfulde">Fulfulde</option>
+              <option value="Ewondo">Ewondo</option>
+              <option value="Duala">Duala</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Audio Recording Section -->
+        <div class="modal-section">
+          <label class="section-label checked">
+            <i class="fas fa-microphone"></i>
+            Audio Recording
+          </label>
+          
+          <div class="recording-controls">
+            <!-- Recording Status -->
+            <div class="recording-status">
+              <span class="status-text" [class.recording]="modalData.isRecording">
+                {{ getRecordingStatus() }}
+              </span>
+            </div>
+            
+            <!-- Recording Buttons -->
+            <div class="recording-buttons">
+              <button 
+                class="btn-record-modal" 
+                [class.recording]="modalData.isRecording"
+                (click)="startRecording()"
+              >
+                <i class="fas fa-microphone"></i>
+                <span>{{ modalData.isRecording ? 'Stop Recording' : 'Start Recording' }}</span>
+              </button>
+              
+              <div class="divider">or</div>
+              
+              <button class="btn-upload-modal" (click)="uploadFile()">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>Upload Audio File</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message Details Section -->
+        <div class="modal-section">
+          <label class="section-label">
+            <i class="fas fa-edit"></i>
+            Message Title
+          </label>
+          <input 
+            type="text" 
+            class="modal-input" 
+            placeholder="e.g., Important Cooperative Announcement"
+            [value]="modalData.messageTitle"
+            (input)="modalData.messageTitle = $any($event.target).value"
+          />
+        </div>
+
+        <!-- Target Audience -->
+        <div class="modal-section">
+          <label class="section-label">
+            <i class="fas fa-users"></i>
+            Target Audience
+          </label>
+          <div class="select-wrapper">
+            <select 
+              class="modal-select" 
+              [value]="modalData.targetAudience"
+              (change)="modalData.targetAudience = $any($event.target).value"
+            >
+              <option>All Members (300)</option>
+              <option>By Zone (150)</option>
+              <option>By Crop Type (120)</option>
+            </select>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="modal-section settings-section">
+          <!-- Auto-play Toggle -->
+          <div class="toggle-row">
+            <label class="toggle-container">
+              <input 
+                type="checkbox" 
+                [checked]="modalData.autoPlayEnabled"
+                (change)="modalData.autoPlayEnabled = $any($event.target).checked"
+              />
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Auto-play when farmers open the app</span>
+          </div>
+
+          <!-- SMS Transcription Toggle -->
+          <div class="toggle-row">
+            <label class="toggle-container">
+              <input 
+                type="checkbox" 
+                [checked]="modalData.includeSmsTranscription"
+                (change)="modalData.includeSmsTranscription = $any($event.target).checked"
+              />
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Include text transcription for SMS delivery</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeAudioModal()">
+          Cancel
+        </button>
+        <button class="btn-broadcast-modal" (click)="broadcastMessage()">
+          <i class="fas fa-bullhorn"></i>
+          Broadcast Message
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

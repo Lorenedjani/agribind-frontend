@@ -3,8 +3,10 @@ package cm.agribind.usermanagement.mapper;
 import cm.agribind.usermanagement.dto.command.CreateUserCommand;
 import cm.agribind.usermanagement.dto.command.UpdateUserCommand;
 import cm.agribind.usermanagement.dto.response.UserResponse;
+import cm.agribind.usermanagement.entity.Address;
 import cm.agribind.usermanagement.entity.Profile;
 import cm.agribind.usermanagement.entity.User;
+import cm.agribind.usermanagement.enums.Region;
 import cm.agribind.usermanagement.enums.UserStatus;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-12-02T10:19:03+0100",
+    date = "2025-12-13T07:20:17+0100",
     comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.44.0.v20251118-1623, environment: Java 21.0.9 (Eclipse Adoptium)"
 )
 @Component
@@ -54,6 +56,11 @@ public class UserMapperImpl implements UserMapper {
         userResponse.setFullAddress( toFullAddress( user.getAddress() ) );
         userResponse.setProfilePictureUrl( userProfileProfilePicturePath( user ) );
         userResponse.setPreferredLanguage( userProfilePreferredLanguage( user ) );
+        userResponse.setRegion( regionToString( userAddressRegion( user ) ) );
+        userResponse.setDepartment( userAddressDepartment( user ) );
+        userResponse.setDistrict( userAddressDistrict( user ) );
+        userResponse.setVillage( userAddressVillage( user ) );
+        userResponse.setGpsCoordinates( userAddressGpsCoordinates( user ) );
         userResponse.setCreatedAt( user.getCreatedAt() );
         userResponse.setEmail( user.getEmail() );
         userResponse.setId( user.getId() );
@@ -142,5 +149,80 @@ public class UserMapperImpl implements UserMapper {
             return null;
         }
         return preferredLanguage;
+    }
+
+    private Region userAddressRegion(User user) {
+        if ( user == null ) {
+            return null;
+        }
+        Address address = user.getAddress();
+        if ( address == null ) {
+            return null;
+        }
+        Region region = address.getRegion();
+        if ( region == null ) {
+            return null;
+        }
+        return region;
+    }
+
+    private String userAddressDepartment(User user) {
+        if ( user == null ) {
+            return null;
+        }
+        Address address = user.getAddress();
+        if ( address == null ) {
+            return null;
+        }
+        String department = address.getDepartment();
+        if ( department == null ) {
+            return null;
+        }
+        return department;
+    }
+
+    private String userAddressDistrict(User user) {
+        if ( user == null ) {
+            return null;
+        }
+        Address address = user.getAddress();
+        if ( address == null ) {
+            return null;
+        }
+        String district = address.getDistrict();
+        if ( district == null ) {
+            return null;
+        }
+        return district;
+    }
+
+    private String userAddressVillage(User user) {
+        if ( user == null ) {
+            return null;
+        }
+        Address address = user.getAddress();
+        if ( address == null ) {
+            return null;
+        }
+        String village = address.getVillage();
+        if ( village == null ) {
+            return null;
+        }
+        return village;
+    }
+
+    private String userAddressGpsCoordinates(User user) {
+        if ( user == null ) {
+            return null;
+        }
+        Address address = user.getAddress();
+        if ( address == null ) {
+            return null;
+        }
+        String gpsCoordinates = address.getGpsCoordinates();
+        if ( gpsCoordinates == null ) {
+            return null;
+        }
+        return gpsCoordinates;
     }
 }

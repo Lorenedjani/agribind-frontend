@@ -96,9 +96,13 @@
           <i class="fas fa-plus"></i>
           <span>Add Member</span>
         </button>
-        <button class="btn btn-outline" (click)="onExport()">
+        <button class="btn btn-outline" (click)="generateRegistrationQR()">
+          <i class="fas fa-qrcode"></i>
+          <span>Registration QR</span>
+        </button>
+        <button class="btn btn-outline" (click)="onExport()" [disabled]="exportLoading">
           <i class="fas fa-download"></i>
-          <span>Export</span>
+          <span>{{ exportLoading ? 'Exporting...' : 'Export CSV' }}</span>
         </button>
       </div>
     </section>
@@ -151,11 +155,13 @@
       <table>
         <thead>
           <tr>
-            <th><i class="fas fa-hashtag"></i> Member ID</th>
+            <th><i class="fas fa-hashtag"></i> AR Code</th>
+            <th><i class="fas fa-id-card"></i> Reg. Number</th>
             <th><i class="fas fa-user"></i> Name</th>
             <th><i class="fas fa-phone"></i> Contact</th>
             <th><i class="fas fa-tag"></i> Type</th>
-            <th><i class="fas fa-map-pin"></i> Location</th>
+            <th><i class="fas fa-map-pin"></i> Region</th>
+            <th><i class="fas fa-map-marker-alt"></i> Farm Location</th>
             <th><i class="fas fa-seedling"></i> Primary Crop</th>
             <th><i class="fas fa-circle"></i> Status</th>
             <th><i class="fas fa-cog"></i> Actions</th>
@@ -165,6 +171,9 @@
           <tr *ngFor="let member of paginatedMembers">
             <td>
               <span class="id-badge">{{ member.id }}</span>
+            </td>
+            <td>
+              <span class="reg-badge">{{ member.registrationNumber || 'N/A' }}</span>
             </td>
             <td>
               <div class="name-cell">
@@ -182,8 +191,17 @@
             <td>
               <div class="location-cell">
                 <i class="fas fa-map-marker-alt"></i>
-                <span>{{ member.region }}</span>
+                <span>{{ member.region || 'N/A' }}</span>
               </div>
+            </td>
+            <td>
+              <div class="farm-location-cell" *ngIf="member.gpsCoordinates; else noLocation">
+                <i class="fas fa-map-pin gps-icon"></i>
+                <span class="gps-coords">{{ member.gpsCoordinates }}</span>
+              </div>
+              <ng-template #noLocation>
+                <span class="no-location">Not set</span>
+              </ng-template>
             </td>
             <td><span class="crop-badge">{{ member.primaryCrop }}</span></td>
             <td>
@@ -197,8 +215,9 @@
                 <button class="icon-btn view-btn" (click)="openViewMemberModal(member)" title="View Details">
                   <i class="fas fa-eye"></i>
                 </button>
-                <button class="icon-btn qr-btn" title="QR Code">
+                <button class="icon-btn qr-btn qr-account-btn" (click)="generateAccountAccessQR(member)" title="Account Access QR">
                   <i class="fas fa-qrcode"></i>
+                  <span class="btn-text">Access</span>
                 </button>
                 <button class="icon-btn edit-btn" (click)="openEditMemberModal(member)" title="Edit">
                   <i class="fas fa-edit"></i>
@@ -210,7 +229,7 @@
             </td>
           </tr>
           <tr *ngIf="paginatedMembers.length === 0 && !isLoading">
-            <td colspan="8" class="no-data">
+            <td colspan="10" class="no-data">
               <i class="fas fa-inbox"></i>
               <p>No members match the filters.</p>
             </td>
@@ -255,16 +274,25 @@
   <div class="qr-modal">
     <div class="qr-modal-header">
       <h2>
-        <i class="fas fa-qrcode"></i> Registration QR Code
+        <i class="fas fa-qrcode"></i>
+        {{ selectedQRCode.purpose === 'ACCOUNT_ACCESS' ? 'Account Access QR Code' : 'Registration QR Code' }}
       </h2>
       <button class="close-btn" (click)="closeQRModal()">✖</button>
     </div>
 
-    <div class="qr-modal-body">
+      <div class="qr-modal-body">
       <div class="qr-code-display">
-        <img [src]="selectedQRCode.qrCodeImage"
+        <img *ngIf="!qrCodeLoading && selectedQRCode.qrCodeImage" [src]="selectedQRCode.qrCodeImage"
              alt="QR Code"
              class="qr-code-image">
+        <div *ngIf="qrCodeLoading" class="qr-loading">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Generating QR Code...</p>
+        </div>
+        <div *ngIf="!qrCodeLoading && !selectedQRCode.qrCodeImage" class="qr-placeholder">
+          <i class="fas fa-qrcode fa-3x"></i>
+          <p>QR Code image not available, but data is ready for manual entry</p>
+        </div>
       </div>
 
       <div class="qr-info">
@@ -284,9 +312,15 @@
 
       <div class="qr-instructions">
         <h4><i class="fas fa-info-circle"></i> Instructions</h4>
-        <ul>
+        <ul *ngIf="selectedQRCode.purpose === 'ACCOUNT_ACCESS'">
           <li>Download and print this QR code</li>
-          <li>Provide it to the farmer for easy registration</li>
+          <li>Provide it to the farmer for easy account access</li>
+          <li>Scan with the AgriBind mobile app to log into their account</li>
+          <li>Store securely - this contains account access credentials</li>
+        </ul>
+        <ul *ngIf="selectedQRCode.purpose === 'REGISTRATION'">
+          <li>Download and print this QR code</li>
+          <li>Provide it to farmers for easy registration</li>
           <li>Scan with the AgriBind mobile app to complete registration</li>
           <li>Store securely - this contains unique registration data</li>
         </ul>
@@ -303,7 +337,6 @@
     </div>
   </div>
 </div>
-
 <!-- Add this CSS to member-list.component.scss -->
 <style>
 .qr-modal {
@@ -514,6 +547,90 @@
         box-shadow: 0 4px 12px rgba(50, 128, 72, 0.4);
       }
     }
+  }
+}
+
+/* QR Code Button Styles */
+.action-buttons-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+  min-width: 32px;
+  justify-content: center;
+}
+
+.icon-btn .btn-text {
+  display: none;
+}
+
+.icon-btn:hover .btn-text {
+  display: inline;
+}
+
+.qr-account-btn {
+  background: linear-gradient(135deg, #328048 0%, #2e7d32 100%);
+  color: white;
+}
+
+.qr-account-btn:hover {
+  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(50, 128, 72, 0.3);
+}
+
+.view-btn {
+  background: #17a2b8;
+  color: white;
+}
+
+.view-btn:hover {
+  background: #138496;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+}
+
+.edit-btn {
+  background: #ffc107;
+  color: #333;
+}
+
+.edit-btn:hover {
+  background: #ffb300;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+.delete-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+@media (min-width: 768px) {
+  .icon-btn .btn-text {
+    display: inline;
+  }
+
+  .icon-btn {
+    padding: 8px 12px;
+    min-width: auto;
   }
 }
 

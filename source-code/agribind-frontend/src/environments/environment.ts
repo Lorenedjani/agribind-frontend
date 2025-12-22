@@ -8,7 +8,7 @@ export const environment = {
   services: {
     userManagement: 'http://localhost:8080/user-management',
     auth: 'http://localhost:8080/auth',
-    productionApiUrl: 'http://localhost:8083/api/v1', // Production monitoring service
+    productionApiUrl: 'http://localhost:8085/api/v1', // Production monitoring service
     notification: 'http://localhost:8080/notification'
   }
 };

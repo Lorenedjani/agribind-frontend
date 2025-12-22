@@ -17,10 +17,10 @@ public class ProductionRecordDTO {
     private Long id;
 
     @NotNull(message = "Farmer ID is required")
-    private Long farmerId;
+    private String farmerId; // Accept String userId (e.g., "F51070")
 
     @NotNull(message = "Cooperative ID is required")
-    private Long cooperativeId;
+    private String cooperativeId; // Accept String userId (e.g., "C41069")
 
     @NotNull(message = "Product type is required")
     private ProductType productType;

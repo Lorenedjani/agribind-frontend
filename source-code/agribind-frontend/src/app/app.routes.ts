@@ -37,6 +37,10 @@ export const routes: Routes = [
         loadComponent: () => import('./modules/cooperative/production/production.component').then(c => c.ProductionComponent)
       },
       {
+        path: 'communication',
+        loadComponent: () => import('./modules/cooperative/communication/communication-wrapper.component').then(c => c.CommunicationWrapperComponent)
+      },
+      {
         path: 'inventory',
         loadComponent: () => import('./modules/cooperative/inventory/inventory.component').then(c => c.InventoryComponent)
       }

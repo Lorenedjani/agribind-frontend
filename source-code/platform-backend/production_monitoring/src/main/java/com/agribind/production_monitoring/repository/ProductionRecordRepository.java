@@ -16,12 +16,12 @@ import java.util.List;
 @Repository
 public interface ProductionRecordRepository extends JpaRepository<ProductionRecord, Long> {
 
-    List<ProductionRecord> findByFarmerId(Long farmerId);
+    List<ProductionRecord> findByFarmerId(String farmerId);
 
-    List<ProductionRecord> findByCooperativeId(Long cooperativeId);
+    List<ProductionRecord> findByCooperativeId(String cooperativeId);
 
     Page<ProductionRecord> findByCooperativeIdAndProductName(
-            Long cooperativeId,
+            String cooperativeId,
             String productName,
             Pageable pageable
     );
@@ -29,7 +29,7 @@ public interface ProductionRecordRepository extends JpaRepository<ProductionReco
     @Query("SELECT pr FROM ProductionRecord pr WHERE pr.cooperativeId = :cooperativeId " +
            "AND pr.productionDate BETWEEN :startDate AND :endDate")
     List<ProductionRecord> findByCooperativeIdAndDateRange(
-            @Param("cooperativeId") Long cooperativeId,
+            @Param("cooperativeId") String cooperativeId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
@@ -37,7 +37,7 @@ public interface ProductionRecordRepository extends JpaRepository<ProductionReco
     @Query("SELECT pr FROM ProductionRecord pr WHERE pr.cooperativeId = :cooperativeId " +
            "AND pr.productName = :productName AND pr.maturityStatus = :status")
     List<ProductionRecord> findByCooperativeIdAndProductNameAndMaturityStatus(
-            @Param("cooperativeId") Long cooperativeId,
+            @Param("cooperativeId") String cooperativeId,
             @Param("productName") String productName,
             @Param("status") MaturityStatus status
     );
@@ -45,7 +45,7 @@ public interface ProductionRecordRepository extends JpaRepository<ProductionReco
     @Query("SELECT DISTINCT pr.productName FROM ProductionRecord pr " +
            "WHERE pr.cooperativeId = :cooperativeId AND pr.productType = :productType")
     List<String> findDistinctProductNamesByCooperativeIdAndProductType(
-            @Param("cooperativeId") Long cooperativeId,
+            @Param("cooperativeId") String cooperativeId,
             @Param("productType") ProductType productType
     );
 
@@ -53,7 +53,7 @@ public interface ProductionRecordRepository extends JpaRepository<ProductionReco
            "WHERE pr.cooperativeId = :cooperativeId AND pr.productName = :productName " +
            "AND pr.productionDate BETWEEN :startDate AND :endDate")
     Integer countDistinctFarmersByProduct(
-            @Param("cooperativeId") Long cooperativeId,
+            @Param("cooperativeId") String cooperativeId,
             @Param("productName") String productName,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
@@ -63,7 +63,7 @@ public interface ProductionRecordRepository extends JpaRepository<ProductionReco
            "WHERE pr.cooperativeId = :cooperativeId AND pr.productName = :productName " +
            "AND pr.productionDate BETWEEN :startDate AND :endDate")
     Double sumQuantityByProductAndDateRange(
-            @Param("cooperativeId") Long cooperativeId,
+            @Param("cooperativeId") String cooperativeId,
             @Param("productName") String productName,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate

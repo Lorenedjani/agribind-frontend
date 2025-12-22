@@ -34,6 +34,11 @@ public interface UserMapper {
     @Mapping(target = "fullAddress", source = "address", qualifiedByName = "toFullAddress")
     @Mapping(target = "profilePictureUrl", source = "profile.profilePicturePath")
     @Mapping(target = "preferredLanguage", source = "profile.preferredLanguage")
+    @Mapping(target = "region", source = "address.region", qualifiedByName = "regionToString")
+    @Mapping(target = "department", source = "address.department")
+    @Mapping(target = "district", source = "address.district")
+    @Mapping(target = "village", source = "address.village")
+    @Mapping(target = "gpsCoordinates", source = "address.gpsCoordinates")
     UserResponse toResponse(User user);
 
     List<UserResponse> toResponseList(List<User> users);
@@ -91,6 +96,11 @@ public interface UserMapper {
         address.setVillage(command.getVillage());
         address.setGpsCoordinates(command.getGpsCoordinates());
         return address;
+    }
+
+    @Named("regionToString")
+    default String regionToString(cm.agribind.usermanagement.enums.Region region) {
+        return region != null ? region.name() : null;
     }
 
     @AfterMapping

@@ -109,12 +109,13 @@
           <th>Date</th>
           <th>Farmer</th>
           <th>Crop</th>
-          <th>Quantity</th>
+          <th>Quantity (Unit)</th>
           <th>Grade</th>
           <th>Warehouse</th>
           <th>Unit Price</th>
           <th>Total Value (XAF)</th>
           <th>Status</th>
+          <th>Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -123,15 +124,22 @@
           <td>{{ record.date }}</td>
           <td>{{ record.farmer }}</td>
           <td>{{ record.crop }}</td>
-          <td>{{ record.quantity }}</td>
+          <td>{{ record.quantity }} {{ record.unit || 'MT' }}</td>
           <td><span class="badge" [ngClass]="record.gradeClass">{{ record.grade }}</span></td>
           <td>{{ record.warehouse }}</td>
           <td>{{ record.unitPrice }}</td>
           <td><strong>{{ record.value }}</strong></td>
           <td><span class="status-badge" [ngClass]="record.statusClass">{{ record.status }}</span></td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-action btn-view" (click)="viewProduction(record)" title="View Details">👁️</button>
+              <button class="btn-action btn-edit" (click)="editProduction(record)" title="Edit">✏️</button>
+              <button class="btn-action btn-delete" (click)="deleteProduction(record)" title="Delete">🗑️</button>
+            </div>
+          </td>
         </tr>
         <tr *ngIf="filteredProduction.length === 0">
-          <td colspan="10" class="no-data">No production records found.</td>
+          <td colspan="11" class="no-data">No production records found.</td>
         </tr>
         </tbody>
       </table>
@@ -205,11 +213,11 @@
           <div class="form-row">
             <div class="form-group">
               <label for="cropInput">Crop Type *</label>
-              <select 
-                id="cropInput" 
-                [(ngModel)]="newProduction.productName" 
-                name="cropType" 
-                required 
+              <select
+                id="cropInput"
+                [(ngModel)]="newProduction.productName"
+                name="cropType"
+                required
                 class="form-input"
                 (ngModelChange)="onProductionFormChange()">
                 <option value="COCOA">Cocoa</option>
@@ -222,7 +230,7 @@
             </div>
 
             <div class="form-group">
-              <label for="quantityInput">Quantity (MT) *</label>
+              <label for="quantityInput">Quantity *</label>
               <input
                 type="number"
                 id="quantityInput"
@@ -235,6 +243,19 @@
                 placeholder="e.g., 2.5"
                 (ngModelChange)="onProductionFormChange()"
               />
+            </div>
+
+            <div class="form-group">
+              <label for="unitInput">Unit *</label>
+              <select
+                id="unitInput"
+                [(ngModel)]="newProduction.unit"
+                name="unit"
+                required
+                class="form-input"
+                (ngModelChange)="onProductionFormChange()">
+                <option *ngFor="let unit of availableUnits" [value]="unit">{{ unit }}</option>
+              </select>
             </div>
           </div>
 
@@ -279,10 +300,10 @@
           <!-- Price Information Display -->
           <div class="price-info-section">
             <div class="price-info-card">
-              <div class="price-row">
-                <span class="price-label">Unit Price (per MT):</span>
-                <span class="price-value">{{ formatValue(newProduction.unitPrice) }}</span>
-              </div>
+            <div class="price-row">
+              <span class="price-label">Unit Price (per {{ newProduction.unit || 'MT' }}):</span>
+              <span class="price-value">{{ formatValue(newProduction.unitPrice) }}</span>
+            </div>
               <div class="price-row total">
                 <span class="price-label">Total Value:</span>
                 <span class="price-value-total">{{ formatValue(newProduction.valueXaf) }}</span>
@@ -396,6 +417,190 @@
       <div class="modal-footer">
         <button class="btn btn-outline" (click)="closeExportModal()">Cancel</button>
         <button class="btn btn-primary" (click)="performExport()">Export Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Production Modal -->
+  <div class="modal-overlay" *ngIf="showViewModal" (click)="closeViewModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Production Record Details</h2>
+        <button class="modal-close" (click)="closeViewModal()">×</button>
+      </div>
+
+      <div class="modal-body" *ngIf="selectedRecord">
+        <div class="detail-section">
+          <div class="detail-row">
+            <span class="detail-label">Production ID:</span>
+            <span class="detail-value">{{ selectedRecord.id }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Date:</span>
+            <span class="detail-value">{{ selectedRecord.date }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Farmer:</span>
+            <span class="detail-value">{{ selectedRecord.farmer }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Crop:</span>
+            <span class="detail-value">{{ selectedRecord.crop }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Quantity:</span>
+            <span class="detail-value">{{ selectedRecord.quantity }} {{ selectedRecord.unit || 'MT' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Grade:</span>
+            <span class="detail-value"><span class="badge" [ngClass]="selectedRecord.gradeClass">{{ selectedRecord.grade }}</span></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Warehouse:</span>
+            <span class="detail-value">{{ selectedRecord.warehouse }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Unit Price:</span>
+            <span class="detail-value">{{ selectedRecord.unitPrice }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Total Value:</span>
+            <span class="detail-value"><strong>{{ selectedRecord.value }}</strong></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Status:</span>
+            <span class="detail-value"><span class="status-badge" [ngClass]="selectedRecord.statusClass">{{ selectedRecord.status }}</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-primary" (click)="closeViewModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Production Modal -->
+  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Edit Production Record</h2>
+        <button class="modal-close" (click)="closeEditModal()">×</button>
+      </div>
+
+      <div class="modal-body" *ngIf="editingRecord">
+        <form>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editCropInput">Crop Type *</label>
+              <select
+                id="editCropInput"
+                [(ngModel)]="editingRecord.productName"
+                name="editCropType"
+                required
+                class="form-input"
+                (ngModelChange)="onEditFormChange()">
+                <option value="COCOA">Cocoa</option>
+                <option value="COFFEE">Coffee</option>
+                <option value="MAIZE">Maize</option>
+                <option value="CASSAVA">Cassava</option>
+                <option value="RICE">Rice</option>
+                <option value="COTTON">Cotton</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="editQuantityInput">Quantity *</label>
+              <input
+                type="number"
+                id="editQuantityInput"
+                [(ngModel)]="editingRecord.quantity"
+                name="editQuantity"
+                min="0.1"
+                step="0.1"
+                required
+                class="form-input"
+                placeholder="e.g., 2.5"
+                (ngModelChange)="onEditFormChange()"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="editUnitInput">Unit *</label>
+              <select
+                id="editUnitInput"
+                [(ngModel)]="editingRecord.unit"
+                name="editUnit"
+                required
+                class="form-input"
+                (ngModelChange)="onEditFormChange()">
+                <option *ngFor="let unit of availableUnits" [value]="unit">{{ unit }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editGradeInput">Quality Grade *</label>
+              <select 
+                id="editGradeInput" 
+                [(ngModel)]="editingRecord.qualityGrade" 
+                name="editQualityGrade" 
+                required 
+                class="form-input"
+                (ngModelChange)="onEditFormChange()">
+                <option value="GRADE_A">Grade A</option>
+                <option value="GRADE_B">Grade B</option>
+                <option value="GRADE_C">Grade C</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="editWarehouseInput">Warehouse *</label>
+              <select id="editWarehouseInput" [(ngModel)]="editingRecord.warehouse" name="editWarehouse" required class="form-input">
+                <option *ngFor="let warehouse of warehouses" [value]="warehouse">{{ warehouse }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label for="editDateInput">Delivery Date *</label>
+              <input
+                type="date"
+                id="editDateInput"
+                [(ngModel)]="editingRecord.productionDate"
+                name="editDeliveryDate"
+                required
+                class="form-input"
+              />
+            </div>
+          </div>
+
+          <!-- Price Information Display -->
+          <div class="price-info-section">
+            <div class="price-info-card">
+              <div class="price-row">
+                <span class="price-label">Unit Price (per {{ editingRecord.unit || 'MT' }}):</span>
+                <span class="price-value">{{ formatValue(editingRecord.unitPrice) }}</span>
+              </div>
+              <div class="price-row total">
+                <span class="price-label">Total Value:</span>
+                <span class="price-value-total">{{ formatValue(editingRecord.valueXaf) }}</span>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline" (click)="closeEditModal()">Cancel</button>
+        <button 
+          class="btn btn-primary" 
+          (click)="submitEdit()"
+          [disabled]="!isEditFormValid()">
+          Update Production
+        </button>
       </div>
     </div>
   </div>

@@ -15,7 +15,7 @@ import java.util.Optional;
 public interface FarmerContributionRepository extends JpaRepository<FarmerContribution, Long> {
 
     Optional<FarmerContribution> findByFarmerIdAndCooperativeIdAndProductNameAndProductType(
-            Long farmerId,
+            String farmerId,
             Long cooperativeId,
             String productName,
             ProductType productType

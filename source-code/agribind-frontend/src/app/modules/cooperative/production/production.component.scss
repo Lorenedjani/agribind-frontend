@@ -21,7 +21,7 @@
 }
 
 app-cooperative-sidebar {
-  width: 240px !important;
+  width: 200px !important;
   height: 100vh;
   position: fixed;
   left: 0;
@@ -33,9 +33,9 @@ app-cooperative-sidebar {
 }
 
 .main-content {
-  margin-left: 240px;
+  margin-left: 200px;
   flex-grow: 1;
-  padding: 100px 36px 48px;
+  padding: 100px 24px 24px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -47,7 +47,7 @@ app-cooperative-sidebar {
 .top-bar {
   position: fixed;
   top: 0;
-  left: 240px;
+  left: 200px;
   right: 0;
   z-index: 1002;
   background: #fff;
@@ -1223,4 +1223,92 @@ app-cooperative-sidebar {
       min-width: 120px;
     }
   }
+}
+
+// Action Buttons
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-action {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.btn-view {
+  color: #328048;
+  
+  &:hover {
+    background: rgba(50, 128, 72, 0.1);
+  }
+}
+
+.btn-edit {
+  color: #ff9800;
+  
+  &:hover {
+    background: rgba(255, 152, 0, 0.1);
+  }
+}
+
+.btn-delete {
+  color: #e64a4a;
+  
+  &:hover {
+    background: rgba(230, 74, 74, 0.1);
+  }
+}
+
+// Detail Section for View Modal
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.detail-label {
+  font-weight: 600;
+  color: var(--color-gray-text);
+  font-size: 14px;
+}
+
+.detail-value {
+  font-weight: 500;
+  color: #2c2c2c;
+  font-size: 14px;
+  text-align: right;
 }

@@ -25,6 +25,7 @@ interface Member {
   phone: string;
   type: string;
   region: string;
+  gpsCoordinates?: string;
   primaryCrop: string;
   status: string;
   email?: string;
@@ -162,29 +163,80 @@ export class MemberListComponent implements OnInit, OnDestroy {
       });
   }
 
+
   // ===== QR CODE FUNCTIONALITY =====
 
   /**
-   * Generate and display QR code for a member
+   * Generate QR code for farmer account access
    */
-  onQRCodeClick(member: Member) {
-    console.log('🔲 Generating QR code for member:', member.id);
+  generateAccountAccessQR(member: Member) {
+    console.log('🔲 Generating account access QR code for member:', member.id);
     this.qrCodeLoading = true;
     this.showQRModal = true;
 
-    this.qrCodeService.generateRegistrationQRCode(member.id)
+    this.qrCodeService.generateLoginQRCode(member.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          console.log('✅ QR code generated successfully');
-          this.selectedQRCode = response;
+          console.log('✅ Account access QR code generated successfully');
+          this.selectedQRCode = { ...response, purpose: 'ACCOUNT_ACCESS' };
           this.qrCodeLoading = false;
         },
         error: (error) => {
-          console.error('❌ QR code generation failed:', error);
-          alert('Failed to generate QR code. Please try again.');
+          console.error('❌ Account access QR code generation failed:', error);
+          // Show fallback QR code data even if image generation fails
+          const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days from now
+          this.selectedQRCode = {
+            userId: member.id,
+            purpose: 'ACCOUNT_ACCESS',
+            qrCodeImage: '', // Empty image
+            qrCodeData: `USER:${member.id}:ACCOUNT_ACCESS:${Date.now()}`,
+            downloadUrl: undefined,
+            size: 250,
+            format: 'PNG',
+            expiresAt: expiresAt
+          };
           this.qrCodeLoading = false;
-          this.showQRModal = false;
+          alert('QR code generation failed, but you can still see the account access data.');
+        }
+      });
+  }
+
+  /**
+   * Generate QR code for farmer registration
+   */
+  generateRegistrationQR(member?: Member) {
+    console.log('🔲 Generating registration QR code');
+    this.qrCodeLoading = true;
+    this.showQRModal = true;
+
+    // For registration QR, we use a generic user ID since it's for general registration
+    const genericUserId = 'registration-general';
+
+    this.qrCodeService.generateRegistrationQRCode(genericUserId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          console.log('✅ Registration QR code generated successfully');
+          this.selectedQRCode = { ...response, purpose: 'REGISTRATION' };
+          this.qrCodeLoading = false;
+        },
+        error: (error) => {
+          console.error('❌ Registration QR code generation failed:', error);
+          // Show fallback QR code data even if image generation fails
+          const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days from now
+          this.selectedQRCode = {
+            userId: genericUserId,
+            purpose: 'REGISTRATION',
+            qrCodeImage: '', // Empty image
+            qrCodeData: `REGISTRATION:COOPERATIVE:${Date.now()}`,
+            downloadUrl: undefined,
+            size: 250,
+            format: 'PNG',
+            expiresAt: expiresAt
+          };
+          this.qrCodeLoading = false;
+          alert('QR code generation failed, but you can still see the registration data.');
         }
       });
   }
@@ -224,46 +276,63 @@ export class MemberListComponent implements OnInit, OnDestroy {
   // ===== EXPORT FUNCTIONALITY =====
 
   /**
-   * Export members data
+   * Export members data in CSV format (Excel compatible)
    */
   onExport() {
-    console.log('📤 Exporting members data...');
+    console.log('📤 Exporting members data to CSV...');
     this.exportLoading = true;
 
-    const filters = {
-      type: undefined,
-      status: this.selectedStatus !== 'All' ? this.selectedStatus : undefined,
-      region: this.selectedRegion !== 'All' ? this.selectedRegion : undefined
-    };
+    try {
+      // Create CSV data from current filtered members
+      const headers = ['AR Code', 'Registration Number', 'Name', 'Phone', 'Type', 'Region', 'Farm Location', 'Primary Crop', 'Status', 'Email'];
 
-    this.exportService.exportFilteredData(filters, 'EXCEL')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          console.log('✅ Export generated:', response);
+      const csvData = this.filteredMembers.map(member => [
+        member.id,
+        member.registrationNumber || 'N/A',
+        member.name,
+        member.phone,
+        member.type,
+        member.region,
+        member.gpsCoordinates || 'Not set',
+        member.primaryCrop,
+        member.status,
+        member.email || 'N/A'
+      ]);
 
-          // Download the file
-          this.exportService.downloadExport(response.exportId)
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-              next: (blob) => {
-                this.exportService.triggerDownload(blob, response.filename);
-                this.exportLoading = false;
-                alert(`✅ Export completed! Downloaded ${response.recordCount} records.`);
-              },
-              error: (error) => {
-                console.error('❌ Export download failed:', error);
-                this.exportLoading = false;
-                alert('Failed to download export. Please try again.');
-              }
-            });
-        },
-        error: (error) => {
-          console.error('❌ Export generation failed:', error);
-          this.exportLoading = false;
-          alert('Failed to generate export. Please try again.');
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `members_export_${timestamp}.csv`;
+
+      // Create and download CSV file
+      this.createCSVFile([headers, ...csvData], filename);
+
+      this.exportLoading = false;
+      alert(`✅ CSV export completed! Downloaded ${csvData.length} records.`);
+
+    } catch (error) {
+      console.error('❌ CSV export generation failed:', error);
+      this.exportLoading = false;
+      alert('Failed to generate CSV export. Please try again.');
+    }
+  }
+
+  /**
+   * Create CSV file from data
+   */
+  private createCSVFile(data: any[][], filename: string) {
+    const csvContent = data.map(row =>
+      row.map(cell => {
+        // Escape quotes and wrap in quotes if contains comma, quote, or newline
+        const cellStr = String(cell || '');
+        if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+          return '"' + cellStr.replace(/"/g, '""') + '"';
         }
-      });
+        return cellStr;
+      }).join(',')
+    ).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    this.exportService.triggerDownload(blob, filename);
   }
 
   // ===== EXISTING METHODS =====
@@ -341,12 +410,17 @@ export class MemberListComponent implements OnInit, OnDestroy {
   // ... rest of existing methods (transformUserToMember, pagination, filters, etc.)
 
   transformUserToMember(user: any): Member {
+    // Extract region from user data - try multiple sources
+    const region = user.region || (user.address && user.address.region);
+    const gpsCoordinates = user.gpsCoordinates || (user.address && user.address.gpsCoordinates);
+
     return {
       id: user.userId || user.id,
       name: user.name,
       phone: user.phoneNumber,
       type: this.formatUserType(user.type),
-      region: this.formatRegionName(user.region),
+      region: this.formatRegionName(region),
+      gpsCoordinates: gpsCoordinates,
       primaryCrop: this.getPrimaryCrop(user),
       status: this.formatStatus(user.status),
       email: user.email,
@@ -433,8 +507,18 @@ export class MemberListComponent implements OnInit, OnDestroy {
 
   applyLocalFilters() {
     this.filteredMembers = this.members.filter(member => {
-      const matchesCrop = this.selectedCrop === 'All' || member.primaryCrop === this.selectedCrop;
-      return matchesCrop;
+      const matchesStatus = this.selectedStatus === 'All' || member.status === this.selectedStatus;
+      const matchesRegion = this.selectedRegion === 'All' || member.region === this.selectedRegion;
+      // Fix crop filtering by comparing formatted crop names
+      const matchesCrop = this.selectedCrop === 'All' ||
+        this.formatCropName(this.selectedCrop) === member.primaryCrop ||
+        member.primaryCrop === 'N/A' && this.selectedCrop === 'All';
+      const matchesSearch = !this.searchQuery.trim() ||
+        member.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        member.phone.includes(this.searchQuery) ||
+        (member.registrationNumber && member.registrationNumber.includes(this.searchQuery));
+
+      return matchesStatus && matchesRegion && matchesCrop && matchesSearch;
     });
     this.updatePaginatedMembers();
   }

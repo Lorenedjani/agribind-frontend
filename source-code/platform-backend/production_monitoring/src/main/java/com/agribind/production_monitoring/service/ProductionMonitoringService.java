@@ -5,7 +5,11 @@ import com.agribind.production_monitoring.dto.*;
 import com.agribind.production_monitoring.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,11 +68,11 @@ public class ProductionMonitoringService {
 
         ProductionRecord savedRecord = productionRecordRepository.save(record);
 
-        // Update farmer contribution
-        updateFarmerContribution(savedRecord);
+        // TODO: Update farmer contribution (needs FarmerContribution entity update to String IDs)
+        // updateFarmerContribution(savedRecord);
 
-        // Update aggregate statistics
-        updateProductionAggregates(savedRecord);
+        // TODO: Update aggregate statistics (needs ProductionAggregate entity update to String IDs)
+        // updateProductionAggregates(savedRecord);
 
         log.info("Production recorded successfully with ID: {}, Value: {} XAF",
                 savedRecord.getId(), savedRecord.getValueXaf());
@@ -110,7 +114,7 @@ public class ProductionMonitoringService {
      * Get production aggregate for a specific product
      */
     public ProductionAggregateDTO getProductionAggregate(
-            Long cooperativeId,
+            String cooperativeId,
             String productName,
             LocalDate startDate,
             LocalDate endDate
@@ -141,7 +145,7 @@ public class ProductionMonitoringService {
 
         // Get top contributors
         List<FarmerContribution> contributions = farmerContributionRepository.findTopContributors(
-                cooperativeId, productName, PageRequest.of(0, 10)
+                Long.valueOf(cooperativeId), productName, PageRequest.of(0, 10)
         );
 
         List<FarmerContributionSummary> topContributors = contributions.stream()
@@ -174,7 +178,7 @@ public class ProductionMonitoringService {
     /**
      * Get production dashboard for cooperative
      */
-    public ProductionDashboardDTO getProductionDashboard(Long cooperativeId, LocalDate startDate, LocalDate endDate) {
+    public ProductionDashboardDTO getProductionDashboard(String cooperativeId, LocalDate startDate, LocalDate endDate) {
         log.info("Generating production dashboard for cooperative: {}", cooperativeId);
 
         List<String> cropProducts = productionRecordRepository.findDistinctProductNamesByCooperativeIdAndProductType(
@@ -194,7 +198,7 @@ public class ProductionMonitoringService {
                 .collect(Collectors.toList()));
 
         return ProductionDashboardDTO.builder()
-                .cooperativeId(cooperativeId)
+                .cooperativeId(Long.valueOf(cooperativeId))
                 .productionByType(aggregates)
                 .reportPeriod(startDate + " to " + endDate)
                 .build();
@@ -203,7 +207,7 @@ public class ProductionMonitoringService {
     /**
      * Get farmer's production history
      */
-    public List<ProductionRecord> getFarmerProductionHistory(Long farmerId) {
+    public List<ProductionRecord> getFarmerProductionHistory(String farmerId) {
         return productionRecordRepository.findByFarmerId(farmerId);
     }
 
@@ -211,13 +215,119 @@ public class ProductionMonitoringService {
      * Get products by maturity status
      */
     public List<ProductionRecord> getProductsByMaturityStatus(
-            Long cooperativeId,
+            String cooperativeId,
             String productName,
             MaturityStatus status
     ) {
         return productionRecordRepository.findByCooperativeIdAndProductNameAndMaturityStatus(
                 cooperativeId, productName, status
         );
+    }
+
+    /**
+     * Get all production records for a cooperative with pagination and filters
+     */
+    public Page<ProductionRecord> getProductionRecords(
+            String cooperativeId,
+            int page,
+            int size,
+            String productName,
+            String qualityGrade,
+            String searchTerm
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "productionDate"));
+        
+        if (productName != null && !productName.isEmpty() && !productName.equals("All Crops")) {
+            return productionRecordRepository.findByCooperativeIdAndProductName(cooperativeId, productName, pageable);
+        }
+        
+        // For now, return all records for the cooperative. In a real scenario, you'd add more filtering
+        List<ProductionRecord> allRecords = productionRecordRepository.findByCooperativeId(cooperativeId);
+        
+        // Apply filters
+        List<ProductionRecord> filtered = allRecords.stream()
+                .filter(record -> {
+                    if (productName != null && !productName.isEmpty() && !productName.equals("All Crops")) {
+                        if (!record.getProductName().equals(productName)) return false;
+                    }
+                    if (qualityGrade != null && !qualityGrade.isEmpty() && !qualityGrade.equals("All Grades")) {
+                        if (record.getQualityGrade() == null || !record.getQualityGrade().equals(qualityGrade)) return false;
+                    }
+                    if (searchTerm != null && !searchTerm.isEmpty()) {
+                        String search = searchTerm.toLowerCase();
+                        // Search in notes, product name, etc.
+                        boolean matches = (record.getNotes() != null && record.getNotes().toLowerCase().contains(search)) ||
+                                record.getProductName().toLowerCase().contains(search) ||
+                                record.getId().toString().contains(search);
+                        if (!matches) return false;
+                    }
+                    return true;
+                })
+                .collect(Collectors.toList());
+        
+        // Manual pagination
+        int start = page * size;
+        int end = Math.min(start + size, filtered.size());
+        List<ProductionRecord> paginated = start < filtered.size() ? filtered.subList(start, end) : List.of();
+        
+        return new PageImpl<>(paginated, pageable, filtered.size());
+    }
+
+    /**
+     * Get production record by ID
+     */
+    public ProductionRecord getProductionRecordById(Long id) {
+        return productionRecordRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Production record not found with ID: " + id));
+    }
+
+    /**
+     * Update production record
+     */
+    @Transactional
+    public ProductionRecord updateProductionRecord(Long id, ProductionRecordDTO dto) {
+        log.info("Updating production record with ID: {}", id);
+        
+        ProductionRecord record = productionRecordRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Production record not found with ID: " + id));
+        
+        // Update fields
+        if (dto.getFarmerId() != null) record.setFarmerId(dto.getFarmerId());
+        if (dto.getProductType() != null) record.setProductType(dto.getProductType());
+        if (dto.getProductName() != null) record.setProductName(dto.getProductName());
+        if (dto.getQuantity() != null) record.setQuantity(dto.getQuantity());
+        if (dto.getUnit() != null) record.setUnit(dto.getUnit());
+        if (dto.getQualityGrade() != null) record.setQualityGrade(dto.getQualityGrade());
+        if (dto.getMaturityStatus() != null) record.setMaturityStatus(dto.getMaturityStatus());
+        if (dto.getProductionDate() != null) record.setProductionDate(dto.getProductionDate());
+        if (dto.getHarvestDate() != null) record.setHarvestDate(dto.getHarvestDate());
+        if (dto.getLocationLatitude() != null) record.setLocationLatitude(dto.getLocationLatitude());
+        if (dto.getLocationLongitude() != null) record.setLocationLongitude(dto.getLocationLongitude());
+        if (dto.getNotes() != null) record.setNotes(dto.getNotes());
+        if (dto.getUnitPrice() != null) record.setUnitPrice(dto.getUnitPrice());
+        if (dto.getValueXaf() != null) record.setValueXaf(dto.getValueXaf());
+        
+        // Recalculate value if quantity or unit price changed
+        if (dto.getQuantity() != null || dto.getUnitPrice() != null) {
+            BigDecimal calculatedValue = record.getUnitPrice().multiply(record.getQuantity());
+            record.setValueXaf(calculatedValue);
+        }
+        
+        return productionRecordRepository.save(record);
+    }
+
+    /**
+     * Delete production record
+     */
+    @Transactional
+    public void deleteProductionRecord(Long id) {
+        log.info("Deleting production record with ID: {}", id);
+        
+        ProductionRecord record = productionRecordRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Production record not found with ID: " + id));
+        
+        productionRecordRepository.delete(record);
+        log.info("Production record deleted successfully with ID: {}", id);
     }
 
     // Private helper methods
@@ -268,23 +378,17 @@ public class ProductionMonitoringService {
         if (existing.isPresent()) {
             ProductionAggregate aggregate = existing.get();
             aggregate.setTotalQuantity(aggregate.getTotalQuantity().add(record.getQuantity()));
-
-            // Recalculate total farmers
-            Integer farmerCount = productionRecordRepository.countDistinctFarmersByProduct(
-                    record.getCooperativeId(), record.getProductName(), periodStart, periodEnd
-            );
-            aggregate.setTotalFarmers(farmerCount != null ? farmerCount : 0);
-
+            aggregate.setLastUpdated(record.getProductionDate());
             productionAggregateRepository.save(aggregate);
         } else {
             ProductionAggregate newAggregate = new ProductionAggregate();
             newAggregate.setCooperativeId(record.getCooperativeId());
             newAggregate.setProductName(record.getProductName());
             newAggregate.setProductType(record.getProductType());
-            newAggregate.setTotalQuantity(record.getQuantity());
-            newAggregate.setTotalFarmers(1);
             newAggregate.setPeriodStart(periodStart);
             newAggregate.setPeriodEnd(periodEnd);
+            newAggregate.setTotalQuantity(record.getQuantity());
+            newAggregate.setLastUpdated(record.getProductionDate());
             productionAggregateRepository.save(newAggregate);
         }
     }

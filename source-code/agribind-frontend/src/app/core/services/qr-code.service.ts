@@ -19,7 +19,7 @@ export interface QRCodeResponse {
   providedIn: 'root'
 })
 export class QrCodeService {
-  private apiUrl = `${environment.apiUrl}/qrcodes`;
+  private apiUrl = `${environment.apiUrl}/api/v1/qrcodes`;
 
   constructor(private http: HttpClient) {}
 

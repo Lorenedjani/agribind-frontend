@@ -14,7 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductionAggregateDTO {
 
-    private Long cooperativeId;
+    private String cooperativeId;
     private String cooperativeName;
     private String productName;
     private ProductType productType;

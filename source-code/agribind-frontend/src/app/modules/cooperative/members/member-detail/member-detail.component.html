@@ -6,22 +6,30 @@
     </div>
 
     <div class="modal-body">
+      <!-- Loading Indicator -->
+      <div *ngIf="isLoading" class="loading-indicator">
+        <i class="fas fa-spinner fa-spin"></i> Loading member details...
+      </div>
+
       <!-- Member Header -->
-      <div class="member-header">
+      <div class="member-header" *ngIf="!isLoading">
         <div class="member-avatar">
           <span class="item-icon"><i class="fas fa-user"></i></span>
         </div>
         <div class="member-basic-info">
           <h3 class="member-name">{{ member.name }}</h3>
-          <div class="member-id">ID: {{ member.id }}</div>
-          <span class="status-badge" [class]="getStatusClass(member.status)">
+          <div class="member-id">AR Code: {{ member.id }}</div>
+          <div class="member-reg" *ngIf="member.registrationNumber">
+            Registration: {{ member.registrationNumber }}
+          </div>
+          <span class="status-badge" [class]="getStatusClass(member.status || '')">
             {{ member.status }}
           </span>
         </div>
       </div>
 
       <!-- Main Details Grid -->
-      <div class="details-grid">
+      <div class="details-grid" *ngIf="!isLoading && member">
         <!-- Contact Information -->
         <div class="detail-section">
           <h4 class="section-title">📞 Contact Information</h4>
@@ -36,6 +44,18 @@
           <div class="detail-item full-width" *ngIf="member.address">
             <span class="detail-label">Address:</span>
             <span class="detail-value">{{ member.address }}</span>
+          </div>
+          <div class="detail-item" *ngIf="member.department">
+            <span class="detail-label">Department:</span>
+            <span class="detail-value">{{ member.department }}</span>
+          </div>
+          <div class="detail-item" *ngIf="member.district">
+            <span class="detail-label">District:</span>
+            <span class="detail-value">{{ member.district }}</span>
+          </div>
+          <div class="detail-item" *ngIf="member.village">
+            <span class="detail-label">Village:</span>
+            <span class="detail-value">{{ member.village }}</span>
           </div>
         </div>
 
@@ -63,19 +83,31 @@
         </div>
 
         <!-- Farming Information -->
-        <div class="detail-section">
+        <div class="detail-section" *ngIf="member.type === 'Farmer'">
           <h4 class="section-title">🌱 Farming Information</h4>
           <div class="detail-item">
+            <span class="detail-label">Agricultural Type:</span>
+            <span class="detail-value">{{ member.agriculturalType || 'Not specified' }}</span>
+          </div>
+          <div class="detail-item">
             <span class="detail-label">Primary Crop:</span>
-            <span class="detail-value">{{ member.primaryCrop }}</span>
+            <span class="detail-value">{{ member.primaryCrop || 'Not specified' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="member.cropTypes && member.cropTypes.length > 0">
+            <span class="detail-label">Crop Types:</span>
+            <span class="detail-value">{{ member.cropTypes.join(', ') }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Farm Size:</span>
-            <span class="detail-value">{{ member.farmSize || 'Not specified' }}</span>
+            <span class="detail-label">Farm Size (Land Area):</span>
+            <span class="detail-value">{{ member.farmSize || (member.landArea ? member.landArea + ' ha' : 'Not specified') }}</span>
           </div>
           <div class="detail-item">
-            <span class="detail-label">Farm Location:</span>
-            <span class="detail-value">{{ member.farmLocation || 'Not specified' }}</span>
+            <span class="detail-label">Farm Location (GPS):</span>
+            <span class="detail-value">{{ member.farmLocation || member.gpsCoordinates || 'Not specified' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="member.gpsCoordinates">
+            <span class="detail-label">GPS Coordinates:</span>
+            <span class="detail-value"><code>{{ member.gpsCoordinates }}</code></span>
           </div>
           <div class="detail-item">
             <span class="detail-label">Last Production:</span>
@@ -96,22 +128,30 @@
       </div>
 
       <!-- Quick Stats Section -->
-      <div class="quick-stats" *ngIf="hasAdditionalInfo()">
+      <div class="quick-stats" *ngIf="!isLoading && hasAdditionalInfo()">
         <h4 class="section-title">📊 Quick Overview</h4>
         <div class="stats-grid">
-          <div class="stat-item" *ngIf="member.farmSize">
+          <div class="stat-item" *ngIf="member.farmSize || member.landArea">
             <div class="stat-icon">🌾</div>
             <div class="stat-info">
-              <div class="stat-value">{{ member.farmSize }}</div>
+              <div class="stat-value">{{ member.farmSize || (member.landArea ? member.landArea + ' ha' : 'N/A') }}</div>
               <div class="stat-label">Farm Size</div>
             </div>
           </div>
 
-          <div class="stat-item" *ngIf="member.farmLocation">
+          <div class="stat-item" *ngIf="member.farmLocation || member.gpsCoordinates">
             <div class="stat-icon">📍</div>
             <div class="stat-info">
-              <div class="stat-value">{{ member.farmLocation }}</div>
+              <div class="stat-value">{{ member.farmLocation || member.gpsCoordinates || 'N/A' }}</div>
               <div class="stat-label">Farm Location</div>
+            </div>
+          </div>
+
+          <div class="stat-item" *ngIf="member.registrationNumber">
+            <div class="stat-icon">🆔</div>
+            <div class="stat-info">
+              <div class="stat-value">{{ member.registrationNumber }}</div>
+              <div class="stat-label">Registration Number</div>
             </div>
           </div>
 
@@ -122,18 +162,10 @@
               <div class="stat-label">Last Production</div>
             </div>
           </div>
-
-          <div class="stat-item" *ngIf="member.creditStatus">
-            <div class="stat-icon">💳</div>
-            <div class="stat-info">
-              <div class="stat-value">{{ member.creditStatus }}</div>
-              <div class="stat-label">Credit Status</div>
-            </div>
-          </div>
         </div>
       </div>
 
-      <div class="action-buttons">
+      <div class="action-buttons" *ngIf="!isLoading && member">
         <button class="btn btn-secondary" (click)="closeModal()">Close</button>
         <button class="btn btn-primary">View Member</button>
         <button class="btn btn-info" *ngIf="member.creditStatus">View Credit History</button>
