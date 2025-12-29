@@ -24,7 +24,6 @@ import java.util.List;
 public class ProductionMonitoringController {
 
     private final ProductionMonitoringService productionMonitoringService;
-    //private static final Logger log = LoggerFactory.getLogger(ProductionMonitoringController.class);
 
     /**
      * Record new production entry
@@ -162,10 +161,12 @@ public class ProductionMonitoringController {
     /**
      * Get all production records for a cooperative with pagination
      * GET /api/v1/production/cooperative/{cooperativeId}
+     *
+     * FIXED: Changed cooperativeId parameter type from Long to String
      */
     @GetMapping("/cooperative/{cooperativeId}")
     public ResponseEntity<ApiResponse<Page<ProductionRecord>>> getProductionRecords(
-            @PathVariable Long cooperativeId,
+            @PathVariable String cooperativeId,  // ✅ FIXED: Changed from Long to String
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String productName,
@@ -174,8 +175,8 @@ public class ProductionMonitoringController {
     ) {
         try {
             log.info("Fetching production records for cooperative: {}, page: {}, size: {}", cooperativeId, page, size);
-            org.springframework.data.domain.Page<ProductionRecord> records = productionMonitoringService.getProductionRecords(
-                    String.valueOf(cooperativeId), page, size, productName, qualityGrade, searchTerm
+            Page<ProductionRecord> records = productionMonitoringService.getProductionRecords(
+                    cooperativeId, page, size, productName, qualityGrade, searchTerm
             );
             return ResponseEntity.ok(ApiResponse.success(records, "Production records retrieved successfully"));
         } catch (Exception e) {

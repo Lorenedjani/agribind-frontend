@@ -178,19 +178,19 @@
                   name="farmerSearch"
                   autocomplete="off"
                 />
-                <button 
-                  type="button" 
-                  class="clear-farmer-btn" 
+                <button
+                  type="button"
+                  class="clear-farmer-btn"
                   *ngIf="selectedFarmer"
                   (click)="clearFarmerSelection()"
                   title="Clear selection">
                   ×
                 </button>
-                
+
                 <!-- Farmer Dropdown -->
                 <div class="farmer-dropdown" *ngIf="showFarmerDropdown && searchedFarmers.length > 0">
-                  <div 
-                    class="farmer-item" 
+                  <div
+                    class="farmer-item"
                     *ngFor="let farmer of searchedFarmers"
                     (click)="selectFarmer(farmer)">
                     <div class="farmer-name">{{ farmer.name }}</div>
@@ -262,16 +262,29 @@
           <div class="form-row">
             <div class="form-group">
               <label for="gradeInput">Quality Grade *</label>
-              <select 
-                id="gradeInput" 
-                [(ngModel)]="newProduction.qualityGrade" 
-                name="qualityGrade" 
-                required 
+              <select
+                id="gradeInput"
+                [(ngModel)]="newProduction.qualityGrade"
+                name="qualityGrade"
+                required
                 class="form-input"
                 (ngModelChange)="onProductionFormChange()">
                 <option value="GRADE_A">Grade A</option>
                 <option value="GRADE_B">Grade B</option>
                 <option value="GRADE_C">Grade C</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="maturityStatusInput">Maturity Status *</label>
+              <select
+                id="maturityStatusInput"
+                [(ngModel)]="newProduction.maturityStatus"
+                name="maturityStatus"
+                required
+                class="form-input">
+                <option *ngFor="let status of maturityStatuses" [value]="status.value" [title]="status.description">
+                  {{ status.label }}
+                </option>
               </select>
             </div>
 
@@ -318,8 +331,8 @@
 
       <div class="modal-footer">
         <button class="btn btn-outline" (click)="closeRecordModal()">Cancel</button>
-        <button 
-          class="btn btn-primary" 
+        <button
+          class="btn btn-primary"
           (click)="submitProduction()"
           [disabled]="!isFormValid()">
           Record Production
@@ -542,16 +555,29 @@
           <div class="form-row">
             <div class="form-group">
               <label for="editGradeInput">Quality Grade *</label>
-              <select 
-                id="editGradeInput" 
-                [(ngModel)]="editingRecord.qualityGrade" 
-                name="editQualityGrade" 
-                required 
+              <select
+                id="editGradeInput"
+                [(ngModel)]="editingRecord.qualityGrade"
+                name="editQualityGrade"
+                required
                 class="form-input"
                 (ngModelChange)="onEditFormChange()">
                 <option value="GRADE_A">Grade A</option>
                 <option value="GRADE_B">Grade B</option>
                 <option value="GRADE_C">Grade C</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="editMaturityStatusInput">Maturity Status *</label>
+              <select
+                id="editMaturityStatusInput"
+                [(ngModel)]="editingRecord.maturityStatus"
+                name="editMaturityStatus"
+                required
+                class="form-input">
+                <option *ngFor="let status of maturityStatuses" [value]="status.value" [title]="status.description">
+                  {{ status.label }}
+                </option>
               </select>
             </div>
 
@@ -595,8 +621,8 @@
 
       <div class="modal-footer">
         <button class="btn btn-outline" (click)="closeEditModal()">Cancel</button>
-        <button 
-          class="btn btn-primary" 
+        <button
+          class="btn btn-primary"
           (click)="submitEdit()"
           [disabled]="!isEditFormValid()">
           Update Production

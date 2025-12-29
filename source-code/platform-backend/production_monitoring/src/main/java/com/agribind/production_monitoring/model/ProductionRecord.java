@@ -86,7 +86,7 @@ public class ProductionRecord {
         this.id = id;
     }
 
-    public Long getFarmerId() {
+    public String getFarmerId() {
         return farmerId;
     }
 

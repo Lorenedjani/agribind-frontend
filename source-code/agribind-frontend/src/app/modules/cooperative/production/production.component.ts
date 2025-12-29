@@ -78,6 +78,12 @@ export class ProductionComponent implements OnInit {
   selectedGrade = 'All Grades';
   cropTypes: string[] = ['All Crops', 'COCOA', 'COFFEE', 'MAIZE', 'CASSAVA', 'RICE', 'COTTON'];
   qualityGrades: string[] = ['All Grades', 'GRADE_A', 'GRADE_B', 'GRADE_C'];
+  maturityStatuses: { value: string; label: string; description: string }[] = [
+    { value: 'IMMATURE', label: 'Immature', description: 'Crop is still growing' },
+    { value: 'MATURE', label: 'Mature', description: 'Crop has reached maturity' },
+    { value: 'READY_FOR_HARVEST', label: 'Ready for Harvest', description: 'Crop is ready to be harvested' },
+    { value: 'HARVESTED', label: 'Harvested', description: 'Crop has been harvested' }
+  ];
   warehouses: string[] = [];
 
   // Production data
@@ -105,6 +111,7 @@ export class ProductionComponent implements OnInit {
     quantity: 0,
     unit: 'MT', // MT = Metric Tons, KG = Kilograms, etc.
     qualityGrade: 'GRADE_A',
+    maturityStatus: 'HARVESTED',
     warehouse: '',
     productionDate: new Date().toISOString().split('T')[0],
     unitPrice: 0,
@@ -179,11 +186,11 @@ export class ProductionComponent implements OnInit {
 
     if (currentUser) {
       console.log('Current user from auth:', currentUser);
-      
+
       // For COOPERATIVE users, their cooperativeId is their own userId
       // If cooperativeId is not set, use userId as fallback
       let cooperativeId = currentUser.cooperativeId;
-      
+
       if (!cooperativeId && currentUser.role === 'COOPERATIVE') {
         cooperativeId = currentUser.userId;
         console.log('Using userId as cooperativeId for COOPERATIVE user:', cooperativeId);
@@ -606,7 +613,7 @@ export class ProductionComponent implements OnInit {
       console.error('Invalid farmerId:', this.newProduction.farmerId);
       return;
     }
-    
+
     if (!this.user.cooperativeId) {
       alert('Invalid cooperative ID. Please refresh the page and try again.');
       console.error('Invalid cooperativeId:', this.user.cooperativeId);
@@ -651,6 +658,7 @@ export class ProductionComponent implements OnInit {
       this.newProduction.quantity > 0 &&
       this.newProduction.unit &&
       this.newProduction.qualityGrade &&
+      this.newProduction.maturityStatus &&
       this.newProduction.warehouse &&
       this.newProduction.productionDate &&
       this.newProduction.valueXaf > 0
@@ -737,6 +745,7 @@ export class ProductionComponent implements OnInit {
       quantity: typeof originalRecord.quantity === 'number' ? originalRecord.quantity : parseFloat(originalRecord.quantity || '0'),
       unit: originalRecord.unit || 'MT',
       qualityGrade: originalRecord.qualityGrade || 'GRADE_A',
+       maturityStatus: originalRecord.maturityStatus || 'HARVESTED',
       warehouse: originalRecord.warehouse || originalRecord.notes || this.warehouses[0],
       productionDate: originalRecord.productionDate ? originalRecord.productionDate.split('T')[0] : new Date().toISOString().split('T')[0],
       unitPrice: typeof originalRecord.unitPrice === 'number' ? originalRecord.unitPrice : parseFloat(originalRecord.unitPrice || '0'),
@@ -778,6 +787,7 @@ export class ProductionComponent implements OnInit {
       this.editingRecord.quantity > 0 &&
       this.editingRecord.unit &&
       this.editingRecord.qualityGrade &&
+      this.editingRecord.maturityStatus &&
       this.editingRecord.warehouse &&
       this.editingRecord.productionDate &&
       this.editingRecord.valueXaf > 0

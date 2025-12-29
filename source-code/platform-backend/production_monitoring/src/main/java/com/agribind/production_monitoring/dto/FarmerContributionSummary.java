@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class FarmerContributionSummary {
 
-    private Long farmerId;
+    private String farmerId;  // Changed from Long to String
     private String farmerName;
     private String farmerRegistrationNumber;
     private BigDecimal quantityContributed;

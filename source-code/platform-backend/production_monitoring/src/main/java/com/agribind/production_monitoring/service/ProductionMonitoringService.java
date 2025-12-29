@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -145,7 +146,7 @@ public class ProductionMonitoringService {
 
         // Get top contributors
         List<FarmerContribution> contributions = farmerContributionRepository.findTopContributors(
-                Long.valueOf(cooperativeId), productName, PageRequest.of(0, 10)
+                cooperativeId, productName, PageRequest.of(0, 10)
         );
 
         List<FarmerContributionSummary> topContributors = contributions.stream()
@@ -378,7 +379,7 @@ public class ProductionMonitoringService {
         if (existing.isPresent()) {
             ProductionAggregate aggregate = existing.get();
             aggregate.setTotalQuantity(aggregate.getTotalQuantity().add(record.getQuantity()));
-            aggregate.setLastUpdated(record.getProductionDate());
+            aggregate.setLastUpdated(LocalDateTime.now());
             productionAggregateRepository.save(aggregate);
         } else {
             ProductionAggregate newAggregate = new ProductionAggregate();
@@ -388,7 +389,7 @@ public class ProductionMonitoringService {
             newAggregate.setPeriodStart(periodStart);
             newAggregate.setPeriodEnd(periodEnd);
             newAggregate.setTotalQuantity(record.getQuantity());
-            newAggregate.setLastUpdated(record.getProductionDate());
+            newAggregate.setLastUpdated(LocalDateTime.now());
             productionAggregateRepository.save(newAggregate);
         }
     }

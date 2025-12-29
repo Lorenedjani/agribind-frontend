@@ -22,8 +22,9 @@ public class MaturityUpdate {
     @Column(name = "new_status", nullable = false)
     private String newStatus;
 
-    @Column(name = "updated_by_farmer_id", nullable = false)
-    private Long updatedByFarmerId;
+    // VERIFIED: This is String type as per our updates
+    @Column(name = "updated_by_farmer_id", nullable = false, length = 20)
+    private String updatedByFarmerId;
 
     @Column(name = "update_date")
     private LocalDateTime updateDate;
