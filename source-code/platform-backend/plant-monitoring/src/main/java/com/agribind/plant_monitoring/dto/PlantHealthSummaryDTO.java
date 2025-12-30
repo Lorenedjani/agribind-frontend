@@ -16,9 +16,3 @@ public class PlantHealthSummaryDTO {
     private List<HealthTrendDTO> healthTrends;
 }
 
-@Data
-class HealthTrendDTO {
-    private LocalDateTime date;
-    private Double healthScore;
-    private String healthStatus;
-}

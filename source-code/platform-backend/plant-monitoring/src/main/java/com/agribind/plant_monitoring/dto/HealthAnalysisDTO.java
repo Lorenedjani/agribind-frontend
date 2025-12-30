@@ -1,6 +1,6 @@
 package com.agribind.plant_monitoring.dto;
 
-import com.plantmonitoring.model.HealthAnalysis.HealthStatus;
+import com.agribind.plant_monitoring.model.HealthAnalysis.HealthStatus;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -17,4 +17,5 @@ public class HealthAnalysisDTO {
     private String nutrientDeficiency;
     private String recommendations;
     private LocalDateTime analyzedAt;
+
 }

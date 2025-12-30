@@ -1,4 +1,4 @@
-package com.plantmonitoring.model;
+package com.agribind.plant_monitoring.model;
 
 import jakarta.persistence.*;
 import lombok.Data;

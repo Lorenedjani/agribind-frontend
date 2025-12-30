@@ -2,18 +2,18 @@ package com.agribind.plant_monitoring.controller;
 
 import com.agribind.plant_monitoring.dto.PlantPhotoResponseDTO;
 import com.agribind.plant_monitoring.dto.PlantPhotoUploadDTO;
-import com.agribind.plant_monitoring.model.HealthAnalysis;
-import com.agribind.plant_monitoring.model.Plant;
-import com.agribins.plant_monitoring.model.PlantPhoto;
+import com.agribind.plant_monitoring.model.PlantPhoto;
 import com.agribind.plant_monitoring.service.FileStorageService;
 import com.agribind.plant_monitoring.service.PlantHealthAnalysisService;
 import com.agribind.plant_monitoring.service.PlantPhotoService;
-import com.agribind.plant_monitoring.service.PlantService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -37,23 +38,26 @@ public class PlantPhotoController {
     private PlantPhotoService plantPhotoService;
     
     @Autowired
-    private PlantService plantService;
-    
-    @Autowired
     private FileStorageService fileStorageService;
     
     @Autowired
     private PlantHealthAnalysisService healthAnalysisService;
     
-    @PostMapping("/{plantId}/photos/upload")
-    @Operation(summary = "Upload a plant photo")
+    @PostMapping(value = "/{plantId}/photos/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload a plant photo", 
+               description = "Upload a photo for plant health monitoring with optional caption and timestamp")
     public ResponseEntity<PlantPhotoResponseDTO> uploadPlantPhoto(
             @PathVariable Long plantId,
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "caption", required = false) String caption,
             @RequestParam(value = "takenAt", required = false) LocalDateTime takenAt) {
         
-        log.info("Uploading photo for plant id: {}", plantId);
+        log.info("Uploading photo for plant ID: {}", plantId);
+        
+        // Validate file
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
         
         PlantPhotoUploadDTO uploadDTO = new PlantPhotoUploadDTO();
         uploadDTO.setPlantId(plantId);
@@ -62,17 +66,6 @@ public class PlantPhotoController {
         uploadDTO.setTakenAt(takenAt != null ? takenAt : LocalDateTime.now());
         
         PlantPhoto photo = plantPhotoService.uploadPhoto(uploadDTO);
-        
-        // Start health analysis asynchronously
-        healthAnalysisService.analyzePlantHealth(photo)
-                .thenAccept(analysis -> {
-                    log.info("Health analysis completed for photo: {}", photo.getId());
-                })
-                .exceptionally(ex -> {
-                    log.error("Failed to analyze plant health for photo: {}", photo.getId(), ex);
-                    return null;
-                });
-        
         PlantPhotoResponseDTO responseDTO = convertToDTO(photo);
         
         URI location = ServletUriComponentsBuilder
@@ -84,12 +77,44 @@ public class PlantPhotoController {
         return ResponseEntity.created(location).body(responseDTO);
     }
     
+    @PostMapping("/{plantId}/photos/batch-upload")
+    @Operation(summary = "Upload multiple plant photos")
+    public ResponseEntity<List<PlantPhotoResponseDTO>> uploadMultiplePhotos(
+            @PathVariable Long plantId,
+            @RequestParam("files") List<MultipartFile> files,
+            @RequestParam(value = "caption", required = false) String caption) {
+        
+        log.info("Uploading {} photos for plant ID: {}", files.size(), plantId);
+        
+        List<PlantPhotoResponseDTO> responses = files.stream()
+                .map(file -> {
+                    PlantPhotoUploadDTO uploadDTO = new PlantPhotoUploadDTO();
+                    uploadDTO.setPlantId(plantId);
+                    uploadDTO.setFile(file);
+                    uploadDTO.setCaption(caption);
+                    uploadDTO.setTakenAt(LocalDateTime.now());
+                    
+                    try {
+                        PlantPhoto photo = plantPhotoService.uploadPhoto(uploadDTO);
+                        return convertToDTO(photo);
+                    } catch (Exception e) {
+                        log.error("Failed to upload file: {}", file.getOriginalFilename(), e);
+                        return null;
+                    }
+                })
+                .filter(response -> response != null)
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.status(HttpStatus.CREATED).body(responses);
+    }
+    
     @GetMapping("/{plantId}/photos")
     @Operation(summary = "Get all photos for a plant")
     public ResponseEntity<List<PlantPhotoResponseDTO>> getPlantPhotos(
             @PathVariable Long plantId,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size) {
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "sort", defaultValue = "takenAt,desc") String sort) {
         
         List<PlantPhoto> photos = plantPhotoService.getPhotosByPlantId(plantId, page, size);
         List<PlantPhotoResponseDTO> response = photos.stream()
@@ -106,6 +131,44 @@ public class PlantPhotoController {
         return ResponseEntity.ok(convertToDTO(photo));
     }
     
+    @GetMapping("/photos/{photoId}/download")
+    @Operation(summary = "Download plant photo")
+    public ResponseEntity<Resource> downloadPlantPhoto(@PathVariable Long photoId) throws IOException {
+        PlantPhoto photo = plantPhotoService.getPhotoById(photoId);
+        byte[] fileContent = plantPhotoService.getPhotoImage(photoId);
+        
+        ByteArrayResource resource = new ByteArrayResource(fileContent);
+        
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, 
+                        "attachment; filename=\"" + photo.getOriginalFilename() + "\"")
+                .contentType(MediaType.parseMediaType(photo.getContentType()))
+                .contentLength(fileContent.length)
+                .body(resource);
+    }
+    
+    @GetMapping(value = "/photos/{photoId}/image", produces = {MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE})
+    @Operation(summary = "Get plant photo as image")
+    public ResponseEntity<byte[]> getPlantPhotoImage(@PathVariable Long photoId) throws IOException {
+        PlantPhoto photo = plantPhotoService.getPhotoById(photoId);
+        byte[] imageBytes = plantPhotoService.getPhotoImage(photoId);
+        
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(photo.getContentType()))
+                .body(imageBytes);
+    }
+    
+    @GetMapping(value = "/photos/{photoId}/thumbnail", produces = {MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE})
+    @Operation(summary = "Get plant photo thumbnail")
+    public ResponseEntity<byte[]> getPlantPhotoThumbnail(@PathVariable Long photoId) throws IOException {
+        PlantPhoto photo = plantPhotoService.getPhotoById(photoId);
+        byte[] imageBytes = plantPhotoService.getPhotoThumbnail(photoId);
+        
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(photo.getContentType()))
+                .body(imageBytes);
+    }
+    
     @GetMapping("/photos/{photoId}/health-analysis")
     @Operation(summary = "Get health analysis for a photo")
     public ResponseEntity<?> getPhotoHealthAnalysis(@PathVariable Long photoId) {
@@ -113,10 +176,121 @@ public class PlantPhotoController {
         
         if (photo.getHealthAnalysis() == null) {
             return ResponseEntity.status(HttpStatus.ACCEPTED)
-                    .body("Health analysis in progress...");
+                    .body(Map.of(
+                        "status", "processing",
+                        "message", "Health analysis in progress...",
+                        "photoId", photoId,
+                        "estimatedTime", "30 seconds"
+                    ));
         }
         
         return ResponseEntity.ok(healthAnalysisService.convertToDTO(photo.getHealthAnalysis()));
+    }
+    
+    @PostMapping("/photos/{photoId}/reprocess")
+    @Operation(summary = "Reprocess health analysis for a photo")
+    public ResponseEntity<Map<String, Object>> reprocessHealthAnalysis(@PathVariable Long photoId) {
+        PlantPhoto photo = plantPhotoService.reprocessHealthAnalysis(photoId);
+        
+        return ResponseEntity.ok(Map.of(
+            "status", "success",
+            "message", "Health analysis reprocessing started",
+            "photoId", photoId,
+            "estimatedCompletion", "30 seconds"
+        ));
+    }
+    
+    @GetMapping("/photos/search")
+    @Operation(summary = "Search photos by keyword")
+    public ResponseEntity<List<PlantPhotoResponseDTO>> searchPhotos(
+            @RequestParam String keyword,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
+        
+        List<PlantPhoto> photos = plantPhotoService.searchPhotos(keyword);
+        List<PlantPhotoResponseDTO> response = photos.stream()
+                .skip(page * size)
+                .limit(size)
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/photos/health-status/{status}")
+    @Operation(summary = "Get photos by health status")
+    public ResponseEntity<List<PlantPhotoResponseDTO>> getPhotosByHealthStatus(
+            @PathVariable String status,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
+        
+        List<PlantPhoto> photos = plantPhotoService.getPhotosByHealthStatus(status);
+        List<PlantPhotoResponseDTO> response = photos.stream()
+                .skip(page * size)
+                .limit(size)
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/photos/diseases")
+    @Operation(summary = "Get photos with detected diseases")
+    public ResponseEntity<List<PlantPhotoResponseDTO>> getPhotosWithDiseases(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
+        
+        List<PlantPhoto> photos = plantPhotoService.getPhotosWithDisease();
+        List<PlantPhotoResponseDTO> response = photos.stream()
+                .skip(page * size)
+                .limit(size)
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/photos/recent")
+    @Operation(summary = "Get recent photos")
+    public ResponseEntity<List<PlantPhotoResponseDTO>> getRecentPhotos(
+            @RequestParam(defaultValue = "10") int count) {
+        
+        List<PlantPhoto> photos = plantPhotoService.getRecentPhotos(count);
+        List<PlantPhotoResponseDTO> response = photos.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/{plantId}/photos/stats")
+    @Operation(summary = "Get photo statistics for a plant")
+    public ResponseEntity<Map<String, Object>> getPhotoStats(@PathVariable Long plantId) {
+        Long totalPhotos = plantPhotoService.countPhotosByPlantId(plantId);
+        Double avgHealthScore = plantPhotoService.getAverageHealthScoreByPlant(plantId);
+        List<PlantPhoto> recentPhotos = plantPhotoService.getRecentPhotos(5);
+        
+        Map<String, Object> stats = Map.of(
+            "plantId", plantId,
+            "totalPhotos", totalPhotos,
+            "averageHealthScore", String.format("%.2f", avgHealthScore),
+            "recentPhotosCount", recentPhotos.size(),
+            "lastUpload", recentPhotos.isEmpty() ? null : recentPhotos.get(0).getUploadedAt()
+        );
+        
+        return ResponseEntity.ok(stats);
+    }
+    
+    @PutMapping("/photos/{photoId}/caption")
+    @Operation(summary = "Update photo caption")
+    public ResponseEntity<PlantPhotoResponseDTO> updatePhotoCaption(
+            @PathVariable Long photoId,
+            @RequestBody Map<String, String> request) {
+        
+        String newCaption = request.get("caption");
+        PlantPhoto updatedPhoto = plantPhotoService.updatePhotoCaption(photoId, newCaption);
+        
+        return ResponseEntity.ok(convertToDTO(updatedPhoto));
     }
     
     @DeleteMapping("/photos/{photoId}")
@@ -126,39 +300,25 @@ public class PlantPhotoController {
         return ResponseEntity.noContent().build();
     }
     
-    @GetMapping("/{plantId}/health-summary")
-    @Operation(summary = "Get plant health summary")
-    public ResponseEntity<?> getPlantHealthSummary(@PathVariable Long plantId) {
-        return ResponseEntity.ok(plantService.getPlantHealthSummary(plantId));
+    @DeleteMapping("/photos/batch-delete")
+    @Operation(summary = "Delete multiple photos")
+    public ResponseEntity<Void> batchDeletePhotos(@RequestBody List<Long> photoIds) {
+        plantPhotoService.batchDeletePhotos(photoIds);
+        return ResponseEntity.noContent().build();
     }
     
-    @GetMapping(value = "/photos/{photoId}/image", produces = MediaType.IMAGE_JPEG_VALUE)
-    @Operation(summary = "Get plant photo image")
-    public ResponseEntity<byte[]> getPlantPhotoImage(@PathVariable Long photoId) throws IOException {
-        PlantPhoto photo = plantPhotoService.getPhotoById(photoId);
-        byte[] imageBytes = fileStorageService.getFileAsBytes(photo.getFilename());
+    @GetMapping("/photos/date-range")
+    @Operation(summary = "Get photos by date range")
+    public ResponseEntity<List<PlantPhotoResponseDTO>> getPhotosByDateRange(
+            @RequestParam LocalDateTime startDate,
+            @RequestParam LocalDateTime endDate) {
         
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(photo.getContentType()))
-                .body(imageBytes);
-    }
-    
-    @GetMapping(value = "/photos/{photoId}/thumbnail", produces = MediaType.IMAGE_JPEG_VALUE)
-    @Operation(summary = "Get plant photo thumbnail")
-    public ResponseEntity<byte[]> getPlantPhotoThumbnail(@PathVariable Long photoId) throws IOException {
-        PlantPhoto photo = plantPhotoService.getPhotoById(photoId);
+        List<PlantPhoto> photos = plantPhotoService.getPhotosByDateRange(startDate, endDate);
+        List<PlantPhotoResponseDTO> response = photos.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
         
-        if (photo.getThumbnailPath() == null) {
-            return ResponseEntity.notFound().build();
-        }
-        
-        byte[] imageBytes = fileStorageService.getFileAsBytes(
-            photo.getThumbnailPath().substring(photo.getThumbnailPath().lastIndexOf("/") + 1)
-        );
-        
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(photo.getContentType()))
-                .body(imageBytes);
+        return ResponseEntity.ok(response);
     }
     
     private PlantPhotoResponseDTO convertToDTO(PlantPhoto photo) {
@@ -178,8 +338,9 @@ public class PlantPhotoController {
         
         // Generate URLs
         String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-        dto.setFileUrl(baseUrl + "/uploads/" + photo.getFilename());
-        dto.setThumbnailUrl(baseUrl + "/uploads/thumb_" + photo.getFilename());
+        dto.setFileUrl(baseUrl + "/api/v1/plants/photos/" + photo.getId() + "/image");
+        dto.setThumbnailUrl(baseUrl + "/api/v1/plants/photos/" + photo.getId() + "/thumbnail");
+        dto.setDownloadUrl(baseUrl + "/api/v1/plants/photos/" + photo.getId() + "/download");
         
         // Include health analysis if available
         if (photo.getHealthAnalysis() != null) {
