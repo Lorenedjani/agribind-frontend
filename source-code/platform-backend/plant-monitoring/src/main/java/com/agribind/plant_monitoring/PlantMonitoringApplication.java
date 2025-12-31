@@ -1,5 +1,6 @@
 package com.agribind.plant_monitoring;
 
+import com.agribind.plant_monitoring.config.FileStorageProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

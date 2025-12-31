@@ -7,7 +7,6 @@ import com.agribind.plant_monitoring.model.Plant;
 import com.agribind.plant_monitoring.model.PlantPhoto;
 import com.agribind.plant_monitoring.repository.PlantPhotoRepository;
 import com.agribind.plant_monitoring.repository.PlantRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,30 +17,36 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.persistence.criteria.Predicate;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @Service
-@Slf4j
 public class PlantPhotoService {
     
-    @Autowired
-    private PlantPhotoRepository plantPhotoRepository;
+    private final PlantPhotoRepository plantPhotoRepository;
+    private final PlantRepository plantRepository;
+    private final FileStorageService fileStorageService;
+    private final PlantHealthAnalysisService healthAnalysisService;
     
     @Autowired
-    private PlantRepository plantRepository;
-    
-    @Autowired
-    private FileStorageService fileStorageService;
-    
-    @Autowired
-    private PlantHealthAnalysisService healthAnalysisService;
+    public PlantPhotoService(
+            PlantPhotoRepository plantPhotoRepository,
+            PlantRepository plantRepository,
+            FileStorageService fileStorageService,
+            PlantHealthAnalysisService healthAnalysisService) {
+        this.plantPhotoRepository = plantPhotoRepository;
+        this.plantRepository = plantRepository;
+        this.fileStorageService = fileStorageService;
+        this.healthAnalysisService = healthAnalysisService;
+        System.out.println("PlantPhotoService initialized");
+    }
     
     @Transactional
     public PlantPhoto uploadPhoto(PlantPhotoUploadDTO uploadDTO) {
-        log.info("Uploading photo for plant ID: {}", uploadDTO.getPlantId());
+        System.out.println("Uploading photo for plant ID: " + uploadDTO.getPlantId());
         
         try {
             // 1. Validate plant exists
@@ -77,7 +82,7 @@ public class PlantPhotoService {
             
             // 6. Save to database
             PlantPhoto savedPhoto = plantPhotoRepository.save(photo);
-            log.info("Photo saved with ID: {}", savedPhoto.getId());
+            System.out.println("Photo saved with ID: " + savedPhoto.getId());
             
             // 7. Trigger async health analysis
             triggerHealthAnalysis(savedPhoto);
@@ -85,10 +90,12 @@ public class PlantPhotoService {
             return savedPhoto;
             
         } catch (IOException e) {
-            log.error("Failed to upload photo: {}", e.getMessage(), e);
+            System.err.println("Failed to upload photo: " + e.getMessage());
+            e.printStackTrace();
             throw new FileStorageException("Failed to upload photo: " + e.getMessage(), e);
         } catch (Exception e) {
-            log.error("Unexpected error uploading photo: {}", e.getMessage(), e);
+            System.err.println("Unexpected error uploading photo: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("Failed to upload photo: " + e.getMessage(), e);
         }
     }
@@ -96,18 +103,19 @@ public class PlantPhotoService {
     @Async
     public void triggerHealthAnalysis(PlantPhoto photo) {
         try {
-            log.info("Starting health analysis for photo ID: {}", photo.getId());
+            System.out.println("Starting health analysis for photo ID: " + photo.getId());
             healthAnalysisService.analyzePlantHealth(photo)
                     .thenAccept(analysis -> {
-                        log.info("Health analysis completed for photo ID: {}", photo.getId());
+                        System.out.println("Health analysis completed for photo ID: " + photo.getId());
                     })
                     .exceptionally(ex -> {
-                        log.error("Failed to analyze plant health for photo ID: {}", 
-                                photo.getId(), ex);
+                        System.err.println("Failed to analyze plant health for photo ID: " + photo.getId());
+                        ex.printStackTrace();
                         return null;
                     });
         } catch (Exception e) {
-            log.error("Error triggering health analysis: {}", e.getMessage(), e);
+            System.err.println("Error triggering health analysis: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
@@ -123,11 +131,14 @@ public class PlantPhotoService {
     
     public List<PlantPhoto> getPhotosByPlantId(Long plantId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "takenAt"));
-        Page<PlantPhoto> photoPage = plantPhotoRepository.findAll(
-            (root, query, criteriaBuilder) -> 
-                criteriaBuilder.equal(root.get("plant").get("id"), plantId),
-            pageable
-        );
+        
+        // Use Specification for filtering
+        Page<PlantPhoto> photoPage = plantPhotoRepository.findAll((root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(criteriaBuilder.equal(root.get("plant").get("id"), plantId));
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        }, pageable);
+        
         return photoPage.getContent();
     }
     
@@ -150,18 +161,18 @@ public class PlantPhotoService {
             // Delete from database
             plantPhotoRepository.delete(photo);
             
-            log.info("Photo deleted successfully: {}", photoId);
+            System.out.println("Photo deleted successfully: " + photoId);
         } catch (IOException e) {
-            log.error("Failed to delete photo file: {}", e.getMessage(), e);
+            System.err.println("Failed to delete photo file: " + e.getMessage());
+            e.printStackTrace();
             throw new FileStorageException("Failed to delete photo file: " + e.getMessage(), e);
         }
     }
     
     public List<PlantPhoto> getUnprocessedPhotos() {
-        // Get photos without health analysis
         return plantPhotoRepository.findAll().stream()
                 .filter(photo -> photo.getHealthAnalysis() == null)
-                .limit(50) // Limit to 50 at a time
+                .limit(50)
                 .toList();
     }
     
@@ -263,7 +274,7 @@ public class PlantPhotoService {
     @Transactional
     public void batchDeletePhotos(List<Long> photoIds) {
         photoIds.forEach(this::deletePhoto);
-        log.info("Batch deleted {} photos", photoIds.size());
+        System.out.println("Batch deleted " + photoIds.size() + " photos");
     }
     
     public List<PlantPhoto> getPhotosByDateRange(LocalDateTime startDate, LocalDateTime endDate) {

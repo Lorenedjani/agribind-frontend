@@ -2,10 +2,13 @@ package com.agribind.plant_monitoring.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
 
 @Component
 @ConfigurationProperties(prefix = "file.upload")
 public class FileStorageProperties {
+
+    @Value("${file.upload.dir}")
     private String uploadDir;
     private long maxSize;
     private String[] allowedExtensions;

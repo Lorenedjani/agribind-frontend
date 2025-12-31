@@ -9,7 +9,6 @@ import com.agribind.plant_monitoring.service.PlantPhotoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -31,17 +30,22 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/plants")
 @Tag(name = "Plant Photo Management", description = "Endpoints for uploading and managing plant photos")
-@Slf4j
 public class PlantPhotoController {
     
-    @Autowired
-    private PlantPhotoService plantPhotoService;
+    private final PlantPhotoService plantPhotoService;
+    private final FileStorageService fileStorageService;
+    private final PlantHealthAnalysisService healthAnalysisService;
     
     @Autowired
-    private FileStorageService fileStorageService;
-    
-    @Autowired
-    private PlantHealthAnalysisService healthAnalysisService;
+    public PlantPhotoController(
+            PlantPhotoService plantPhotoService,
+            FileStorageService fileStorageService,
+            PlantHealthAnalysisService healthAnalysisService) {
+        this.plantPhotoService = plantPhotoService;
+        this.fileStorageService = fileStorageService;
+        this.healthAnalysisService = healthAnalysisService;
+        System.out.println("PlantPhotoController initialized");
+    }
     
     @PostMapping(value = "/{plantId}/photos/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Upload a plant photo", 
@@ -52,7 +56,7 @@ public class PlantPhotoController {
             @RequestParam(value = "caption", required = false) String caption,
             @RequestParam(value = "takenAt", required = false) LocalDateTime takenAt) {
         
-        log.info("Uploading photo for plant ID: {}", plantId);
+        System.out.println("Uploading photo for plant ID: " + plantId);
         
         // Validate file
         if (file.isEmpty()) {
@@ -84,7 +88,7 @@ public class PlantPhotoController {
             @RequestParam("files") List<MultipartFile> files,
             @RequestParam(value = "caption", required = false) String caption) {
         
-        log.info("Uploading {} photos for plant ID: {}", files.size(), plantId);
+        System.out.println("Uploading " + files.size() + " photos for plant ID: " + plantId);
         
         List<PlantPhotoResponseDTO> responses = files.stream()
                 .map(file -> {
@@ -98,7 +102,8 @@ public class PlantPhotoController {
                         PlantPhoto photo = plantPhotoService.uploadPhoto(uploadDTO);
                         return convertToDTO(photo);
                     } catch (Exception e) {
-                        log.error("Failed to upload file: {}", file.getOriginalFilename(), e);
+                        System.err.println("Failed to upload file: " + file.getOriginalFilename());
+                        e.printStackTrace();
                         return null;
                     }
                 })

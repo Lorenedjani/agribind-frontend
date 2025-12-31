@@ -3,38 +3,42 @@ package com.agribind.plant_monitoring.service;
 import com.agribind.plant_monitoring.dto.HealthAnalysisDTO;
 import com.agribind.plant_monitoring.model.HealthAnalysis;
 import com.agribind.plant_monitoring.model.PlantPhoto;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @Service
-@Slf4j
 public class PlantHealthAnalysisService {
     
     private final double HEALTHY_THRESHOLD = 80.0;
     private final double MODERATE_THRESHOLD = 50.0;
     private final double POOR_THRESHOLD = 20.0;
     
+    public PlantHealthAnalysisService() {
+        System.out.println("PlantHealthAnalysisService initialized");
+    }
+    
     @Async
     public CompletableFuture<HealthAnalysis> analyzePlantHealth(PlantPhoto photo) {
-        log.info("Starting health analysis for photo: {}", photo.getId());
+        System.out.println("Starting health analysis for photo: " + photo.getId());
         
         try {
             // Simulate AI/ML analysis - In production, integrate with actual ML model
             HealthAnalysis analysis = performImageAnalysis(photo);
             
-            log.info("Health analysis completed for photo: {}", photo.getId());
+            System.out.println("Health analysis completed for photo: " + photo.getId());
             return CompletableFuture.completedFuture(analysis);
             
         } catch (Exception e) {
-            log.error("Error analyzing plant health for photo: {}", photo.getId(), e);
+            System.err.println("Error analyzing plant health for photo: " + photo.getId());
+            e.printStackTrace();
             throw new RuntimeException("Failed to analyze plant health", e);
         }
     }
@@ -44,7 +48,7 @@ public class PlantHealthAnalysisService {
         analysis.setPhoto(photo);
         
         // Read image for analysis
-        BufferedImage image = ImageIO.read(photo.getFilePath());
+        BufferedImage image = ImageIO.read(new File(photo.getFilePath()));
         
         // Calculate health scores (simulated - replace with actual ML model)
         double leafColorScore = analyzeLeafColor(image);

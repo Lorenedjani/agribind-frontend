@@ -3,43 +3,50 @@ package com.agribind.plant_monitoring.task;
 import com.agribind.plant_monitoring.model.PlantPhoto;
 import com.agribind.plant_monitoring.service.PlantHealthAnalysisService;
 import com.agribind.plant_monitoring.service.PlantPhotoService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
-@Slf4j
 public class ScheduledHealthAnalysisTask {
     
-    @Autowired
-    private PlantPhotoService plantPhotoService;
+    private final PlantPhotoService plantPhotoService;
+    private final PlantHealthAnalysisService healthAnalysisService;
     
     @Autowired
-    private PlantHealthAnalysisService healthAnalysisService;
+    public ScheduledHealthAnalysisTask(
+            PlantPhotoService plantPhotoService,
+            PlantHealthAnalysisService healthAnalysisService) {
+        this.plantPhotoService = plantPhotoService;
+        this.healthAnalysisService = healthAnalysisService;
+        System.out.println("ScheduledHealthAnalysisTask initialized");
+    }
     
     @Scheduled(cron = "0 0 2 * * ?") // Run daily at 2 AM
     public void analyzeUnprocessedPhotos() {
-        log.info("Starting scheduled health analysis for unprocessed photos");
+        System.out.println("Starting scheduled health analysis for unprocessed photos");
         
         List<PlantPhoto> unprocessedPhotos = plantPhotoService.getUnprocessedPhotos();
         
         for (PlantPhoto photo : unprocessedPhotos) {
             try {
                 healthAnalysisService.analyzePlantHealth(photo);
-                log.info("Scheduled analysis started for photo: {}", photo.getId());
+                System.out.println("Scheduled analysis started for photo: " + photo.getId());
             } catch (Exception e) {
-                log.error("Failed to analyze photo: {}", photo.getId(), e);
+                System.err.println("Failed to analyze photo: " + photo.getId());
+                e.printStackTrace();
             }
         }
     }
     
     @Scheduled(cron = "0 0 1 * * MON") // Run every Monday at 1 AM
     public void generateWeeklyHealthReports() {
-        log.info("Generating weekly health reports");
+        System.out.println("Generating weekly health reports");
         // Implement weekly report generation
+
+        // Example: Generate weekly report for all plants
+        // healthAnalysisService.generateWeeklyReport();
     }
 }
