@@ -41,6 +41,13 @@ file:
     thumbnail:
       width: 300
       height: 300
+  storage:
+    upload-dir: ./uploads/disease-reports
+    max-size: 5242880 # 5MB
+    allowed-extensions: jpg,jpeg,png,gif
+    thumbnail:
+      width: 200
+      height: 200
 
 # Health Analysis Configuration
 plant:
@@ -49,6 +56,16 @@ plant:
       healthy: 80
       moderate: 50
       poor: 20
+
+# Disease Report Configuration
+app:
+  disease-report:
+    auto-generate-id: true
+
+# Farmer microservice configuration
+farmer:
+  service:
+    url: http://localhost:8081
 
 server:
   port: 8080
@@ -68,6 +85,7 @@ logging:
     org.springframework.web: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.agribind: DEBUG
   file:
     name: logs/plant-monitoring.log
   pattern:
