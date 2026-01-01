@@ -24,7 +24,7 @@
     <mapstruct.version>1.5.5.Final</mapstruct.version>
     <lombok.version>1.18.30</lombok.version>
     <zxing.version>3.5.2</zxing.version>
-    <poi.version>5.2.4</poi.version>
+    <poi.version>5.4.0</poi.version>
   </properties>
 
   <dependencies>
@@ -76,6 +76,7 @@
     <dependency>
       <groupId>com.mysql</groupId>
       <artifactId>mysql-connector-j</artifactId>
+      <version>8.2.0</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
