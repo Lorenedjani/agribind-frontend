@@ -501,6 +501,7 @@ export class ProductionComponent implements OnInit {
       statusClass: this.getStatusClass(record.status || record.maturityStatus || 'PENDING'),
       productName: record.productName,
       qualityGrade: record.qualityGrade,
+      maturityStatus: record.maturityStatus,
       productionDate: record.productionDate
     };
   }
@@ -672,6 +673,7 @@ export class ProductionComponent implements OnInit {
       quantity: 0,
       unit: 'MT',
       qualityGrade: 'GRADE_A',
+      maturityStatus: 'HARVESTED', // Add this line
       warehouse: this.warehouses[0] || '',
       productionDate: new Date().toISOString().split('T')[0],
       unitPrice: 0,

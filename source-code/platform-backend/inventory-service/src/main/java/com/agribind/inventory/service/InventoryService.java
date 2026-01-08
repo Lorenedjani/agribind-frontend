@@ -79,6 +79,9 @@ public class InventoryService {
         Double farmerProductsStock = inventoryRepository.getTotalFarmerProductsStock();
         Long inputSuppliesCount = inventoryRepository.countInputSupplies();
         Long criticalItems = inventoryRepository.countCriticalStockItems();
+        Long lowStockItems = inventoryRepository.findByStatus(InventoryItem.StockStatus.LOW_STOCK).size();
+        Long outOfStockItems = inventoryRepository.findByStatus(InventoryItem.StockStatus.OUT_OF_STOCK).size();
+        Long totalItems = inventoryRepository.count();
 
         // Mock percentage change - in real scenario, calculate from historical data
         Double percentageChange = 5.7;
@@ -88,6 +91,9 @@ public class InventoryService {
             farmerProductsStock != null ? farmerProductsStock : 0.0,
             inputSuppliesCount != null ? inputSuppliesCount : 0L,
             criticalItems != null ? criticalItems : 0L,
+            lowStockItems,
+            outOfStockItems,
+            totalItems,
             percentageChange
         );
     }
