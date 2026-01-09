@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface CashLoanRepository extends MongoRepository<CashLoan, String> {
+public interface CashLoanRepository extends JpaRepository<CashLoan, String> {
 
     List<CashLoan> findByStatus(String status);
 

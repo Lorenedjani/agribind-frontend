@@ -7,10 +7,21 @@ spring:
   application:
     name: microcredit-service
 
-  data:
-    mongodb:
-      uri: mongodb+srv://ismaelulrich121_db_user:237-Work-1234@cluster0.wsQgnas.mongodb.net/microcredit_db?retryWrites=true&w=majority&appName=Cluster0
-      auto-index-creation: true
+  # Changed from MongoDB to MySQL
+  datasource:
+    url: jdbc:mysql://localhost:3306/microcredit_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: your_password_here
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  # Added JPA configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
 
   cloud:
     loadbalancer:
@@ -28,18 +39,18 @@ eureka:
     hostname: localhost
     prefer-ip-address: true
 
-# MongoDB connection pooling configuration
-mongodb:
-  connection:
-    pool:
-      max-size: 100
-      min-size: 10
-      max-wait-time: 120000
-      max-connection-life-time: 0
+# Removed MongoDB connection pooling configuration
+# mongodb:
+#   connection:
+#     pool:
+#       max-size: 100
+#       min-size: 10
+#       max-wait-time: 120000
+#       max-connection-life-time: 0
 
-# SSL/TLS configuration for MongoDB Atlas
-ssl:
-  enabled: true
+# Removed SSL/TLS configuration for MongoDB Atlas
+# ssl:
+#   enabled: true
 
 management:
   endpoints:
@@ -49,41 +60,38 @@ management:
   endpoint:
     health:
       show-details: always
-      mongo:
+      # Changed from mongo to db
+      db:
         enabled: true
 
 logging:
   level:
     com.microcredit: DEBUG
-    org.springframework.data.mongodb: INFO
-    org.mongodb.driver: WARN
+    # Changed from MongoDB to JPA/Hibernate
+    org.springframework.orm.jpa: INFO
+    org.hibernate.SQL: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
   file:
     name: logs/microcredit-service.log
 
-# Application specific configuration
+# Application specific configuration (unchanged)
 microcredit:
   loan:
-    # XAF currency configuration
     currency: XAF
-    # Default repayment period in months
     default-repayment-period: 12
-    # Risk assessment thresholds
     risk:
       low-threshold: 700
       medium-threshold: 500
       max-low-risk-amount: 5000000
       max-medium-risk-amount: 10000000
 
-  # Email notifications configuration
   notifications:
     enabled: true
     overdue-alert-days: 7
     repayment-reminder-days: 3
 
-# Feign client configuration
 feign:
   client:
     config:
@@ -94,7 +102,6 @@ feign:
   circuitbreaker:
     enabled: true
 
-# Resilience4j configuration for circuit breaker
 resilience4j:
   circuitbreaker:
     instances:
@@ -116,7 +123,7 @@ resilience4j:
           - org.springframework.web.client.ResourceAccessException
           - java.net.ConnectException
 
-# Spring Actuator health check configuration
+# Changed from mongo to db
 health:
-  mongo:
+  db:
     enabled: true
