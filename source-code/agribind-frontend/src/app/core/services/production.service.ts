@@ -87,7 +87,7 @@ export interface MaturityUpdateDTO {
   providedIn: 'root'
 })
 export class ProductionService {
-  private baseUrl = `${environment.services.productionApiUrl}/production`;
+  private baseUrl = environment.services.productionApiUrl;
 
   constructor(private http: HttpClient) {}
 

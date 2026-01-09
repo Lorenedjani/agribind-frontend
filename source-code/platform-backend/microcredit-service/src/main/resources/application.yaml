@@ -1,0 +1,134 @@
+server:
+  port: 8091
+  servlet:
+    context-path: /microcredit
+
+spring:
+  application:
+    name: microcredit-service
+
+  data:
+    mongodb:
+      uri: mongodb+srv://ismaelulrich121_db_user:237-Work-1234@cluster0.wsQgnas.mongodb.net/microcredit_db?retryWrites=true&w=majority&appName=Cluster0
+      auto-index-creation: true
+
+  cloud:
+    loadbalancer:
+      ribbon:
+        enabled: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    enabled: true
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+
+# MongoDB connection pooling configuration
+mongodb:
+  connection:
+    pool:
+      max-size: 100
+      min-size: 10
+      max-wait-time: 120000
+      max-connection-life-time: 0
+
+# SSL/TLS configuration for MongoDB Atlas
+ssl:
+  enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+      mongo:
+        enabled: true
+
+logging:
+  level:
+    com.microcredit: DEBUG
+    org.springframework.data.mongodb: INFO
+    org.mongodb.driver: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/microcredit-service.log
+
+# Application specific configuration
+microcredit:
+  loan:
+    # XAF currency configuration
+    currency: XAF
+    # Default repayment period in months
+    default-repayment-period: 12
+    # Risk assessment thresholds
+    risk:
+      low-threshold: 700
+      medium-threshold: 500
+      max-low-risk-amount: 5000000
+      max-medium-risk-amount: 10000000
+
+  # Email notifications configuration
+  notifications:
+    enabled: true
+    overdue-alert-days: 7
+    repayment-reminder-days: 3
+
+# Feign client configuration
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+  circuitbreaker:
+    enabled: true
+
+# Resilience4j configuration for circuit breaker
+resilience4j:
+  circuitbreaker:
+    instances:
+      userService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+  retry:
+    instances:
+      userService:
+        maxAttempts: 3
+        waitDuration: 1s
+        retryExceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - java.net.ConnectException
+
+# Spring Actuator health check configuration
+health:
+  mongo:
+    enabled: true
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  show-actuator: false

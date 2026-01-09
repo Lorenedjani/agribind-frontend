@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, catchError, of, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
@@ -91,7 +91,7 @@ export interface QuickDiseaseReportRequest {
   disease: string;
   location: string;
   affectedArea: string;
-  severity: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   reportDate: Date;
   reportedBy: string;
   treatmentNotes?: string;
@@ -102,7 +102,7 @@ export interface QuickDiseaseReportRequest {
   providedIn: 'root'
 })
 export class PlantHealthService {
-  private apiUrl = `${environment.services.plantMonitoring}`;
+  private apiUrl = environment.services.plantMonitoring;
 
   constructor(private http: HttpClient) {}
 
@@ -127,7 +127,7 @@ export class PlantHealthService {
 
     // Add photos if provided
     if (request.photos && request.photos.length > 0) {
-      request.photos.forEach((photo, index) => {
+      request.photos.forEach((photo) => {
         formData.append('photos', photo, photo.name);
       });
     }
@@ -248,9 +248,9 @@ export class PlantHealthService {
   }
 
   updateReportStatus(id: number, status: string, treatmentNotes?: string): Observable<DiseaseReport> {
-    const body = { status };
+    const body: any = { status };
     if (treatmentNotes) {
-      body['treatmentNotes'] = treatmentNotes;
+      body.treatmentNotes = treatmentNotes;
     }
 
     return this.http.put<DiseaseReport>(`${this.apiUrl}/disease-reports/${id}/status`, body).pipe(
