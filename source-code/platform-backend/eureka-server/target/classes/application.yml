@@ -48,7 +48,7 @@ spring:
 
 eureka:
   instance:
-    hostname: ${RENDER_SERVICE_NAME:localhost}.onrender.com
+    hostname: ${RENDER_SERVICE_NAME:localhost} #.onrender.com
     # IMPORTANT: Use secure settings for cloud deployment
     secure-port-enabled: true
     non-secure-port-enabled: false
