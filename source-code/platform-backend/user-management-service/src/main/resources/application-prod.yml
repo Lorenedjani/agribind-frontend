@@ -1,0 +1,166 @@
+# Production Configuration for User Management Service
+server:
+  port: ${PORT:8084}
+
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+
+spring:
+  application:
+    name: user-management-service
+
+  config:
+    activate:
+      on-profile: prod
+
+  # ✅ PRODUCTION: PostgreSQL Database Configuration
+  datasource:
+    # Remove credentials from URL - put them separately
+    url: ${DATABASE_URL:jdbc:mysql://metro.proxy.rlwy.net:10982/railway?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8}
+    username: ${DATABASE_USERNAME:root}
+    password: ${DATABASE_PASSWORD:yudxFBiWIVYqYqiIitfgoOHZtEbhpdnD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 3
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+
+  # ✅ JPA with MySQL
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Use 'validate' in production
+    show-sql: false
+    database-platform: org.hibernate.dialect.MySQLDialect
+    properties:
+      hibernate:
+        format_sql: true
+        # REMOVE: default_schema (MySQL doesn't use schemas like PostgreSQL)
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+  # ✅ Flyway Database Migrations for MySQL
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    repair: true  # This should fix failed migrations
+    validate-on-migrate: false  # Keep false until fixed
+    clean-on-validation-error: false
+    # REMOVE: schemas and default-schema (MySQL doesn't use schemas)
+    table: flyway_schema_history
+    # REMOVE: placeholders (PostgreSQL-specific)
+    # Add MySQL-specific settings:
+    init-sqls: SET FOREIGN_KEY_CHECKS = 0
+    clean-disabled: true
+    out-of-order: true
+  # ✅ Kafka Configuration (optional for production)
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: userEvent:cm.agribind.usermanagement.event.UserEvent
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP:user-management-group}
+      auto-offset-reset: earliest
+
+# ✅ Eureka Client Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:https://agribind-frontend-795v.onrender.com/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+    healthcheck:
+      enabled: true
+  instance:
+    hostname: ${RENDER_SERVICE_NAME:user-management-service}.onrender.com
+    prefer-ip-address: false
+    instance-id: ${spring.application.name}:${server.port}
+    metadata-map:
+      zone: ${INSTANCE_ZONE:default}
+      version: ${APP_VERSION:1.0.0}
+
+# ✅ Service Discovery (NO hardcoded URLs!)
+# Services will be discovered via Eureka using Feign clients
+
+# ✅ Application Configuration
+agribind:
+  security:
+    jwt-secret: ${JWT_SECRET:agribind-super-secure-jwt-secret-key-2025-minimum-32-chars}
+
+  qrcode:
+    default-size: 300
+    default-format: PNG
+    expiration-minutes: 30
+
+  default-password:
+    enabled: true
+    length: 12
+    pattern: "AG${random}${year}"
+
+  notifications:
+    enabled: ${NOTIFICATIONS_ENABLED:true}
+    use-kafka: ${NOTIFICATIONS_USE_KAFKA:false}
+    send-sms: ${NOTIFICATIONS_SEND_SMS:false}
+    send-email: ${NOTIFICATIONS_SEND_EMAIL:true}
+
+  google-maps:
+    api-key: ${GOOGLE_MAPS_API_KEY:}
+    enabled: ${GOOGLE_MAPS_ENABLED:false}
+
+# ✅ Feign Client Configuration
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 10000
+        loggerLevel: basic
+  circuitbreaker:
+    enabled: true
+
+# ✅ Management Endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      db:
+        enabled: true
+      diskSpace:
+        enabled: true
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+
+# ✅ Logging
+logging:
+  level:
+    root: WARN
+    cm.agribind.usermanagement: INFO
+    org.springframework: WARN
+    org.hibernate.SQL: WARN
+    org.springframework.cloud: INFO
+    org.springframework.cloud.netflix.eureka: INFO
+    feign: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: ./logs/user-management.log
+    max-size: 10MB
+    max-history: 30

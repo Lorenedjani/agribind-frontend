@@ -3,9 +3,9 @@ spring:
     name: communication
 
   datasource:
-    url: jdbc:mysql://localhost:3306/agribind_communications?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+    url: jdbc:mysql://root:gOpBKAtqaFyXJtxIwqJXqmDnbIahZgFo@shuttle.proxy.rlwy.net:38695/railway?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
     username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:}
+    password: ${DB_PASSWORD:gOpBKAtqaFyXJtxIwqJXqmDnbIahZgFo}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:

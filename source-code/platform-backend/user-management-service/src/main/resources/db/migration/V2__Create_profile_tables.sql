@@ -8,7 +8,7 @@ CREATE TABLE profiles (
     receive_push_notifications BOOLEAN DEFAULT TRUE,
     skills VARCHAR(1000),
     date_of_birth VARCHAR(20),
-    gender ENUM('MALE', 'FEMALE', 'OTHER'),
+    gender VARCHAR(10) CHECK (gender IN ('MALE', 'FEMALE', 'OTHER')),
     marital_status VARCHAR(50),
     dependents_count INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -1,7 +1,7 @@
 -- V9__Fix_agricultural_type_enum.sql
 -- Fix the agricultural_type enum to match Java enum values
 
-USE agribind_users;
+USE railway;
 
 -- Step 1: Add a temporary column
 ALTER TABLE farmers ADD COLUMN agricultural_type_temp VARCHAR(50);
@@ -35,6 +35,6 @@ ALTER TABLE farmers DROP COLUMN agricultural_type_temp;
 -- Verify the change
 SELECT COLUMN_NAME, COLUMN_TYPE
 FROM information_schema.COLUMNS
-WHERE TABLE_SCHEMA = 'agribind_users'
+WHERE TABLE_SCHEMA = 'railway'
 AND TABLE_NAME = 'farmers'
 AND COLUMN_NAME = 'agricultural_type';

@@ -1,0 +1,31 @@
+ARG SERVICE_NAME=auth-service1
+
+FROM maven:3.9-eclipse-temurin-17 AS builder
+
+WORKDIR /app
+
+# Copy parent POM first
+COPY pom.xml .
+RUN mvn clean install -N -DskipTests
+
+# Build auth-service1
+COPY auth-service1/pom.xml auth-service1/pom.xml
+COPY auth-service1/src auth-service1/src
+
+WORKDIR /app/auth-service1
+RUN mvn clean package -DskipTests
+
+# Runtime stage
+FROM eclipse-temurin:17-jre-alpine AS runtime
+
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring:spring
+
+COPY --from=builder /app/auth-service1/target/*.jar app.jar
+
+EXPOSE 8081
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8081/actuator/health || exit 1
+
+ENTRYPOINT ["java", "-Xmx256m", "-jar", "/app.jar"]

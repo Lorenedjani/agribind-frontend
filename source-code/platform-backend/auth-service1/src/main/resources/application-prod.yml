@@ -1,0 +1,127 @@
+# Production configuration for Auth Service
+server:
+  port: ${PORT:8082}
+
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+
+spring:
+  application:
+    name: auth-service  # ⬅️ THIS IS THE SERVICE NAME FOR EUREKA
+
+  config:
+    activate:
+      on-profile: prod
+
+  # ✅ YOUR RENDER POSTGRESQL DATABASE
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://root:vTbUrkBvUEsYHAxcIBNnSzzGiTSjMBCr@turntable.proxy.rlwy.net:49592/railway?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8}
+    username: ${MYSQLUSER:root}
+    password: ${MYSQLPASSWORD:vTbUrkBvUEsYHAxcIBNnSzzGiTSjMBCr}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # ✅ JPA with PostgreSQL
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${SHOW_SQL:false}
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    properties:
+      hibernate:
+        format_sql: true
+
+  # ✅ Flyway Database Migrations
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+# ✅ CRITICAL: Eureka Client Configuration (MISSING BEFORE)
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:https://agribind-frontend-795v.onrender.com/eureka/}
+    register-with-eureka: true  # ⬅️ REGISTER WITH EUREKA
+    fetch-registry: true        # ⬅️ DISCOVER OTHER SERVICES
+    enabled: true
+  instance:
+    hostname: ${RENDER_SERVICE_NAME:auth-service}.onrender.com
+    prefer-ip-address: false
+    instance-id: ${spring.application.name}:${server.port}
+    # Metadata for load balancing
+    metadata-map:
+      zone: ${INSTANCE_ZONE:default}
+      version: ${APP_VERSION:1.0.0}
+
+# ✅ JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:agribind-super-secure-jwt-secret-key-2025-minimum-32-chars}
+  access-token-expiration-ms: ${JWT_ACCESS_EXPIRATION:900000}
+  refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRATION:2592000000}
+
+# ✅ External Services Configuration
+# These will be discovered via Eureka, not hardcoded
+services:
+  user-management:
+    service-id: user-management-service
+  notification:
+    service-id: notification-service
+  communication:
+    service-id: communication
+
+# ✅ Feign Client Configuration for service-to-service calls
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 10000
+        loggerLevel: basic
+  circuitbreaker:
+    enabled: true
+
+# ✅ Management Endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+# ✅ Logging
+logging:
+  level:
+    root: INFO
+    cm.agribind.auth: DEBUG
+    org.springframework.cloud: INFO
+    org.springframework.cloud.netflix.eureka: INFO
+    com.netflix.eureka: INFO
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: ./logs/auth-service.log

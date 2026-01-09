@@ -1,13 +1,11 @@
-USE agribind_users;
+USE railway;
 
--- Remove failed migration
 DELETE FROM flyway_schema_history WHERE version = '3';
 
--- Check if foreign key exists and drop it if necessary
 SET @fk_exists = (
     SELECT COUNT(*)
     FROM information_schema.TABLE_CONSTRAINTS
-    WHERE CONSTRAINT_SCHEMA = 'agribind_users'
+    WHERE CONSTRAINT_SCHEMA = 'railway'
     AND TABLE_NAME = 'users'
     AND CONSTRAINT_NAME = 'fk_users_profile'
 );
@@ -25,7 +23,7 @@ DEALLOCATE PREPARE stmt_drop;
 SET @idx_exists = (
     SELECT COUNT(*)
     FROM information_schema.STATISTICS
-    WHERE TABLE_SCHEMA = 'agribind_users'
+    WHERE TABLE_SCHEMA = 'railway'
     AND TABLE_NAME = 'users'
     AND INDEX_NAME = 'idx_profile_id'
 );
