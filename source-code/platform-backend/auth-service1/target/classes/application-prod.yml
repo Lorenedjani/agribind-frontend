@@ -17,9 +17,9 @@ spring:
 
   # ✅ YOUR RENDER POSTGRESQL DATABASE
   datasource:
-    url: ${DATABASE_URL:jdbc:mysql://mysql.railway.internal:3306/railway?createDatabaseIfNotExist=true&allowTouseSSL=false&serverTimezone=UTC}
-    username: ${DATABASE_USER:root}
-    password: ${DATABASE_PASSWORD:TfejvX1AQg9EglOJulgKUCP3F9MjbEmH}
+    url: ${MYSQL_URL:jdbc:mysql://root:vTbUrkBvUEsYHAxcIBNnSzzGiTSjMBCr@turntable.proxy.rlwy.net:49592/railway?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8}
+    username: ${MYSQLUSER:root}
+    password: ${MYSQLPASSWORD:vTbUrkBvUEsYHAxcIBNnSzzGiTSjMBCr}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 5

@@ -6,9 +6,13 @@ spring:
     name: user-management-service
 
   datasource:
-    url: jdbc:mysql://localhost:3306/agribind_users?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root
-    password: 237Work1234
+    #url: jdbc:mysql://localhost:3306/agribind_users?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    #username: root
+    #password: 237Work1234
+    #driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DATABASE_URL:jdbc:mysql://metro.proxy.rlwy.net:10982/railway?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8}
+    username: ${DATABASE_USERNAME:root}
+    password: ${DATABASE_PASSWORD:yudxFBiWIVYqYqiIitfgoOHZtEbhpdnD}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 20
@@ -24,7 +28,7 @@ spring:
         format_sql: true
 
   flyway:
-    enabled: true
+    enabled: false
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: false

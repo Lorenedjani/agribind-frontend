@@ -4,9 +4,9 @@ spring:
     name: production-monitoring-service
 
   datasource:
-    url: jdbc:mysql://localhost:3307/agri_production_db?createDatabaseIfNotExist=true
+    url: jdbc:mysql://localhost:3307/agri_production_dbmysql://root:gOpBKAtqaFyXJtxIwqJXqmDnbIahZgFo@shuttle.proxy.rlwy.net:38695/railway?createDatabaseIfNotExist=true
     username: root
-    password: ISI3Eng!2025
+    password: gOpBKAtqaFyXJtxIwqJXqmDnbIahZgFo
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10

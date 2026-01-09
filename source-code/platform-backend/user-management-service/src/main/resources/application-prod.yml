@@ -17,47 +17,50 @@ spring:
 
   # ✅ PRODUCTION: PostgreSQL Database Configuration
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://dpg-d4jdk16mcj7s73bfp9ag-a/wolfdb_fdmc}
-    username: ${DATABASE_USERNAME:wolfdb_fdmc_user}
-    password: ${DATABASE_PASSWORD:TfejvX1AQg9EglOJulgKUCP3F9MjbEmH}
-    driver-class-name: org.postgresql.Driver
+    # Remove credentials from URL - put them separately
+    url: ${DATABASE_URL:jdbc:mysql://metro.proxy.rlwy.net:10982/railway?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8}
+    username: ${DATABASE_USERNAME:root}
+    password: ${DATABASE_PASSWORD:yudxFBiWIVYqYqiIitfgoOHZtEbhpdnD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      maximum-pool-size: ${DATABASE_POOL_SIZE:10}
-      minimum-idle: ${DATABASE_MIN_IDLE:3}
+      maximum-pool-size: 10
+      minimum-idle: 3
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
-      connection-test-query: SELECT 1
 
-  # ✅ JPA with PostgreSQL
+
+  # ✅ JPA with MySQL
   jpa:
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:validate}  # Production: validate schema
-    show-sql: ${SHOW_SQL:false}
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+      ddl-auto: validate  # Use 'validate' in production
+    show-sql: false
+    database-platform: org.hibernate.dialect.MySQLDialect
     properties:
       hibernate:
         format_sql: true
-        default_schema: user_management
+        # REMOVE: default_schema (MySQL doesn't use schemas like PostgreSQL)
         jdbc:
           batch_size: 20
         order_inserts: true
         order_updates: true
 
-  # ✅ Flyway Database Migrations for PostgreSQL
+  # ✅ Flyway Database Migrations for MySQL
   flyway:
     enabled: ${FLYWAY_ENABLED:true}
     locations: classpath:db/migration
     baseline-on-migrate: true
     baseline-version: 0
-    validate-on-migrate: true
-    schemas: user_management
-    default-schema: user_management
+    repair: true  # This should fix failed migrations
+    validate-on-migrate: false  # Keep false until fixed
+    clean-on-validation-error: false
+    # REMOVE: schemas and default-schema (MySQL doesn't use schemas)
     table: flyway_schema_history
-    # PostgreSQL specific
-    placeholders:
-      db_schema: public
-
+    # REMOVE: placeholders (PostgreSQL-specific)
+    # Add MySQL-specific settings:
+    init-sqls: SET FOREIGN_KEY_CHECKS = 0
+    clean-disabled: true
+    out-of-order: true
   # ✅ Kafka Configuration (optional for production)
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:}

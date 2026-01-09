@@ -1,11 +1,8 @@
--- Create ENUM type for livestock types
-CREATE TYPE livestock_type_enum AS ENUM ('CATTLE', 'GOATS', 'SHEEP', 'PIGS', 'POULTRY', 'RABBITS',
-                        'FISH', 'BEES', 'OTHER');
-
 CREATE TABLE farmer_livestock (
-                                  farmer_id BIGINT NOT NULL REFERENCES farmers(user_id) ON DELETE CASCADE,
-                                  livestock_type livestock_type_enum NOT NULL,
-                                  PRIMARY KEY (farmer_id, livestock_type)
-);
-
-CREATE INDEX idx_livestock_type ON farmer_livestock(livestock_type);
+    farmer_id BIGINT NOT NULL,
+    livestock_type ENUM('CATTLE', 'GOATS', 'SHEEP', 'PIGS', 'POULTRY', 'RABBITS',
+                        'FISH', 'BEES', 'OTHER') NOT NULL,
+    PRIMARY KEY (farmer_id, livestock_type),
+    FOREIGN KEY (farmer_id) REFERENCES farmers(user_id) ON DELETE CASCADE,
+    INDEX idx_livestock_type (livestock_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

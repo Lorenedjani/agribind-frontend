@@ -1,28 +1,38 @@
--- Remove failed migration (if flyway_schema_history table exists)
+USE railway;
+
 DELETE FROM flyway_schema_history WHERE version = '3';
 
--- Check if foreign key exists and drop it if necessary
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1 FROM information_schema.table_constraints
-        WHERE constraint_schema = current_schema()
-        AND table_name = 'users'
-        AND constraint_name = 'fk_users_profile'
-    ) THEN
-ALTER TABLE users DROP CONSTRAINT fk_users_profile;
-END IF;
-END $$;
+SET @fk_exists = (
+    SELECT COUNT(*)
+    FROM information_schema.TABLE_CONSTRAINTS
+    WHERE CONSTRAINT_SCHEMA = 'railway'
+    AND TABLE_NAME = 'users'
+    AND CONSTRAINT_NAME = 'fk_users_profile'
+);
+
+SET @drop_fk = IF(@fk_exists > 0,
+    'ALTER TABLE users DROP FOREIGN KEY fk_users_profile',
+    'SELECT "No FK to drop" AS info'
+);
+
+PREPARE stmt_drop FROM @drop_fk;
+EXECUTE stmt_drop;
+DEALLOCATE PREPARE stmt_drop;
 
 -- Check if index exists and drop it if necessary
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1 FROM pg_indexes
-        WHERE schemaname = current_schema()
-        AND tablename = 'users'
-        AND indexname = 'idx_profile_id'
-    ) THEN
-DROP INDEX idx_profile_id;
-END IF;
-END $$;
+SET @idx_exists = (
+    SELECT COUNT(*)
+    FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = 'railway'
+    AND TABLE_NAME = 'users'
+    AND INDEX_NAME = 'idx_profile_id'
+);
+
+SET @drop_idx = IF(@idx_exists > 0,
+    'DROP INDEX idx_profile_id ON users',
+    'SELECT "No index to drop" AS info'
+);
+
+PREPARE stmt_drop_idx FROM @drop_idx;
+EXECUTE stmt_drop_idx;
+DEALLOCATE PREPARE stmt_drop_idx;
