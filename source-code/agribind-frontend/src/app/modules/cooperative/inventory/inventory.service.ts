@@ -6,7 +6,7 @@ import { InventoryItem, InventorySummary } from './inventory.model';
 
 @Injectable({ providedIn: 'root' })
 export class InventoryService {
-  private apiUrl = `${environment.apiUrl}/api/inventory`;
+  private apiUrl = `${environment.services.inventory}/inventory`;
 
   constructor(private http: HttpClient) {}
 

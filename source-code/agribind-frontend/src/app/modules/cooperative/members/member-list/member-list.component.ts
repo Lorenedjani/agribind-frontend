@@ -17,7 +17,6 @@ import { MemberFormComponent } from '../member-form/member-form.component';
 import { EditMemberFormComponent } from '../edit-member-form/edit-member-form.component';
 import { MemberDetailComponent } from '../member-detail/member-detail.component';
 import { DeleteMemberComponent } from '../delete-member/delete-member.component';
-import { CooperativeSidebarComponent } from "../../../../../shared/cooperative-sidebar/cooperative-sidebar.component";
 
 interface Member {
   id: string;
@@ -41,8 +40,7 @@ interface Member {
     MemberFormComponent,
     EditMemberFormComponent,
     MemberDetailComponent,
-    DeleteMemberComponent,
-    CooperativeSidebarComponent
+    DeleteMemberComponent
   ],
   templateUrl: './member-list.component.html',
   styleUrls: ['./member-list.component.scss']

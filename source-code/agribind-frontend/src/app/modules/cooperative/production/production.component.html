@@ -1,29 +1,52 @@
-<div class="wrapper">
-  <app-cooperative-sidebar></app-cooperative-sidebar>
-
-  <!-- Top Bar -->
-  <header class="top-bar">
-    <div class="page-title">
-      <h3>Production Management</h3>
-    </div>
-
-    <div class="top-bar-actions">
-      <button class="notification-btn" title="Notifications">🔔</button>
-
-      <div class="user-info" title="{{ user.name }}">
-        <div class="avatar">{{ user.initials }}</div>
-        <div class="user-details">
-          <span class="user-name">{{ user.name }}</span>
-          <small>{{ user.role }}</small>
+<div class="page-content">
+      <!-- User Info Header - Top of Page -->
+      <div class="user-header-top">
+        <div class="user-info">
+          <div class="user-avatar">
+            <span class="avatar-text">{{ user.initials }}</span>
+          </div>
+          <div class="user-details">
+            <span class="user-name">{{ user.name }}</span>
+            <span class="user-role">{{ user.role }}</span>
+          </div>
         </div>
       </div>
-    </div>
-  </header>
 
-  <main class="main-content">
+      <!-- Page Header Section -->
+      <div class="page-header-section">
+        <div class="header-content">
+          <div>
+            <h2>Production Management</h2>
+            <p class="page-description">Track farmer deliveries, manage production cycles, and monitor quality standards</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-outline" (click)="exportProduction()">
+              <span class="icon">📥</span>
+              Export
+            </button>
+            <button class="btn btn-primary" (click)="addNewProduction()">
+              <span class="icon">➕</span>
+              Add Production
+            </button>
+          </div>
+        </div>
+      </div>
 
-    <!-- Cards Overview -->
-    <section class="cards-overview">
+      <!-- Action Bar -->
+      <div class="action-bar">
+        <button *ngFor="let btn of actionButtons"
+                class="action-btn"
+                [class.active]="btn.active"
+                (click)="onActionButtonClick(btn.name)">
+          <i [class]="btn.icon"></i>
+          <span>{{btn.name}}</span>
+        </button>
+      </div>
+
+      <!-- Production Section -->
+      <div *ngIf="isProductionSectionActive">
+        <!-- Cards Overview -->
+      <section class="cards-overview">
       <div class="card">
         <div class="card-content">
           <h2>{{ totalProduction }}</h2>
@@ -151,7 +174,7 @@
         <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next →</button>
       </div>
     </section>
-  </main>
+</div>
 
   <!-- Record Production Modal -->
   <div class="modal-overlay" *ngIf="showRecordModal" (click)="closeRecordModal()">
@@ -630,4 +653,3 @@
       </div>
     </div>
   </div>
-</div>

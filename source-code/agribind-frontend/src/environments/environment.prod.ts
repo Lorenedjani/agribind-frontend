@@ -8,6 +8,7 @@ export const environment = {
     userManagement: 'https://api.agribind.cm/user-management',
     auth: 'https://api.agribind.cm/auth',
     productionApiUrl: 'https://api.agribind.cm/production/api/v1',
+    inventory: 'https://api.agribind.cm/inventory/api',
     notification: 'https://api.agribind.cm/notification'
   }
 };

@@ -164,8 +164,8 @@ public class CommunicationController {
         @RequestBody List<Long> supplierIds
     ) {
         log.info("Matching suppliers for request: {}", requestId);
-        // Implementation for matching suppliers
-        return ResponseEntity.ok().build();
+        boolean matched = communicationService.matchSuppliers(requestId, supplierIds);
+        return matched ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
     // ==================== Template Endpoints ====================
@@ -187,8 +187,22 @@ public class CommunicationController {
 
     @GetMapping("/templates/{id}")
     public ResponseEntity<MessageTemplateDto> getTemplateById(@PathVariable Long id) {
-        // Implementation for getting specific template
-        return ResponseEntity.ok().build();
+        MessageTemplateDto template = communicationService.getTemplateById(id);
+        return template != null ? ResponseEntity.ok(template) : ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/templates/{id}")
+    public ResponseEntity<MessageTemplateDto> updateTemplate(@PathVariable Long id, @Valid @RequestBody MessageTemplateDto template) {
+        log.info("Updating message template: {}", id);
+        MessageTemplateDto updatedTemplate = communicationService.updateTemplate(id, template);
+        return updatedTemplate != null ? ResponseEntity.ok(updatedTemplate) : ResponseEntity.notFound().build();
+    }
+
+    @DeleteMapping("/templates/{id}")
+    public ResponseEntity<Void> deleteTemplate(@PathVariable Long id) {
+        log.info("Deleting message template: {}", id);
+        boolean deleted = communicationService.deleteTemplate(id);
+        return deleted ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
     // ==================== Statistics Endpoints ====================

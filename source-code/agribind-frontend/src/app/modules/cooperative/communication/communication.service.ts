@@ -1,149 +1,279 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { Communication } from './communication.model';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, catchError, of } from 'rxjs';
+import { environment } from '../../../../environments/environment';
+import {
+  AudioMessage,
+  MessageTemplate,
+  Alert,
+  DashboardStats,
+  DashboardSummary,
+  MessageFilter,
+  Language,
+  ResourceRequest,
+  AlertStatus,
+  MessageStatus,
+  ApiResponse,
+  PaginatedResponse,
+  DEFAULT_DASHBOARD_STATS,
+  DEFAULT_RECENT_MESSAGES
+} from './communication.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CommunicationService {
-  private communications: Communication[] = [
-    {
-      id: '1',
-      title: 'Maize Market Prices Update',
-      content: 'Current maize prices are favorable. Sell now for best returns.',
-      language: 'English',
-      category: 'market_prices',
-      targetRegions: ['North West', 'South West'],
-      targetCrops: ['Maize'],
-      status: 'published',
-      createdBy: 'Admin',
-      createdAt: new Date('2024-01-15'),
-      publishedAt: new Date('2024-01-15'),
-      reachCount: 150,
-      broadcastType: 'mobile_app'
-    },
-    {
-      id: '2',
-      title: 'Coffee Planting Season Alert',
-      content: 'Coffee planting season starts next week. Prepare your fields.',
-      language: 'French',
-      category: 'seasonal_alerts',
-      targetRegions: ['West', 'Littoral'],
-      targetCrops: ['Coffee'],
-      status: 'scheduled',
-      scheduledTime: new Date('2024-01-20'),
-      createdBy: 'Admin',
-      createdAt: new Date('2024-01-10'),
-      broadcastType: 'mobile_app'
-    },
-    {
-      id: '3',
-      title: 'Pest Warning for Cocoa Farmers',
-      content: 'Black pod disease detected in cocoa farms. Apply fungicide immediately.',
-      language: 'Pidgin',
-      category: 'pest_warning',
-      targetRegions: ['South West', 'Centre'],
-      targetCrops: ['Cocoa'],
-      status: 'published',
-      createdBy: 'Admin',
-      createdAt: new Date('2024-01-05'),
-      publishedAt: new Date('2024-01-05'),
-      reachCount: 89,
-      broadcastType: 'sms'
-    },
-    {
-      id: '4',
-      title: 'Rainfall Forecast Alert',
-      content: 'Heavy rainfall expected next 3 days. Harvest ripe crops.',
-      language: 'English',
-      category: 'weather_alerts',
-      targetRegions: ['North West', 'Far North'],
-      targetCrops: ['Maize', 'Rice'],
-      status: 'published',
-      createdBy: 'Admin',
-      createdAt: new Date('2024-01-03'),
-      publishedAt: new Date('2024-01-03'),
-      reachCount: 203,
-      broadcastType: 'voice_call'
-    },
-    {
-      id: '5',
-      title: 'New Fertilizer Subsidy',
-      content: 'Government announces 30% subsidy on organic fertilizers.',
-      language: 'French',
-      category: 'general_info',
-      targetRegions: ['Littoral', 'Centre', 'West'],
-      targetCrops: [],
-      status: 'draft',
-      createdBy: 'Admin',
-      createdAt: new Date('2024-01-02')
-    }
-  ];
+  private apiUrl = `${environment.services.communication}/communications`;
 
-  private communicationsSubject = new BehaviorSubject<Communication[]>(this.communications);
+  constructor(private http: HttpClient) {}
 
-  getCommunications(): Observable<Communication[]> {
-    return this.communicationsSubject.asObservable();
+  // ==================== SMS Methods ====================
+
+  sendBulkSms(request: {
+    targetAudience: 'ALL_MEMBERS' | 'ACTIVE_MEMBERS' | 'DOUALA_ZONE' | 'YAOUNDE_ZONE' | 'OTHER_REGIONS' | 'CUSTOM';
+    specificZone?: string;
+    content: string;
+    priority: 'NORMAL' | 'HIGH' | 'URGENT';
+    scheduledAt?: Date;
+    templateId?: string;
+  }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/sms/bulk`, request).pipe(
+      catchError(this.handleError('sendBulkSms'))
+    );
   }
 
-  getCommunicationById(id: string): Observable<Communication | null> {
-    const communication = this.communications.find(c => c.id === id);
-    return of(communication || null);
+  composeBulkMessage(request: {
+    recipientAudience: string;
+    specificZone?: string;
+    messageContent: string;
+    priority: string;
+    scheduledDelivery?: Date;
+    templateId?: string;
+  }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/sms/compose`, request).pipe(
+      catchError(this.handleError('composeBulkMessage'))
+    );
   }
 
-  createCommunication(communication: Omit<Communication, 'id' | 'createdAt'>): Observable<Communication> {
-    const newCommunication: Communication = {
-      ...communication,
-      id: this.generateId(),
+  // ==================== Audio Message Methods ====================
+
+  uploadAudioMessage(formData: FormData): Observable<any> {
+    return this.http.post(`${this.apiUrl}/audio/upload`, formData).pipe(
+      catchError(this.handleError('uploadAudioMessage'))
+    );
+  }
+
+  broadcastAudioMessage(request: any, audioFileId: number): Observable<any> {
+    const params = new HttpParams().set('audioFileId', audioFileId.toString());
+    return this.http.post(`${this.apiUrl}/audio/broadcast`, request, { params }).pipe(
+      catchError(this.handleError('broadcastAudioMessage'))
+    );
+  }
+
+  getSupportedLanguages(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/audio/languages`).pipe(
+      catchError(this.handleError('getSupportedLanguages', []))
+    );
+  }
+
+  // ==================== Alert Methods ====================
+
+  createAlert(request: {
+    title: string;
+    description: string;
+    type: string;
+    priority: string;
+    targetAudience: string;
+    specificZone?: string;
+    channels: string[];
+    expiresAt?: Date;
+  }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/alerts`, request).pipe(
+      catchError(this.handleError('createAlert'))
+    );
+  }
+
+  getAlertHistory(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/alerts/history`).pipe(
+      catchError(this.handleError('getAlertHistory', []))
+    );
+  }
+
+  getAlertById(alertId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/alerts/${alertId}`).pipe(
+      catchError(this.handleError('getAlertById'))
+    );
+  }
+
+  // ==================== Resource Request Methods ====================
+
+  createResourceRequest(request: {
+    resourceName: string;
+    quantity: number;
+    unit: string;
+    urgency: 'LOW' | 'MEDIUM' | 'HIGH';
+    requestedBy: string;
+    requestedByZone?: string;
+    requiredDate?: Date;
+    notes?: string;
+    budgetAmount?: number;
+    currency?: string;
+  }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/resources/requests`, request).pipe(
+      catchError(this.handleError('createResourceRequest'))
+    );
+  }
+
+  getActiveResourceRequests(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/resources/requests`).pipe(
+      catchError(this.handleError('getActiveResourceRequests', []))
+    );
+  }
+
+  getResourceRequestById(requestId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/resources/requests/${requestId}`).pipe(
+      catchError(this.handleError('getResourceRequestById'))
+    );
+  }
+
+  matchSuppliers(requestId: string, supplierIds: number[]): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/resources/requests/${requestId}/match`, supplierIds).pipe(
+      catchError(this.handleError('matchSuppliers'))
+    );
+  }
+
+  // ==================== Template Methods ====================
+
+  createTemplate(template: {
+    name: string;
+    title: string;
+    content: string;
+    category: string;
+    language: string;
+    variables?: string[];
+  }): Observable<MessageTemplate> {
+    return this.http.post<MessageTemplate>(`${this.apiUrl}/templates`, template).pipe(
+      catchError(this.handleError('createTemplate'))
+    );
+  }
+
+  getAllTemplates(): Observable<MessageTemplate[]> {
+    return this.http.get<MessageTemplate[]>(`${this.apiUrl}/templates`).pipe(
+      catchError(this.handleError('getAllTemplates', []))
+    );
+  }
+
+  getTemplateById(id: number): Observable<MessageTemplate> {
+    return this.http.get<MessageTemplate>(`${this.apiUrl}/templates/${id}`).pipe(
+      catchError(this.handleError('getTemplateById'))
+    );
+  }
+
+  updateTemplate(id: number, template: Partial<MessageTemplate>): Observable<MessageTemplate> {
+    return this.http.put<MessageTemplate>(`${this.apiUrl}/templates/${id}`, template).pipe(
+      catchError(this.handleError('updateTemplate'))
+    );
+  }
+
+  deleteTemplate(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/templates/${id}`).pipe(
+      catchError(this.handleError('deleteTemplate'))
+    );
+  }
+
+  // ==================== Statistics Methods ====================
+
+  getStatistics(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/statistics`).pipe(
+      catchError(this.handleError('getStatistics'))
+    );
+  }
+
+  refreshStatistics(): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/statistics/refresh`, {}).pipe(
+      catchError(this.handleError('refreshStatistics'))
+    );
+  }
+
+  // ==================== Legacy Methods (for backward compatibility) ====================
+
+  // Audio Messages
+  getAudioMessages(filter?: MessageFilter): Observable<AudioMessage[]> {
+    // For now, return mock data - will be replaced with actual API call
+    return of(DEFAULT_RECENT_MESSAGES);
+  }
+
+  createAudioMessage(message: Partial<AudioMessage>): Observable<AudioMessage> {
+    // Mock implementation - will be replaced with actual API call
+    const newMessage: AudioMessage = {
+      id: Math.floor(Math.random() * 10000),
+      title: message.title || 'New Audio Message',
+      language: message.language || Language.ENGLISH,
+      duration: message.duration || '0:00',
+      listeners: 0,
+      date: new Date().toISOString().split('T')[0],
+      status: MessageStatus.SENT,
+      targetAudience: message.targetAudience || 'All Members',
+      autoPlay: message.autoPlay ?? true,
       createdAt: new Date()
     };
-    
-    this.communications.push(newCommunication);
-    this.communicationsSubject.next([...this.communications]);
-    return of(newCommunication);
+    return of(newMessage);
   }
 
-  updateCommunication(id: string, updates: Partial<Communication>): Observable<Communication> {
-    const index = this.communications.findIndex(c => c.id === id);
-    if (index !== -1) {
-      this.communications[index] = { ...this.communications[index], ...updates };
-      this.communicationsSubject.next([...this.communications]);
-      return of(this.communications[index]);
-    }
-    throw new Error('Communication not found');
+  // Templates
+  getTemplates(): Observable<MessageTemplate[]> {
+    return this.getAllTemplates();
   }
 
-  deleteCommunication(id: string): Observable<boolean> {
-    const index = this.communications.findIndex(c => c.id === id);
-    if (index !== -1) {
-      this.communications.splice(index, 1);
-      this.communicationsSubject.next([...this.communications]);
-      return of(true);
-    }
-    return of(false);
+  // Dashboard
+  getDashboardStats(): Observable<DashboardStats> {
+    return of(DEFAULT_DASHBOARD_STATS);
   }
 
-  getLanguages(): string[] {
-    return ['English', 'French', 'Pidgin', 'Local Dialect'];
+  getDashboardSummary(): Observable<DashboardSummary> {
+    const summary: DashboardSummary = {
+      totalMessages: 247,
+      totalAlerts: 23,
+      totalAudioMessages: 87,
+      totalListeners: 15420,
+      averageDeliveryRate: 94.5,
+      recentActivity: [
+        {
+          id: 1,
+          type: 'message',
+          action: 'Bulk SMS sent to farmers',
+          user: 'Admin',
+          timestamp: new Date()
+        },
+        {
+          id: 2,
+          type: 'alert',
+          action: 'Weather alert created',
+          user: 'Admin',
+          timestamp: new Date(Date.now() - 3600000)
+        }
+      ]
+    };
+    return of(summary);
+  }
+
+  // Utility methods
+  getLanguages(): Language[] {
+    return [Language.ENGLISH, Language.FRENCH, Language.FULFULDE, Language.EVONDO, Language.DUALA];
   }
 
   getCategories(): string[] {
-    return ['market_prices', 'weather_alerts', 'training', 'emergency', 'general_info', 'seasonal_alerts', 'pest_warning', 'success_story'];
+    return ['Payment', 'Meeting', 'Weather', 'General', 'Training', 'Alert', 'Resource'];
   }
 
   getRegions(): string[] {
     return ['North West', 'South West', 'Littoral', 'Centre', 'West', 'Far North'];
   }
 
-  getCrops(): string[] {
-    return ['Cocoa', 'Coffee', 'Maize', 'Plantains', 'Cotton', 'Palm Oil', 'Cassava', 'Rice'];
-  }
-
-  getBroadcastTypes(): string[] {
-    return ['mobile_app', 'sms', 'voice_call'];
-  }
-
-  private generateId(): string {
-    return Math.random().toString(36).substr(2, 9);
+  private handleError<T>(operation = 'operation', result?: T) {
+    return (error: any): Observable<T> => {
+      console.error(`${operation} failed:`, error);
+      return of(result as T);
+    };
   }
 }

@@ -1,35 +1,43 @@
-<!-- src/app/modules/cooperative/members/member-list/member-list.component.html -->
-<div class="wrapper">
-  <app-cooperative-sidebar></app-cooperative-sidebar>
-
-  <!-- Top Bar -->
-  <header class="top-bar">
-    <div class="page-title">
-      <h3>Members</h3>
-    </div>
-
-    <button *ngIf="searchQuery" class="btn-clear" (click)="searchQuery = ''; onSearchChange()">×</button>
-
-    <div class="top-bar-actions">
-      <button class="notification-btn" title="Notifications">🔔</button>
-
-      <div class="user-info" [title]="user.name">
-        <div class="avatar">{{ user.initials }}</div>
-        <div class="user-details">
-          <span class="user-name">{{ user.name }}</span>
-          <small>{{ user.role }}</small>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <main class="main-content">
-    <!-- Loading Indicator -->
+<div class="page-content">
+      <!-- Loading Indicator -->
     <div *ngIf="isLoading" class="spinner"></div>
 
     <!-- Error Message -->
     <div *ngIf="errorMessage && !isLoading" class="alert alert-error">
       {{ errorMessage }}
+    </div>
+
+    <!-- User Info Header - Top of Page -->
+    <div class="user-header-top">
+      <div class="user-info">
+        <div class="user-avatar">
+          <span class="avatar-text">{{ user.initials }}</span>
+        </div>
+        <div class="user-details">
+          <span class="user-name">{{ user.name }}</span>
+          <span class="user-role">{{ user.role }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page Header Section -->
+    <div class="page-header-section">
+      <div class="header-content">
+        <div>
+          <h2>Member Management</h2>
+          <p class="page-description">Manage cooperative members, farmers, and cooperative partners</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-outline" (click)="onExport()">
+            <span class="icon">📥</span>
+            Export
+          </button>
+          <button class="btn btn-primary" (click)="openAddMemberModal()">
+            <span class="icon">➕</span>
+            Add Member
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Cards Overview -->
@@ -244,7 +252,6 @@
         <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next →</button>
       </div>
     </section>
-  </main>
 </div>
 
 <!-- Modals -->

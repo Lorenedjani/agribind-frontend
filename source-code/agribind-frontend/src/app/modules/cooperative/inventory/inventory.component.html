@@ -1,28 +1,5 @@
-<!-- inventory.component.html - FIXED VERSION -->
-<div class="wrapper">
-  <app-cooperative-sidebar></app-cooperative-sidebar>
-
-  <!-- Top Bar -->
-  <header class="top-bar">
-    <div class="page-title">
-      <h3>Inventory Management</h3>
-    </div>
-
-    <div class="top-bar-actions">
-      <button class="notification-btn" title="Notifications">🔔</button>
-
-      <div class="user-info" title="{{ user.name }}">
-        <div class="avatar">{{ user.initials }}</div>
-        <div class="user-details">
-          <span class="user-name">{{ user.name }}</span>
-          <small>{{ user.role }}</small>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <main class="main-content">
-    <!-- LOADING INDICATOR -->
+<div class="page-content">
+      <!-- LOADING INDICATOR -->
     <div *ngIf="isLoading" class="loading-overlay">
       <div class="spinner"></div>
     </div>
@@ -34,7 +11,53 @@
       <button (click)="errorMessage = ''" class="close-error">×</button>
     </div>
 
-    <!-- Cards Overview -->
+    <!-- User Info Header - Top of Page -->
+    <div class="user-header-top">
+      <div class="user-info">
+        <div class="user-avatar">
+          <span class="avatar-text">{{ user.initials }}</span>
+        </div>
+        <div class="user-details">
+          <span class="user-name">{{ user.name }}</span>
+          <span class="user-role">{{ user.role }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page Header Section -->
+    <div class="page-header-section">
+      <div class="header-content">
+        <div>
+          <h2>Inventory Management</h2>
+          <p class="page-description">Track and manage your cooperative's inventory, stock levels, and product distribution</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-outline" (click)="exportInventory()">
+            <span class="icon">📥</span>
+            Export
+          </button>
+          <button class="btn btn-primary" (click)="addNewItem()">
+            <span class="icon">➕</span>
+            Add Item
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <button *ngFor="let btn of actionButtons"
+              class="action-btn"
+              [class.active]="btn.active"
+              (click)="onActionButtonClick(btn.name)">
+        <i [class]="btn.icon"></i>
+        <span>{{btn.name}}</span>
+      </button>
+    </div>
+
+    <!-- Inventory Section -->
+    <div *ngIf="isInventorySectionActive">
+      <!-- Cards Overview -->
     <section class="cards-overview">
       <div class="card">
         <div class="card-content">
@@ -219,7 +242,6 @@
         <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next →</button>
       </div>
     </section>
-  </main>
 </div>
 
 <!-- ADD MODAL - REACT-STYLE -->
@@ -602,3 +624,172 @@
     </div>
   </div>
 </div>
+
+    <!-- Sales & Market Section -->
+    <div *ngIf="isSalesMarketSectionActive">
+      <div class="sales-market-section">
+        <div class="section-header">
+          <i class="fas fa-shopping-cart"></i>
+          <h2>Sales & Market Management</h2>
+          <button class="btn-create-listing" (click)="openNewProductModal()">
+            <i class="fas fa-plus"></i>
+            <span>New Listing</span>
+          </button>
+        </div>
+
+        <!-- Market Prices -->
+        <div class="market-prices-card">
+          <div class="card-header">
+            <h3>Current Market Prices</h3>
+            <span class="update-time">Updated: Today</span>
+          </div>
+          <div class="market-prices-grid">
+            <div class="market-price-item" *ngFor="let price of marketPrices">
+              <div class="price-header">
+                <span class="crop-name">{{ price.crop }}</span>
+                <span class="trend-icon" [ngClass]="price.trend">
+                  {{ getTrendIcon(price.trend) }}
+                </span>
+              </div>
+              <div class="price-values">
+                <div class="price-value">
+                  <span class="label">Local:</span>
+                  <span class="amount">{{ formatCurrency(price.localPrice) }}</span>
+                </div>
+                <div class="price-value">
+                  <span class="label">Regional:</span>
+                  <span class="amount">{{ formatCurrency(price.regionalPrice) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product Listings -->
+        <div class="product-listings-card">
+          <h3>Product Listings</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Farmer</th>
+                  <th>Product</th>
+                  <th>Quantity</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let product of productListings">
+                  <td>{{ product.id }}</td>
+                  <td>{{ product.farmerName }}</td>
+                  <td>{{ product.productName }}</td>
+                  <td>{{ product.quantity }} {{ product.unit }}</td>
+                  <td>{{ formatCurrency(product.pricePerUnit) }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="getProductStatusColor(product.status)">
+                      {{ product.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="btn-action btn-view" (click)="viewProduct(product)">👁️</button>
+                      <button class="btn-action btn-edit" (click)="editProduct(product)">✏️</button>
+                      <button class="btn-action btn-delete" (click)="deleteProduct(product)">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resources Section -->
+    <div *ngIf="isResourcesSectionActive">
+      <div class="resources-section">
+        <div class="section-header">
+          <i class="fas fa-tools"></i>
+          <h2>Resource Procurement</h2>
+          <button class="btn-create-request" (click)="openNewResourceRequestModal()">
+            <i class="fas fa-plus"></i>
+            <span>New Request</span>
+          </button>
+        </div>
+
+        <!-- Resource Requests -->
+        <div class="resource-requests-card">
+          <h3>Resource Requests</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Resource</th>
+                  <th>Type</th>
+                  <th>Quantity</th>
+                  <th>Urgency</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let request of resourceRequests">
+                  <td>{{ request.id }}</td>
+                  <td>{{ request.resourceName }}</td>
+                  <td>{{ request.resourceType }}</td>
+                  <td>{{ request.quantity }} {{ request.unit }}</td>
+                  <td>
+                    <span class="urgency-badge" [ngClass]="getUrgencyColor(request.urgency)">
+                      {{ request.urgency }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="getRequestStatusColor(request.status)">
+                      {{ request.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="btn-action btn-view" (click)="viewResourceRequest(request)">👁️</button>
+                      <button class="btn-action btn-edit" (click)="editResourceRequest(request)">✏️</button>
+                      <button class="btn-action btn-delete" (click)="deleteResourceRequest(request)">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Suppliers Directory -->
+        <div class="suppliers-card">
+          <div class="card-header">
+            <h3>Available Suppliers</h3>
+            <button class="btn-view-all">View All</button>
+          </div>
+          <div class="suppliers-grid">
+            <div class="supplier-card" *ngFor="let supplier of suppliers">
+              <div class="supplier-header">
+                <h4>{{ supplier.name }}</h4>
+                <div class="rating">
+                  <span class="stars">⭐</span>
+                  <span>{{ supplier.rating }}</span>
+                </div>
+              </div>
+              <p class="supplier-location">{{ supplier.location }}</p>
+              <div class="supplier-specialties">
+                <span *ngFor="let specialty of supplier.specialties" class="specialty-tag">
+                  {{ specialty }}
+                </span>
+              </div>
+              <button class="btn-contact">Contact</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

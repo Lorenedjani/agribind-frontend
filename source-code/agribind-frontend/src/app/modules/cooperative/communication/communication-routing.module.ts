@@ -3,10 +3,12 @@ import { RouterModule, Routes } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+import { CommunicationDashboardComponent } from './communication-dashboard/communication-dashboard.component';
+
 const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./communication-dashboard/communication-dashboard.component').then(c => c.CommunicationDashboardComponent)
+    component: CommunicationDashboardComponent
   },
   {
     path: 'dashboard',
@@ -16,6 +18,9 @@ const routes: Routes = [
 ];
 
 @NgModule({
+  declarations: [
+    CommunicationDashboardComponent
+  ],
   imports: [
     CommonModule,
     FormsModule,

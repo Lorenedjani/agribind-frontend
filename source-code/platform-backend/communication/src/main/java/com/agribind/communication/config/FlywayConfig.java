@@ -1,7 +1,7 @@
 // src/main/java/com/agribind/communication/config/FlywayConfig.java
 package com.agribind.communication.config;
 
-import org.flywaydb.core.Flyway;
+//import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;

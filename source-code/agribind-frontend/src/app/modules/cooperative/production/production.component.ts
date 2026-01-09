@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ViewEncapsulation } from '@angular/core';
-import { CooperativeSidebarComponent } from "../../../../shared/cooperative-sidebar/cooperative-sidebar.component";
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { MockProductionService, ExtendedProductionRecord } from '../../../core/services/production.service.mock';
@@ -45,10 +44,33 @@ interface PriceConfig {
   };
 }
 
+interface ProductListing {
+  id: string;
+  farmerName: string;
+  productName: string;
+  cropType: string;
+  quantity: number;
+  unit: string;
+  pricePerUnit: number;
+  status: 'listed' | 'sold' | 'pending' | 'cancelled';
+  listingDate: string;
+  buyerName?: string;
+  saleDate?: string;
+  commission: number;
+}
+
+interface MarketPrice {
+  crop: string;
+  localPrice: number;
+  regionalPrice: number;
+  trend: 'up' | 'down' | 'stable';
+  lastUpdated: string;
+}
+
 @Component({
   selector: 'app-production',
   standalone: true,
-  imports: [CommonModule, FormsModule, CooperativeSidebarComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './production.component.html',
   encapsulation: ViewEncapsulation.None,
   styleUrls: ['./production.component.scss']
@@ -61,6 +83,110 @@ export class ProductionComponent implements OnInit {
     initials: '',
     cooperativeId: ''
   };
+
+  // Action buttons for different sections
+  actionButtons = [
+    {
+      name: 'Production',
+      icon: 'fas fa-tractor',
+      active: true
+    },
+    {
+      name: 'Sales & Market',
+      icon: 'fas fa-shopping-cart',
+      active: false
+    }
+  ];
+
+  // Sales & Market Data
+  marketPrices: MarketPrice[] = [
+    {
+      crop: 'Cocoa',
+      localPrice: 1200000,
+      regionalPrice: 1150000,
+      trend: 'up',
+      lastUpdated: '2025-01-15'
+    },
+    {
+      crop: 'Coffee',
+      localPrice: 900000,
+      regionalPrice: 950000,
+      trend: 'stable',
+      lastUpdated: '2025-01-15'
+    },
+    {
+      crop: 'Palm Oil',
+      localPrice: 800000,
+      regionalPrice: 850000,
+      trend: 'down',
+      lastUpdated: '2025-01-15'
+    },
+    {
+      crop: 'Cassava',
+      localPrice: 150000,
+      regionalPrice: 145000,
+      trend: 'up',
+      lastUpdated: '2025-01-15'
+    }
+  ];
+
+  productListings: ProductListing[] = [
+    {
+      id: 'PROD-001',
+      farmerName: 'Jean Baptiste',
+      productName: 'Cocoa - Grade A',
+      cropType: 'Cocoa',
+      quantity: 2.5,
+      unit: 'MT',
+      pricePerUnit: 1200000,
+      status: 'listed',
+      listingDate: '2025-01-10',
+      commission: 150000
+    },
+    {
+      id: 'PROD-002',
+      farmerName: 'Marie Kouam',
+      productName: 'Coffee - Grade B',
+      cropType: 'Coffee',
+      quantity: 1.8,
+      unit: 'MT',
+      pricePerUnit: 900000,
+      status: 'sold',
+      listingDate: '2025-01-08',
+      buyerName: 'ABC Trading Co.',
+      saleDate: '2025-01-12',
+      commission: 81000
+    },
+    {
+      id: 'PROD-003',
+      farmerName: 'Paul Mbarga',
+      productName: 'Palm Oil',
+      cropType: 'Palm Oil',
+      quantity: 3.2,
+      unit: 'MT',
+      pricePerUnit: 800000,
+      status: 'pending',
+      listingDate: '2025-01-14',
+      commission: 128000
+    }
+  ];
+
+  // Modal states for sales
+  showNewProductModal = false;
+  showViewProductModal = false;
+  showEditProductModal = false;
+  selectedProduct: ProductListing | null = null;
+
+  // Section state getters
+  get isProductionSectionActive(): boolean {
+    const productionBtn = this.actionButtons.find(btn => btn.name === 'Production');
+    return productionBtn ? productionBtn.active : false;
+  }
+
+  get isSalesMarketSectionActive(): boolean {
+    const salesBtn = this.actionButtons.find(btn => btn.name === 'Sales & Market');
+    return salesBtn ? salesBtn.active : false;
+  }
 
   // Dashboard metrics
   totalProduction = '0 MT';
@@ -258,6 +384,15 @@ export class ProductionComponent implements OnInit {
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+  }
+
+  // Handle action button clicks
+  onActionButtonClick(buttonName: string): void {
+    this.actionButtons.forEach(btn => btn.active = false);
+    const clickedButton = this.actionButtons.find(btn => btn.name === buttonName);
+    if (clickedButton) {
+      clickedButton.active = true;
+    }
   }
 
   // Calculate price based on crop type, grade, and quantity
@@ -864,5 +999,65 @@ export class ProductionComponent implements OnInit {
         alert('Failed to delete production: ' + (error.message || 'Please try again.'));
       }
     });
+  }
+
+  exportProduction(): void {
+    console.log('Export production data');
+    // TODO: Implement export functionality
+    alert('Export functionality will be implemented soon');
+  }
+
+  addNewProduction(): void {
+    console.log('Add new production');
+    this.onRecordProduction();
+  }
+
+  // ==================== SALES & MARKET METHODS ====================
+
+  openNewProductModal(): void {
+    // Implementation for opening new product listing modal
+    alert('New Product Listing modal would open here');
+  }
+
+  viewProduct(product: ProductListing): void {
+    this.selectedProduct = product;
+    this.showViewProductModal = true;
+  }
+
+  editProduct(product: ProductListing): void {
+    this.selectedProduct = product;
+    this.showEditProductModal = true;
+  }
+
+  deleteProduct(product: ProductListing): void {
+    if (confirm(`Are you sure you want to delete the listing for ${product.productName}?`)) {
+      const index = this.productListings.findIndex(p => p.id === product.id);
+      if (index > -1) {
+        this.productListings.splice(index, 1);
+        alert('Product listing deleted successfully!');
+      }
+    }
+  }
+
+  getProductStatusColor(status: string): string {
+    switch (status) {
+      case 'sold': return 'status-success';
+      case 'listed': return 'status-primary';
+      case 'pending': return 'status-warning';
+      case 'cancelled': return 'status-danger';
+      default: return 'status-default';
+    }
+  }
+
+  getTrendIcon(trend: string): string {
+    switch (trend) {
+      case 'up': return '↗️';
+      case 'down': return '↘️';
+      default: return '→';
+    }
+  }
+
+  formatCurrency(amount: number): string {
+    return amount.toLocaleString('fr-FR') + ' XAF';
   }
 }

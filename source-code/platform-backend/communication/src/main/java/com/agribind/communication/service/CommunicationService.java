@@ -299,6 +299,20 @@ public class CommunicationService {
             .collect(Collectors.toList());
     }
 
+    @Transactional
+    public boolean matchSuppliers(String requestId, List<Long> supplierIds) {
+        return resourceRequestRepository.findByRequestId(requestId)
+                .map(request -> {
+                    // Here you would implement supplier matching logic
+                    // For now, just update the suppliers matched count
+                    request.setSuppliersMatched(supplierIds.size());
+                    resourceRequestRepository.save(request);
+                    log.info("Matched {} suppliers for request {}", supplierIds.size(), requestId);
+                    return true;
+                })
+                .orElse(false);
+    }
+
     // ==================== Template Operations ====================
 
     @Transactional
@@ -318,6 +332,39 @@ public class CommunicationService {
             .stream()
             .map(this::mapToTemplateDto)
             .collect(Collectors.toList());
+    }
+
+    public MessageTemplateDto getTemplateById(Long id) {
+        return messageTemplateRepository.findById(id)
+                .map(this::mapToTemplateDto)
+                .orElse(null);
+    }
+
+    public MessageTemplateDto updateTemplate(Long id, MessageTemplateDto templateDto) {
+        return messageTemplateRepository.findById(id)
+                .map(template -> {
+                    template.setName(templateDto.getName());
+                    template.setContent(templateDto.getContent());
+                    template.setVariables(templateDto.getVariables() != null ? templateDto.getVariables() : List.of());
+                    template.setUpdatedAt(LocalDateTime.now());
+                    template = messageTemplateRepository.save(template);
+                    return mapToTemplateDto(template);
+                })
+                .orElse(null);
+    }
+
+    public boolean deleteTemplate(Long id) {
+        if (messageTemplateRepository.existsById(id)) {
+            messageTemplateRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    public AlertResponse getAlertById(String alertId) {
+        return alertRepository.findByAlertId(alertId)
+                .map(this::mapToAlertResponse)
+                .orElse(null);
     }
 
     private String applyTemplate(Long templateId, String content) {
