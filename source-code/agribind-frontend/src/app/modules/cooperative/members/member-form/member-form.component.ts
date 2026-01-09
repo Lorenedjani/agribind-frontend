@@ -24,6 +24,7 @@ export interface NewMember {
   village?: string;
   gpsCoordinates?: string;
   preferredLanguage: string;
+  notes?: string;
   agriculturalType?: string;
   cropTypes?: string[];
   landArea?: number;
@@ -433,14 +434,21 @@ export class MemberFormComponent implements OnInit, AfterViewInit, OnDestroy {
         preferredLanguage: formData.preferredLanguage
       };
 
-      if (formData.type === 'FARMER' && formData.farmGpsCoordinates) {
-        newMember.gpsCoordinates = formData.farmGpsCoordinates;
-      }
-
       if (formData.type === 'FARMER') {
         newMember.agriculturalType = formData.agriculturalType;
         newMember.cropTypes = formData.cropTypes || [];
         newMember.landArea = formData.landArea;
+
+        // Handle GPS coordinates
+        if (formData.farmGpsCoordinates) {
+          newMember.gpsCoordinates = formData.farmGpsCoordinates.trim();
+        }
+
+        // Handle farm location search
+        if (formData.farmLocationSearch) {
+          // Store farm location as additional notes or metadata
+          newMember.notes = (newMember.notes || '') + `\nFarm Location: ${formData.farmLocationSearch.trim()}`;
+        }
       } else if (formData.type === 'COOPERATIVE') {
         newMember.cooperativeType = formData.cooperativeType;
         newMember.legalRegistrationNumber = formData.legalRegistrationNumber;

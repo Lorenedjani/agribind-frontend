@@ -15,8 +15,8 @@ public class ProductionAggregate {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "cooperative_id", nullable = false)
-    private Long cooperativeId;
+    @Column(name = "cooperative_id", nullable = false, length = 20)
+    private String cooperativeId;  // Changed from Long to String
 
     @Column(name = "product_name", nullable = false)
     private String productName;
@@ -46,4 +46,3 @@ public class ProductionAggregate {
         lastUpdated = LocalDateTime.now();
     }
 }
-

@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "CommunicationApplication",
+            "request": "launch",
+            "mainClass": "com.agribind.communication.CommunicationApplication",
+            "projectName": "communication"
+        },
+        {
+            "type": "java",
             "name": "UserManagementServiceApplication",
             "request": "launch",
             "mainClass": "cm.agribind.usermanagement.UserManagementServiceApplication",

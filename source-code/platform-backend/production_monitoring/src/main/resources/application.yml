@@ -4,24 +4,29 @@ spring:
     name: production-monitoring-service
 
   datasource:
+<<<<<<< HEAD
     url: jdbc:mysql://localhost:3307/agri_production_dbmysql://root:gOpBKAtqaFyXJtxIwqJXqmDnbIahZgFo@shuttle.proxy.rlwy.net:38695/railway?createDatabaseIfNotExist=true
+=======
+    url: jdbc:mysql://localhost:3307/agri_production_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+>>>>>>> e5d3c9b455daadf9a49a3e40cd8bda3f862c66a0
     username: root
     password: gOpBKAtqaFyXJtxIwqJXqmDnbIahZgFo
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      leak-detection-threshold: 60000
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
         use_sql_comments: true
         jdbc:
@@ -29,32 +34,32 @@ spring:
         order_inserts: true
         order_updates: true
 
-  # Redis Configuration (for caching)
-  redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
-    password: ${REDIS_PASSWORD:}
-    timeout: 60000
-    jedis:
-      pool:
-        max-active: 8
-        max-idle: 8
-        min-idle: 0
+  # Redis Configuration (for caching) - Disabled for basic startup
+  # redis:
+  #   host: ${REDIS_HOST:localhost}
+  #   port: ${REDIS_PORT:6379}
+  #   password: ${REDIS_PASSWORD:}
+  #   timeout: 60000
+  #   jedis:
+  #     pool:
+  #       max-active: 8
+  #       max-idle: 8
+  #       min-idle: 0
 
-  # RabbitMQ Configuration (for event messaging)
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
-    listener:
-      simple:
-        acknowledge-mode: auto
-        concurrency: 5
-        max-concurrency: 10
+  # RabbitMQ Configuration (for event messaging) - Disabled for basic startup
+  # rabbitmq:
+  #   host: ${RABBITMQ_HOST:localhost}
+  #   port: ${RABBITMQ_PORT:5672}
+  #   username: ${RABBITMQ_USERNAME:guest}
+  #   password: ${RABBITMQ_PASSWORD:guest}
+  #   listener:
+  #     simple:
+  #       acknowledge-mode: auto
+  #       concurrency: 5
+  #       max-concurrency: 10
 
-  config:
-    import: optional:configserver:http://localhost:8888
+  # config:
+  #   import: optional:configserver:http://localhost:8888
 
 # Server Configuration
 server:
@@ -108,18 +113,18 @@ app:
       secret: ${JWT_SECRET:your-secret-key-change-in-production}
       expiration: 86400000  # 24 hours
 
-# RabbitMQ Queue Configuration
-rabbitmq:
-  queues:
-    production-recorded: production.recorded.queue
-    maturity-updated: production.maturity.updated.queue
-    aggregate-updated: production.aggregate.updated.queue
-  exchanges:
-    production: production.exchange
-  routing-keys:
-    production-recorded: production.recorded
-    maturity-updated: production.maturity.updated
-    aggregate-updated: production.aggregate.updated
+# RabbitMQ Queue Configuration - Disabled for basic startup
+# rabbitmq:
+#   queues:
+#     production-recorded: production.recorded.queue
+#     maturity-updated: production.maturity.updated.queue
+#     aggregate-updated: production.aggregate.updated.queue
+#   exchanges:
+#     production: production.exchange
+#   routing-keys:
+#     production-recorded: production.recorded
+#     maturity-updated: production.maturity.updated
+#     aggregate-updated: production.aggregate.updated
 
 ---
 # Development Profile
@@ -155,9 +160,9 @@ logging:
     root: WARN
     com.agriplatform.production: INFO
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
+# eureka:
+#   client:
+#     service-url:
+#       defaultZone: http://localhost:8761/eureka/
 
 

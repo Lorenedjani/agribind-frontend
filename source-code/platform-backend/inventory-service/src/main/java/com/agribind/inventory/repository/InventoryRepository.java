@@ -30,7 +30,7 @@ public interface InventoryRepository extends JpaRepository<InventoryItem, String
     @Query("SELECT SUM(i.valueXAF) FROM InventoryItem i")
     BigDecimal getTotalInventoryValue();
 
-    @Query("SELECT COUNT(i) FROM InventoryItem i WHERE i.status = 'LOW_STOCK' OR i.status = 'CRITICAL'")
+    @Query("SELECT COUNT(i) FROM InventoryItem i WHERE i.status = 'CRITICAL'")
     Long countCriticalStockItems();
 
     @Query("SELECT COUNT(i) FROM InventoryItem i WHERE TYPE(i) = InputSupply")

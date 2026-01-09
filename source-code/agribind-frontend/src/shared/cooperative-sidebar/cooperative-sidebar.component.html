@@ -53,7 +53,7 @@
       <span>Inventory</span>
     </a>
 
-    <a class="nav-item" routerLink="/cooperative/microcredits" routerLinkActive="active">
+    <a class="nav-item" (click)="onNavigate('/cooperative/microcredit')" [class.active]="router.url === '/cooperative/microcredit'">
       <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
         <polyline points="14 2 14 8 20 8"/>
@@ -63,7 +63,7 @@
       <span>Microcredits</span>
     </a>
 
-    <a class="nav-item" routerLink="/cooperative/contracts" routerLinkActive="active">
+    <a class="nav-item" (click)="onNavigate('/cooperative/contracts')" [class.active]="router.url === '/cooperative/contracts'">
       <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
         <polyline points="14 2 14 8 20 8"/>
@@ -72,7 +72,7 @@
       <span>Contracts</span>
     </a>
 
-    <a class="nav-item" routerLink="/cooperative/transactions" routerLinkActive="active">
+    <a class="nav-item" (click)="onNavigate('/cooperative/transactions')" [class.active]="router.url === '/cooperative/transactions'">
       <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
         <line x1="1" y1="10" x2="23" y2="10"/>
@@ -80,14 +80,14 @@
       <span>Transactions</span>
     </a>
 
-    <a class="nav-item" routerLink="/cooperative/communications" routerLinkActive="active">
+    <a class="nav-item" (click)="onNavigate('/cooperative/communication')" [class.active]="router.url === '/cooperative/communication'">
       <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
       <span>Communications</span>
     </a>
 
-    <a class="nav-item" routerLink="/cooperative/plant-health" routerLinkActive="active">
+    <a class="nav-item" (click)="onNavigate('/cooperative/plant-health')" [class.active]="router.url === '/cooperative/plant-health'">
       <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
         <line x1="12" y1="9" x2="12" y2="13"/>

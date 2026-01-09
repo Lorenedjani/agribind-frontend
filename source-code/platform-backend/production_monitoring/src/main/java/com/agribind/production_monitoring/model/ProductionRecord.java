@@ -1,7 +1,6 @@
 // ProductionRecord.java - Plain Java version
 package com.agribind.production_monitoring.model;
 
-import com.agribind.production_monitoring.model.ProductType;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -16,11 +15,11 @@ public class ProductionRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "farmer_id", nullable = false)
-    private Long farmerId;
+    @Column(name = "farmer_id", nullable = false, length = 20)
+    private String farmerId; // Store String userId (e.g., "F51070")
 
-    @Column(name = "cooperative_id", nullable = false)
-    private Long cooperativeId;
+    @Column(name = "cooperative_id", nullable = false, length = 20)
+    private String cooperativeId; // Store String userId (e.g., "C41069")
 
     @Enumerated(EnumType.STRING)
     @Column(name = "product_type", nullable = false)
@@ -87,19 +86,19 @@ public class ProductionRecord {
         this.id = id;
     }
 
-    public Long getFarmerId() {
+    public String getFarmerId() {
         return farmerId;
     }
 
-    public void setFarmerId(Long farmerId) {
+    public void setFarmerId(String farmerId) {
         this.farmerId = farmerId;
     }
 
-    public Long getCooperativeId() {
+    public String getCooperativeId() {
         return cooperativeId;
     }
 
-    public void setCooperativeId(Long cooperativeId) {
+    public void setCooperativeId(String cooperativeId) {
         this.cooperativeId = cooperativeId;
     }
 

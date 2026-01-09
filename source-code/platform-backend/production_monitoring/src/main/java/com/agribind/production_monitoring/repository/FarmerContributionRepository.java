@@ -15,32 +15,32 @@ import java.util.Optional;
 public interface FarmerContributionRepository extends JpaRepository<FarmerContribution, Long> {
 
     Optional<FarmerContribution> findByFarmerIdAndCooperativeIdAndProductNameAndProductType(
-            Long farmerId,
-            Long cooperativeId,
+            String farmerId,  // Changed from Long
+            String cooperativeId,  // Changed from Long
             String productName,
             ProductType productType
     );
 
     List<FarmerContribution> findByCooperativeIdAndProductName(
-            Long cooperativeId,
+            String cooperativeId,  // Changed from Long
             String productName
     );
 
     @Query("SELECT fc FROM FarmerContribution fc " +
-           "WHERE fc.cooperativeId = :cooperativeId AND fc.productName = :productName " +
-           "ORDER BY fc.quantityContributed DESC")
+            "WHERE fc.cooperativeId = :cooperativeId AND fc.productName = :productName " +
+            "ORDER BY fc.quantityContributed DESC")
     List<FarmerContribution> findTopContributors(
-            @Param("cooperativeId") Long cooperativeId,
+            @Param("cooperativeId") String cooperativeId,  // Changed from Long
             @Param("productName") String productName,
             Pageable pageable
     );
 
     @Query("SELECT COUNT(DISTINCT fc.farmerId) FROM FarmerContribution fc " +
-           "WHERE fc.cooperativeId = :cooperativeId AND fc.productName = :productName")
+            "WHERE fc.cooperativeId = :cooperativeId AND fc.productName = :productName")
     Integer countDistinctFarmers(
-            @Param("cooperativeId") Long cooperativeId,
+            @Param("cooperativeId") String cooperativeId,  // Changed from Long
             @Param("productName") String productName
     );
 
-    List<FarmerContribution> findByFarmerId(Long farmerId);
+    List<FarmerContribution> findByFarmerId(String farmerId);  // Changed from Long
 }

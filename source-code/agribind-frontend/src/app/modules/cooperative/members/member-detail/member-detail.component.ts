@@ -1,5 +1,8 @@
-import { Component, EventEmitter, Output, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Output, Input, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { UserService } from '../../../../core/services/user.service';
+import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 export interface Member {
   id: string;
@@ -16,6 +19,15 @@ export interface Member {
   lastProduction?: string;
   creditStatus?: string;
   farmLocation?: string;
+  registrationNumber?: string;
+  gpsCoordinates?: string;
+  department?: string;
+  district?: string;
+  village?: string;
+  agriculturalType?: string;
+  cropTypes?: string[];
+  landArea?: number;
+  farmerDetails?: any;
 }
 
 @Component({
@@ -30,16 +42,66 @@ export class MemberDetailComponent implements OnInit {
   @Input() member: Member | null = null;
 
   isModalOpen = false;
+  isLoading = false;
+  fullMemberData: any = null;
+  private destroy$ = new Subject<void>();
+
+  constructor(private userService: UserService) {}
 
   ngOnInit(): void {
     console.log('MemberDetailComponent initialized');
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   openModal(member: Member): void {
     console.log('Opening member detail modal for:', member);
     this.member = member;
     this.isModalOpen = true;
+    this.isLoading = true;
     document.body.style.overflow = 'hidden';
+
+    // Fetch full user data from backend
+    if (member.id) {
+      this.userService.getUserById(member.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (userData: any) => {
+            console.log('✅ Full user data loaded:', userData);
+            this.fullMemberData = userData;
+            this.isLoading = false;
+            
+            // Update member with full data
+            this.member = {
+              ...this.member!,
+              registrationNumber: userData.registrationNumber,
+              email: userData.email,
+              gpsCoordinates: userData.gpsCoordinates || userData.address?.gpsCoordinates,
+              department: userData.department || userData.address?.department,
+              district: userData.district || userData.address?.district,
+              village: userData.village || userData.address?.village,
+              address: userData.fullAddress || userData.address?.getFullAddress?.() || 
+                       `${userData.village || ''}, ${userData.district || ''}, ${userData.department || ''}, ${userData.region || ''}`.trim(),
+              farmLocation: userData.gpsCoordinates || userData.address?.gpsCoordinates || 'Not specified',
+              agriculturalType: userData.farmerDetails?.agriculturalType,
+              cropTypes: userData.farmerDetails?.cropTypes || [],
+              landArea: userData.farmerDetails?.totalLandArea,
+              farmSize: userData.farmerDetails?.totalLandArea ? `${userData.farmerDetails.totalLandArea} ha` : undefined,
+              joinDate: userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : undefined,
+              farmerDetails: userData.farmerDetails
+            };
+          },
+          error: (error) => {
+            console.error('❌ Error loading full user data:', error);
+            this.isLoading = false;
+          }
+        });
+    } else {
+      this.isLoading = false;
+    }
   }
 
   closeModal(): void {
@@ -81,6 +143,8 @@ export class MemberDetailComponent implements OnInit {
   }
 
   hasAdditionalInfo(): boolean {
-    return !!(this.member?.farmSize || this.member?.lastProduction || this.member?.creditStatus);
+    if (!this.member) return false;
+    return !!(this.member.farmSize || this.member.landArea || this.member.lastProduction ||
+              this.member.creditStatus || this.member.registrationNumber || this.member.gpsCoordinates);
   }
 }

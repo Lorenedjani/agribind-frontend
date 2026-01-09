@@ -22,7 +22,7 @@ public class UserResponse {
     private String registrationNumber;
 
     // Address information
-    private Region region;
+    private String region;
     private String department;
     private String district;
     private String village;

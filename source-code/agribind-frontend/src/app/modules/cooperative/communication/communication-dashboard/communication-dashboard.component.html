@@ -1,0 +1,1654 @@
+<div class="communications-center">
+  <!-- Header -->
+  <div class="header">
+    <div class="title-section">
+      <h1 class="title">Communications Center</h1>
+      <p class="subtitle">Multi-channel messaging, alerts, and resource request management</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="filterHistory()">
+        <i class="fas fa-filter"></i>
+        <span>Filter History</span>
+      </button>
+      <button class="btn-secondary" (click)="exportData()">
+        <i class="fas fa-download"></i>
+        <span>Export</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Metrics Container -->
+  <div class="metrics-container">
+    <!-- First Row -->
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-content">
+          <span class="metric-label">Total Messages Sent</span>
+          <div class="metric-value">{{dashboardMetrics.totalMessages.value}}</div>
+          <span class="metric-change positive">{{dashboardMetrics.totalMessages.change}}</span>
+        </div>
+        <div class="metric-badge green">
+          <i class="fas fa-comment"></i>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-content">
+          <span class="metric-label">Audio Messages</span>
+          <div class="metric-value">{{dashboardMetrics.audioMessages.value}}</div>
+          <span class="metric-info">{{dashboardMetrics.audioMessages.info}}</span>
+        </div>
+        <div class="metric-badge yellow">
+          <i class="fas fa-microphone"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Second Row -->
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-content">
+          <span class="metric-label">Active Alerts</span>
+          <div class="metric-value">{{dashboardMetrics.activeAlerts.value}}</div>
+          <span class="metric-status critical">{{dashboardMetrics.activeAlerts.status}}</span>
+        </div>
+        <div class="metric-badge orange">
+          <i class="fas fa-bell"></i>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-content">
+          <span class="metric-label">Delivery Rate</span>
+          <div class="metric-value">{{dashboardMetrics.deliveryRate.value}}</div>
+          <span class="metric-change positive">{{dashboardMetrics.deliveryRate.change}}</span>
+        </div>
+        <div class="metric-badge green-check">
+          <i class="fas fa-check"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <button *ngFor="let btn of actionButtons" 
+            class="action-btn" 
+            [class.active]="btn.active"
+            (click)="onActionButtonClick(btn.name)">
+      <i [class]="btn.icon"></i>
+      <span>{{btn.name}}</span>
+    </button>
+  </div>
+
+  <!-- ==================== RESOURCE REQUEST SECTION ==================== -->
+  <div class="resource-section" *ngIf="isResourceSectionActive">
+    <!-- Section Header -->
+    <div class="section-header">
+      <div class="section-title">
+        <i class="fas fa-boxes"></i>
+        <h2>Resource Request System</h2>
+        <p>Publish resource needs, connect with suppliers, and coordinate bulk purchasing</p>
+      </div>
+      <button class="btn-create-request" (click)="openResourceModal()">
+        <i class="fas fa-plus"></i>
+        <span>Create Resource Request</span>
+      </button>
+    </div>
+
+    
+
+    <!-- Active Resource Requests -->
+    <div class="resource-table-container">
+      <div class="table-header-section">
+        <h3 class="table-title">
+          <i class="fas fa-clipboard-list"></i>
+          <span>Active Resource Requests</span>
+        </h3>
+        <div class="table-actions">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search requests..." [(ngModel)]="resourceSearchQuery" (input)="onResourceSearch()">
+          </div>
+          <button class="btn-filter" (click)="openResourceFilter()">
+            <i class="fas fa-filter"></i>
+            <span>Filter</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="resource-table">
+        <!-- Table Header -->
+        <div class="table-header">
+          <div class="header-row">
+            <div class="header-cell">Request ID</div>
+            <div class="header-cell">Resource</div>
+            <div class="header-cell">Quantity</div>
+            <div class="header-cell">Urgency</div>
+            <div class="header-cell">Requested By</div>
+            <div class="header-cell">Suppliers Matched</div>
+            <div class="header-cell">Date</div>
+            <div class="header-cell">Status</div>
+            <div class="header-cell actions-header">Actions</div>
+          </div>
+        </div>
+
+        <!-- Table Body -->
+        <div class="table-body">
+        
+
+          <!-- More dynamic rows -->
+          <div *ngFor="let request of filteredResourceRequests" class="data-row">
+            <div class="data-cell">
+              <span class="request-id">{{request.id}}</span>
+            </div>
+            <div class="data-cell">
+              <div class="resource-info">
+                <i [class]="getResourceIcon(request.type)"></i>
+                <span class="resource-name">{{request.resource}}</span>
+              </div>
+            </div>
+            <div class="data-cell">
+              <span class="quantity">{{request.quantity}}</span>
+            </div>
+            <div class="data-cell">
+              <span class="urgency-badge" [ngClass]="request.urgency.toLowerCase()">{{request.urgency}}</span>
+            </div>
+            <div class="data-cell">
+              <span class="requester">{{request.requestedBy}}</span>
+            </div>
+            <div class="data-cell">
+              <div class="suppliers-info">
+                <i class="fas fa-users"></i>
+                <span class="suppliers-count">{{request.suppliersMatched}} suppliers</span>
+              </div>
+            </div>
+            <div class="data-cell">
+              <span class="date">{{request.date}}</span>
+            </div>
+            <div class="data-cell">
+              <span class="status-badge" [ngClass]="getStatusClass(request.status)">{{request.status}}</span>
+            </div>
+            <div class="data-cell actions-cell">
+              <div class="action-buttons">
+                <button class="action-btn view-btn" (click)="viewRequest(request.id)" title="View Details">
+                  <i class="fas fa-eye"></i>
+                  <span>View</span>
+                </button>
+                <button class="action-btn match-btn" (click)="matchSuppliers(request.id)" title="Match Suppliers">
+                  <i class="fas fa-handshake"></i>
+                  <span>Match</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="filteredResourceRequests.length === 0" class="empty-state">
+            <i class="fas fa-box-open"></i>
+            <h3>No active resource requests</h3>
+            <p>Create your first resource request to get started</p>
+            <button class="btn-create-first" (click)="openResourceModal()">
+              <i class="fas fa-plus"></i>
+              <span>Create First Request</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="table-pagination" *ngIf="filteredResourceRequests.length > 0">
+        <div class="pagination-info">
+          Showing {{getPaginationInfo()}} of {{filteredResourceRequests.length}} requests
+        </div>
+        <div class="pagination-controls">
+          <button class="pagination-btn" [disabled]="currentPage === 1" (click)="previousPage()">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <span class="page-numbers">Page {{currentPage}} of {{totalPages}}</span>
+          <button class="pagination-btn" [disabled]="currentPage === totalPages" (click)="nextPage()">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ==================== END RESOURCE REQUEST SECTION ==================== -->
+
+  
+
+  <!-- Audio Section -->
+  <div class="audio-section" *ngIf="isAudioSectionActive">
+    <!-- ... (existing audio section content remains the same) ... -->
+  </div>
+
+  <!-- Alerts Section -->
+  <div class="alerts-section" *ngIf="isAlertsSectionActive">
+    <!-- ... (existing alerts section content remains the same) ... -->
+  </div>
+
+  <!-- Compose Section (Bulk SMS) -->
+  <div class="compose-section" *ngIf="isComposeSectionActive">
+    <!-- ... (existing compose section content remains the same) ... -->
+  </div>
+
+  <!-- Create Alert Modal -->
+  <div class="modal-overlay" *ngIf="showAlertModal" (click)="closeAlertModal()">
+    <!-- ... (existing alert modal content remains the same) ... -->
+  </div>
+
+  <!-- Audio Recording Modal -->
+  <div class="modal-overlay" *ngIf="showAudioModal" (click)="closeAudioModal()">
+    <!-- ... (existing audio modal content remains the same) ... -->
+  </div>
+
+  <!-- SMS Send Modal -->
+  <div class="modal-overlay" *ngIf="showSmsModal" (click)="closeSmsModal()">
+    <!-- ... (existing SMS modal content remains the same) ... -->
+  </div>
+
+  <!-- Resource Request Modal -->
+  <div class="modal-overlay" *ngIf="showResourceModal" (click)="closeResourceModal()">
+    <div class="modal-content resource-modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-section">
+          <h2 class="modal-title">
+            <i class="fas fa-boxes"></i>
+            Create Resource Request
+          </h2>
+          <p class="modal-subtitle">Request resources and connect with verified suppliers</p>
+        </div>
+        <button class="modal-close" (click)="closeResourceModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <!-- Resource Type -->
+        <div class="modal-form-section">
+          <label class="form-label">Resource Type</label>
+          <div class="type-selection">
+            <div class="type-options">
+              <div class="type-option" 
+                   [class.active]="newRequest.type === 'fertilizer'"
+                   (click)="newRequest.type = 'fertilizer'">
+                <i class="fas fa-seedling"></i>
+                <span>Fertilizer</span>
+              </div>
+              <div class="type-option" 
+                   [class.active]="newRequest.type === 'seeds'"
+                   (click)="newRequest.type = 'seeds'">
+                <i class="fas fa-leaf"></i>
+                <span>Seeds</span>
+              </div>
+              <div class="type-option" 
+                   [class.active]="newRequest.type === 'equipment'"
+                   (click)="newRequest.type = 'equipment'">
+                <i class="fas fa-tractor"></i>
+                <span>Equipment</span>
+              </div>
+              <div class="type-option" 
+                   [class.active]="newRequest.type === 'chemicals'"
+                   (click)="newRequest.type = 'chemicals'">
+                <i class="fas fa-flask"></i>
+                <span>Chemicals</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Resource Details -->
+        <div class="modal-form-section">
+          <label class="form-label">Resource Name</label>
+          <input 
+            type="text" 
+            class="form-input" 
+            placeholder="e.g., NPK Fertilizer, Maize Seeds"
+            [(ngModel)]="newRequest.resourceName"
+            maxlength="100">
+        </div>
+        
+        <div class="modal-form-section grid-2">
+          <div>
+            <label class="form-label">Quantity</label>
+            <input 
+              type="text" 
+              class="form-input" 
+              placeholder="e.g., 500"
+              [(ngModel)]="newRequest.quantity">
+          </div>
+          <div>
+            <label class="form-label">Unit</label>
+            <select class="form-select" [(ngModel)]="newRequest.unit">
+              <option value="bags">Bags</option>
+              <option value="kg">Kilograms</option>
+              <option value="liters">Liters</option>
+              <option value="units">Units</option>
+              <option value="packets">Packets</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Urgency Level -->
+        <div class="modal-form-section">
+          <label class="form-label">Urgency Level</label>
+          <div class="priority-selection">
+            <div class="priority-options">
+              <div class="priority-option low" 
+                   [class.active]="newRequest.urgency === 'low'"
+                   (click)="newRequest.urgency = 'low'">
+                <i class="fas fa-clock"></i>
+                <span>Low</span>
+              </div>
+              <div class="priority-option medium" 
+                   [class.active]="newRequest.urgency === 'medium'"
+                   (click)="newRequest.urgency = 'medium'">
+                <i class="fas fa-exclamation"></i>
+                <span>Medium</span>
+              </div>
+              <div class="priority-option high" 
+                   [class.active]="newRequest.urgency === 'high'"
+                   (click)="newRequest.urgency = 'high'">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>High</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Requested By -->
+        <div class="modal-form-section">
+          <label class="form-label">Requested By</label>
+          <div class="select-wrapper">
+            <select class="form-select" [(ngModel)]="newRequest.requestedBy">
+              <option value="zone3">Zone 3 Farmers</option>
+              <option value="coop1">Cooperative A</option>
+              <option value="coop2">Cooperative B</option>
+              <option value="individual">Individual Farmer</option>
+              <option value="group">Farmer Group</option>
+            </select>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+        
+        <!-- Delivery Date -->
+        <div class="modal-form-section">
+          <label class="form-label">Required By Date</label>
+          <div class="date-input-wrapper">
+            <input 
+              type="date" 
+              class="form-input"
+              [(ngModel)]="newRequest.requiredDate"
+              [min]="today">
+            <i class="fas fa-calendar-alt"></i>
+          </div>
+        </div>
+        
+        <!-- Additional Notes -->
+        <div class="modal-form-section">
+          <label class="form-label">Additional Notes (Optional)</label>
+          <textarea 
+            class="form-textarea" 
+            placeholder="Add any specific requirements or notes..."
+            rows="3"
+            [(ngModel)]="newRequest.notes"
+            maxlength="500"></textarea>
+         <div class="char-count">{{ (newRequest.notes ? newRequest.notes.length : 0) }}/500</div>
+        </div>
+        
+        <!-- Budget Information -->
+        <div class="modal-form-section">
+          <div class="checkbox-option">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="newRequest.hasBudget"
+                class="checkbox-input"
+                (change)="onBudgetToggle()">
+              <span class="checkmark"></span>
+              <span class="checkbox-text">I have a budget for this purchase</span>
+            </label>
+          </div>
+          
+          <div *ngIf="newRequest.hasBudget" class="budget-details">
+            <div class="grid-2">
+              <div>
+                <label class="form-label">Estimated Budget</label>
+                <input 
+                  type="number" 
+                  class="form-input"
+                  placeholder="Amount"
+                  [(ngModel)]="newRequest.budgetAmount">
+              </div>
+              <div>
+                <label class="form-label">Currency</label>
+                <select class="form-select" [(ngModel)]="newRequest.currency">
+                  <option value="XAF">XAF</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeResourceModal()">
+          Cancel
+        </button>
+        <button class="btn-create" (click)="createResourceRequest()">
+          <i class="fas fa-check"></i>
+          Create Request
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- Audio Section -->
+  <div class="audio-section" *ngIf="isAudioSectionActive">
+    <div class="section-header">
+      <i class="fas fa-headphones"></i>
+      <h2>Multilingual Audio Messages</h2>
+    </div>
+
+    <!-- Language Selection -->
+    <div class="language-selection">
+      <div class="language-header">
+        <i class="fas fa-users"></i>
+        <span>Select Language</span>
+      </div>
+      <div class="language-buttons">
+        <button *ngFor="let lang of languages" 
+                class="language-btn" 
+                [class.selected]="lang.selected"
+                (click)="selectLanguage(lang.name)">
+          <i [class]="lang.icon"></i>
+          <span>{{lang.name}}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Recording Area -->
+    <div class="recording-area">
+      <div class="recording-content">
+        <i class="fas fa-microphone recording-icon"></i>
+        <h3>Record Audio Message</h3>
+        <p>Click to start recording or upload an audio file</p>
+        <div class="recording-actions">
+          <button class="btn-record" (click)="openAudioModal()">
+            <i class="fas fa-microphone"></i>
+            <span>Start Recording</span>
+          </button>
+          <button class="btn-upload" (click)="uploadFile()">
+            <i class="fas fa-plus"></i>
+            <span>Upload File</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Audio Messages -->
+    <div class="recent-messages">
+      <h3 class="section-title">
+        <i class="fas fa-clock"></i>
+        <span>Recent Audio Messages</span>
+      </h3>
+
+      <div class="message-list">
+        <!-- Dynamic messages -->
+        <div *ngFor="let message of recentMessages" 
+             class="message-item" 
+             [class.playing]="message.isPlaying">
+          <div class="message-icon">
+            <i class="fas fa-microphone"></i>
+          </div>
+          <div class="message-details">
+            <h4 class="message-title">{{message.title}}</h4>
+            <div class="message-meta">
+              <span>{{message.language}}</span>
+              <span>•</span>
+              <span>{{message.duration}} min</span>
+              <span>•</span>
+              <span>{{message.listeners}} listeners</span>
+              <span>•</span>
+              <span>{{formatMessageDate(message.date)}}</span>
+            </div>
+          </div>
+          <div class="message-actions">
+            <button class="btn-action primary" (click)="playMessage(message)">
+              <i class="fas" [class.fa-play]="!message.isPlaying" [class.fa-pause]="message.isPlaying"></i>
+              {{message.isPlaying ? 'Pause' : 'Play'}}
+            </button>
+            <button class="btn-action" (click)="viewMessageStats(message)">
+              <i class="fas fa-chart-bar"></i>
+              Stats
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts Section -->
+  <div class="alerts-section" *ngIf="isAlertsSectionActive">
+    <div class="section-header">
+      <i class="fas fa-bell"></i>
+      <h2>Alerts Management</h2>
+      <button class="btn-create-alert" (click)="openAlertModal()">
+        <i class="fas fa-plus"></i>
+        <span>Create Alert</span>
+      </button>
+    </div>
+
+    <!-- Alert Stats -->
+    <div class="alert-stats">
+      <div class="alert-stat-card">
+        <div class="stat-content">
+          <div class="stat-label">Total Alerts</div>
+          <div class="stat-value">{{alertStats.total}}</div>
+        </div>
+        <div class="stat-icon total">
+          <i class="fas fa-bell"></i>
+        </div>
+      </div>
+      
+      <div class="alert-stat-card">
+        <div class="stat-content">
+          <div class="stat-label">Active</div>
+          <div class="stat-value">{{alertStats.active}}</div>
+        </div>
+        <div class="stat-icon active">
+          <i class="fas fa-exclamation-circle"></i>
+        </div>
+      </div>
+      
+      <div class="alert-stat-card">
+        <div class="stat-content">
+          <div class="stat-label">Sent</div>
+          <div class="stat-value">{{alertStats.sent}}</div>
+        </div>
+        <div class="stat-icon sent">
+          <i class="fas fa-paper-plane"></i>
+        </div>
+      </div>
+      
+      <div class="alert-stat-card">
+        <div class="stat-content">
+          <div class="stat-label">Critical</div>
+          <div class="stat-value">{{alertStats.critical}}</div>
+        </div>
+        <div class="stat-icon critical">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert Filters -->
+    <!-- In the alert-filters section, update the filter buttons -->
+<div class="alert-filters">
+  <div class="filter-group">
+    <div class="filter-label">
+      <i class="fas fa-filter"></i>
+      <span>Filter Alerts</span>
+    </div>
+    <div class="filter-buttons">
+      <button 
+        class="filter-btn" 
+        [class.active]="alertStatusFilter === 'all'"
+        (click)="setStatusFilter('all')">
+        All
+      </button>
+      <button 
+        class="filter-btn" 
+        [class.active]="alertStatusFilter === 'active'"
+        (click)="setStatusFilter('active')">
+        Active
+      </button>
+      <button 
+        class="filter-btn" 
+        [class.active]="alertStatusFilter === 'sent'"
+        (click)="setStatusFilter('sent')">
+        Sent
+      </button>
+    </div>
+  </div>
+  
+  <div class="search-box">
+    <i class="fas fa-search"></i>
+    <input 
+      type="text" 
+      placeholder="Search alerts by ID, title, type, priority, region..."
+      [(ngModel)]="alertSearchQuery"
+      (input)="onSearch()">
+  </div>
+</div>
+
+    <!-- Alerts Table -->
+    <div class="alerts-table-container">
+      <div class="alerts-table">
+        <div class="table-header">
+          <div class="table-row">
+            <div class="table-cell header-cell">ID</div>
+            <div class="table-cell header-cell">Type</div>
+            <div class="table-cell header-cell">Priority</div>
+            <div class="table-cell header-cell">Title</div>
+            <div class="table-cell header-cell">Recipients</div>
+            <div class="table-cell header-cell">Channels</div>
+            <div class="table-cell header-cell">Delivery Rate</div>
+            <div class="table-cell header-cell">Date</div>
+            <div class="table-cell header-cell">Status</div>
+            <div class="table-cell header-cell actions-header">Actions</div>
+          </div>
+        </div>
+        
+        <div class="table-body">
+
+          
+          
+             <!-- Dynamic alerts -->
+          <div *ngFor="let alert of filteredAlerts" class="table-row">
+            <div class="table-cell">
+              <div class="cell-content">
+                <span class="alert-id">{{alert.id}}</span>
+              </div>
+            </div>
+            
+            <div class="table-cell type-cell">
+              <div class="cell-content">
+                <div class="type-container">
+                  <i [class]="getAlertIcon(alert.type)" class="alert-icon"></i>
+                  <span class="type-text">{{capitalizeFirst(alert.type)}}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="table-cell">
+              <div class="cell-content">
+                <span 
+                  class="priority-badge" 
+                  [ngClass]="getPriorityClass(alert.priority)">
+                  {{capitalizeFirst(alert.priority)}}
+                </span>
+              </div>
+            </div>
+            
+            <div class="table-cell title-cell">
+              <div class="cell-content">
+                <div class="alert-title">{{alert.title}}</div>
+                <div class="alert-description">{{alert.description}}</div>
+              </div>
+            </div>
+            
+            <div class="table-cell recipients-cell">
+              <div class="cell-content">
+                <div class="recipients-count">{{alert.recipients}}</div>
+                <div class="recipients-label">farmers</div>
+              </div>
+            </div>
+            
+            <div class="table-cell channels-cell">
+              <div class="cell-content">
+                <div class="channels-list">
+                  <span *ngFor="let channel of alert.channels" class="channel-tag">
+                    {{channel.toUpperCase()}}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="table-cell delivery-cell">
+              <div class="cell-content">
+                <div class="delivery-container">
+                  <div class="delivery-rate">{{alert.deliveryRate}}%</div>
+                  <div class="delivery-bar">
+                    <div class="delivery-progress" [style.width.%]="alert.deliveryRate"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="table-cell date-cell">
+              <div class="cell-content">
+                <span class="date-text">{{formatAlertDate(alert.date)}}</span>
+              </div>
+            </div>
+            
+            <div class="table-cell status-cell">
+              <div class="cell-content">
+                <span 
+                  class="status-badge" 
+                  [ngClass]="getStatusClass(alert.status)">
+                  {{capitalizeFirst(alert.status)}}
+                </span>
+              </div>
+            </div>
+            
+            <div class="table-cell actions-cell">
+              <div class="cell-content">
+                <div class="actions-container">
+                  <button class="action-btn view-btn" (click)="viewAlertDetails(alert)" title="View Details">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="action-btn send-btn" 
+                          (click)="updateAlertStatus(alert.id, 'sent')"
+                          [disabled]="alert.status === 'sent'"
+                          title="Send Alert">
+                    <i class="fas fa-paper-plane"></i>
+                  </button>
+                  <button class="action-btn delete-btn" (click)="deleteAlert(alert.id)" title="Delete Alert">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div *ngIf="filteredAlerts.length === 0" class="empty-state">
+            <i class="fas fa-bell-slash"></i>
+            <h3>No alerts found</h3>
+            <p>Try changing your filters or create a new alert</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TEMPLATES SECTION ==================== -->
+  <div class="templates-section" *ngIf="isTemplatesSectionActive">
+    <!-- Header -->
+    <div class="section-header">
+      <div class="header-content">
+        <div class="title-wrapper">
+          <i class="fas fa-file-alt"></i>
+          <h1 class="page-title">Message Templates</h1>
+        </div>
+        <p class="page-subtitle">Pre-built templates for common scenarios</p>
+      </div>
+      <button class="btn-create-template" (click)="openTemplateModal()">
+        <i class="fas fa-plus"></i>
+        <span>Create Template</span>
+      </button>
+    </div>
+
+    <!-- Templates Grid -->
+    <div class="templates-grid">
+      <div class="template-card" *ngFor="let template of templates">
+        <!-- Template Header -->
+        <div class="template-header">
+          <h3 class="template-title">{{ template.title }}</h3>
+        </div>
+
+        <!-- Template Content -->
+        <div class="template-content">
+          <p class="template-description" [innerHTML]="template.description"></p>
+        </div>
+
+        <!-- Template Footer -->
+        <div class="template-footer">
+          <button class="btn-use-template" (click)="setActiveSection('compose'); loadTemplateToCompose(template)">
+           <i class="fas fa-paper-plane"></i>
+            <span>Use Template</span>
+          </button>
+          <button class="btn-edit-template" (click)="editTemplate(template.id)">
+            <i class="fas fa-edit"></i>
+            <span>Edit</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Create Template Modal -->
+  <div class="modal-overlay" *ngIf="showTemplateModal" (click)="closeTemplateModal($event)">
+    <div class="modal-content template-modal" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-title-section">
+          <h2 class="modal-title">Create Message Template</h2>
+          <p class="modal-subtitle">Create reusable message templates with dynamic variables for common scenarios</p>
+        </div>
+        <button class="modal-close" (click)="closeTemplateModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <!-- Template Name -->
+        <div class="modal-form-section">
+          <label class="form-label">Template Name</label>
+          <input 
+            type="text" 
+            class="form-input" 
+            placeholder="e.g., Payment Reminder, Meeting Invitation"
+            [(ngModel)]="templateData.name"
+            maxlength="100">
+        </div>
+
+        <!-- Category -->
+        <div class="modal-form-section">
+          <label class="form-label">Category</label>
+          <div class="select-wrapper">
+            <select class="form-select" [(ngModel)]="templateData.category">
+              <option value="">Select a category</option>
+              <option value="payment">Payment & Finance</option>
+              <option value="meeting">Meeting & Events</option>
+              <option value="alert">Alerts & Notifications</option>
+              <option value="resource">Resource Requests</option>
+              <option value="general">General Communication</option>
+            </select>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+
+        <!-- Primary Language -->
+        <div class="modal-form-section">
+          <label class="form-label">Primary Language</label>
+          <div class="select-wrapper">
+            <select class="form-select" [(ngModel)]="templateData.language">
+              <option value="">Select a language</option>
+              <option value="fr">FR Français (French)</option>
+              <option value="en">EN English</option>
+              <option value="es">ES Español (Spanish)</option>
+              <option value="pt">PT Português (Portuguese)</option>
+              <option value="local">Local Dialects</option>
+            </select>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+
+        <!-- Message Content -->
+        <div class="modal-form-section">
+          <label class="form-label">Message Content</label>
+          <p class="form-hint">Type your message template here... Click on variables below to insert them</p>
+          
+          <div class="message-editor-container">
+            <textarea 
+              class="form-textarea message-editor" 
+              placeholder="Type your message template here..."
+              rows="5"
+              [(ngModel)]="templateData.content"
+              (input)="updateTemplatePreview()"
+              #messageTextarea>
+            </textarea>
+            
+            <!-- Variables Section -->
+            <div class="variables-section">
+              <p class="variables-label">Available Variables (Click to insert):</p>
+              <div class="variables-grid">
+                <button class="variable-btn" (click)="insertVariable('(name)')">(name)</button>
+                <button class="variable-btn" (click)="insertVariable('(id)')">(id)</button>
+                <button class="variable-btn" (click)="insertVariable('(balance)')">(balance)</button>
+                <button class="variable-btn" (click)="insertVariable('(amount)')">(amount)</button>
+                <button class="variable-btn" (click)="insertVariable('(date)')">(date)</button>
+                <button class="variable-btn" (click)="insertVariable('(time)')">(time)</button>
+                <button class="variable-btn" (click)="insertVariable('(location)')">(location)</button>
+                <button class="variable-btn" (click)="insertVariable('(product)')">(product)</button>
+                <button class="variable-btn" (click)="insertVariable('(quantity)')">(quantity)</button>
+                <button class="variable-btn" (click)="insertVariable('(venue)')">(venue)</button>
+              </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="preview-section" *ngIf="templateData.content">
+              <div class="preview-header">
+                <i class="fas fa-eye"></i>
+                <span>Preview (Example)</span>
+              </div>
+              <div class="preview-content">
+                {{templatePreview}}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeTemplateModal()">
+          Cancel
+        </button>
+        <button class="btn-save" (click)="saveTemplate()">
+          Save Template
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+  <!-- ==================== END TEMPLATES SECTION ==================== -->
+<!-- Compose Section (Bulk SMS) -->
+
+<div class="compose-section" *ngIf="isComposeSectionActive">
+  <!-- Bulk SMS Composer -->
+  <div class="bulk-sms-composer">
+    <!-- Recipient Audience -->
+    <div class="composer-section">
+      <label class="section-label">
+        <i class="fas fa-users"></i>
+        Recipient Audience
+      </label>
+      <div class="select-wrapper">
+        <select 
+          class="composer-select" 
+          [(ngModel)]="smsData.audienceSelection"
+          (change)="updateRecipientCount()">
+          <option value="all">All Members (300 farmers)</option>
+          <option value="active">Active members only (245)</option>
+          <option value="douala">Douala zone (87)</option>
+          <option value="yaounde">Yaounde zone (102)</option>
+          <option value="garoua">Garoua zone (56)</option>
+          <option value="cocoa">Cocoa farmers (156)</option>
+          <option value="coffee">Coffee farmers (89)</option>
+          <option value="overdue">Overdue payments (18)</option>
+        </select>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+    </div>
+
+    <!-- Message Template (Optional) -->
+    <div class="composer-section">
+      <label class="section-label">
+        <i class="fas fa-file-alt"></i>
+        Message Template (Optional)
+      </label>
+      <div class="select-wrapper">
+        <select 
+          class="composer-select" 
+          [(ngModel)]="smsData.selectedTemplate"
+          (change)="loadTemplate()">
+          <option value="">Select a template...</option>
+          <option value="welcome">Welcome Message</option>
+          <option value="payment">Payment Reminder</option>
+          <option value="weather">Weather Alert</option>
+          <option value="meeting">Meeting Announcement</option>
+          <option value="delivery">Product Delivery Notice</option>
+        </select>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+    </div>
+
+    <!-- Write Custom Message -->
+    <div class="composer-section">
+      <label class="section-label">
+        <i class="fas fa-edit"></i>
+        Write Custom Message
+      </label>
+      <div class="message-content">
+        <div class="message-input-container">
+          <textarea 
+            class="message-textarea" 
+            placeholder="Type your message here..."
+            rows="5"
+            [(ngModel)]="smsData.messageContent"
+            (input)="updateMessageLength()"
+            maxlength="160">
+          </textarea>
+          <div class="message-footer">
+            <div class="char-count">
+              {{smsData.messageContent ? smsData.messageContent.length : 0}}/160 characters
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schedule Delivery & Priority -->
+    <div class="composer-section schedule-section">
+      <div class="schedule-priority-grid">
+        <!-- Schedule Delivery -->
+        <div class="schedule-column">
+          <label class="section-label">
+            <i class="fas fa-calendar"></i>
+            Schedule Delivery (Optional)
+          </label>
+          <div class="schedule-options">
+            <div class="date-picker">
+              <input 
+                type="date" 
+                class="date-input" 
+                [(ngModel)]="smsData.scheduleDate"
+                [min]="today">
+              <i class="fas fa-calendar-alt"></i>
+            </div>
+            
+            <div class="delivery-type">
+              <div class="checkbox-option">
+                <label class="checkbox-label">
+                  <input 
+                    type="radio" 
+                    name="deliveryType"
+                    [(ngModel)]="smsData.deliveryType"
+                    value="normal"
+                    class="checkbox-input">
+                  
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message Priority -->
+        <div class="priority-column">
+          <label class="section-label">
+            <i class="fas fa-flag"></i>
+            Message Priority
+          </label>
+          <div class="select-wrapper">
+            <select 
+              class="composer-select" 
+              [(ngModel)]="smsData.priority">
+              <option value="high">High Priority</option>
+              <option value="normal">Normal</option>
+              <option value="low">Low Priority</option>
+            </select>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estimated Cost -->
+    <div class="cost-section">
+      <div class="cost-card">
+        <div class="cost-icon">
+          <i class="fas fa-envelope"></i>
+        </div>
+        <div class="cost-content">
+          <div class="cost-label">Estimated Cost:</div>
+          <div class="cost-amount">{{calculateEstimatedCost()}} XAF</div>
+          <div class="cost-breakdown">
+            {{smsData.recipientCount}} recipients × 50 XAF per SMS
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message Priority (Add this section) -->
+<div class="priority-section" *ngIf="showPriorityOptions">
+  <label for="messagePriority">Message Priority:</label>
+  <select 
+    id="messagePriority" 
+    [(ngModel)]="smsData.priority"
+    (change)="onPriorityChange()"
+    class="priority-select">
+    <option value="normal">Normal (50 XAF/SMS)</option>
+    <option value="high">High Priority (+10 XAF/SMS)</option>
+    <option value="urgent">Urgent Priority (+20 XAF/SMS)</option>
+  </select>
+</div>
+
+    <!-- Action Buttons -->
+    <div class="compose-actions">
+      <div class="action-buttons-group">
+        <button 
+  class="btn-send-now" 
+  (click)="openSmsModal()" 
+  title="Send SMS message"
+  [disabled]="!isFormValid()">
+  <i class="fas fa-paper-plane"></i>
+  <span>Send Now</span>
+</button>
+    
+        <button class="btn-schedule" (click)="scheduleSms()">
+          <i class="fas fa-calendar-check"></i>
+          <span>Schedule</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Success Dialog -->
+<div class="success-dialog-overlay" *ngIf="showSuccessDialog">
+  <div class="success-dialog">
+    <div class="dialog-header">
+      <div class="dialog-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h3 class="dialog-title">SMS Sent Successfully!</h3>
+    </div>
+    
+    <div class="dialog-body">
+      <div class="dialog-message">
+        <i class="fas fa-check success-check"></i>
+        <p>Your message has been successfully sent to:</p>
+      </div>
+      
+      <div class="dialog-stats">
+        <div class="stat-item">
+          <div class="stat-label">Recipients:</div>
+          <div class="stat-value">{{smsData.recipientCount}}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Total Cost:</div>
+          <div class="stat-value">{{calculateEstimatedCost()}} XAF</div>
+        </div>
+        <div class="stat-item" *ngIf="smsData.priority !== 'normal'">
+          <div class="stat-label">Priority:</div>
+          <div class="stat-value priority-badge" [class]="'priority-' + smsData.priority">
+            {{smsData.priority | titlecase}}
+          </div>
+        </div>
+      </div>
+      
+      <div class="dialog-note">
+        <i class="fas fa-info-circle"></i>
+        <p>SMS delivery may take a few minutes depending on network conditions.</p>
+      </div>
+    </div>
+    
+    <div class="dialog-footer">
+      <button class="btn-dialog-ok" (click)="closeSuccessDialog()">
+        <i class="fas fa-check"></i> OK
+      </button>
+      <button class="btn-dialog-details" (click)="viewSmsDetails()">
+        <i class="fas fa-chart-bar"></i> View Details
+      </button>
+    </div>
+  </div>
+</div>
+
+    <!-- Preview Section -->
+    <div class="preview-section" *ngIf="smsData.messageContent">
+      <div class="preview-header">
+        <i class="fas fa-eye"></i>
+        <h3>Message Preview</h3>
+      </div>
+      <div class="preview-card">
+        <div class="preview-content">
+          <div class="preview-message">{{smsData.messageContent}}</div>
+          <div class="preview-meta">
+            <span><i class="fas fa-users"></i> {{smsData.recipientCount}} recipients</span>
+            <span><i class="fas fa-coins"></i> {{calculateEstimatedCost()}} XAF</span>
+            <span><i class="fas fa-clock"></i> {{getDeliveryTypeText()}}</span>
+            <span><i class="fas fa-flag"></i> {{getPriorityText()}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  <!-- Create Alert Modal -->
+  <div class="modal-overlay" *ngIf="showAlertModal" (click)="closeAlertModal()">
+    <div class="modal-content alert-modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-section">
+          <h2 class="modal-title">
+            <i class="fas fa-bell"></i>
+            Create New Alert
+          </h2>
+          <p class="modal-subtitle">Send urgent notifications to farmers via multiple channels</p>
+        </div>
+        <button class="modal-close" (click)="closeAlertModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="modal-form-section">
+          <label class="form-label">Alert Type</label>
+          <div class="type-selection">
+            <div class="type-options">
+              <div class="type-option" 
+                   [class.active]="newAlert.type === 'weather'"
+                   (click)="newAlert.type = 'weather'">
+                <i class="fas fa-cloud-rain"></i>
+                <span>Weather Alert</span>
+              </div>
+              <div class="type-option" 
+                   [class.active]="newAlert.type === 'payment'"
+                   (click)="newAlert.type = 'payment'">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Payment Reminder</span>
+              </div>
+              <div class="type-option" 
+                   [class.active]="newAlert.type === 'crop'"
+                   (click)="newAlert.type = 'crop'">
+                <i class="fas fa-seedling"></i>
+                <span>Crop Advisory</span>
+              </div>
+              <div class="type-option" 
+                   [class.active]="newAlert.type === 'market'"
+                   (click)="newAlert.type = 'market'">
+                <i class="fas fa-chart-line"></i>
+                <span>Market Price</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-form-section">
+          <label class="form-label">Priority Level</label>
+          <div class="priority-selection">
+            <div class="priority-options">
+              <div class="priority-option low" 
+                   [class.active]="newAlert.priority === 'low'"
+                   (click)="newAlert.priority = 'low'">
+                <i class="fas fa-info-circle"></i>
+                <span>Low</span>
+              </div>
+              <div class="priority-option warning" 
+                   [class.active]="newAlert.priority === 'warning'"
+                   (click)="newAlert.priority = 'warning'">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Warning</span>
+              </div>
+              <div class="priority-option critical" 
+                   [class.active]="newAlert.priority === 'critical'"
+                   (click)="newAlert.priority = 'critical'">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Critical</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-form-section">
+          <label class="form-label">Alert Title</label>
+          <input 
+            type="text" 
+            class="form-input" 
+            placeholder="e.g., Heavy Rainfall Warning"
+            [(ngModel)]="newAlert.title"
+            maxlength="100">
+          <div class="char-count">{{newAlert.title.length || 0}}/100</div>
+        </div>
+        
+        <div class="modal-form-section">
+          <label class="form-label">Alert Message</label>
+          <textarea 
+            class="form-textarea" 
+            placeholder="Provide detailed information about the alert..."
+            rows="4"
+            [(ngModel)]="newAlert.message"
+            maxlength="500"></textarea>
+          <div class="char-count">{{newAlert.message.length || 0}}/500</div>
+        </div>
+        
+        <div class="modal-form-section">
+          <label class="form-label">Target Audience</label>
+          <div class="audience-selection">
+            <select class="form-select" [(ngModel)]="newAlert.audience">
+              <option value="all">All Farmers (300)</option>
+              <option value="region1">North Region (150)</option>
+              <option value="region2">South Region (120)</option>
+              <option value="region3">East Region (80)</option>
+              <option value="region4">West Region (100)</option>
+              <option value="custom">Custom Selection</option>
+            </select>
+            <div class="audience-hint">
+              <i class="fas fa-info-circle"></i>
+              <span>This alert will reach {{getAudienceCount()}} farmers</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-form-section">
+          <label class="form-label">Communication Channels</label>
+          <div class="channels-selection">
+            <div class="channels-options">
+              <div class="channel-option" 
+                   [class.selected]="channel.selected"
+                   *ngFor="let channel of communicationChannels"
+                   (click)="toggleChannel(channel)">
+                <i [class]="channel.icon"></i>
+                <span>{{channel.name}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-form-section">
+          <div class="checkbox-option">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="newAlert.requiresAck"
+                class="checkbox-input">
+              <span class="checkmark"></span>
+              <span class="checkbox-text">Requires farmer acknowledgment</span>
+            </label>
+            <div class="checkbox-hint">
+              <i class="fas fa-info-circle"></i>
+              <span>Farmers must confirm they've received and understood the alert</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-form-section">
+          <label class="form-label">Alert Expiry (Optional)</label>
+          <div class="expiry-section">
+            <input 
+              type="date" 
+              class="form-input expiry-date"
+              [(ngModel)]="newAlert.expiryDate"
+              [min]="today">
+            <div class="expiry-hint">
+              <i class="fas fa-clock"></i>
+              <span>Alert will be automatically archived after this date</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeAlertModal()">
+          Cancel
+        </button>
+        <button class="btn-send" (click)="sendAlertFromModal()">
+          <i class="fas fa-paper-plane"></i>
+          Send Alert
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio Recording Modal -->
+  <div class="modal-overlay" *ngIf="showAudioModal" (click)="closeAudioModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <i class="fas fa-microphone"></i>
+          Record Audio Message
+        </h2>
+        <button class="modal-close" (click)="closeAudioModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <!-- Language Selection -->
+        <div class="modal-section">
+          <label class="section-label">
+            <i class="fas fa-language"></i>
+            Message Language
+          </label>
+          <div class="language-selector">
+            <select 
+              class="language-dropdown" 
+              [value]="modalData.selectedLanguage"
+              (change)="modalData.selectedLanguage = $any($event.target).value"
+            >
+              <option value="French">French</option>
+              <option value="English">English</option>
+              <option value="Fulfulde">Fulfulde</option>
+              <option value="Ewondo">Ewondo</option>
+              <option value="Duala">Duala</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Audio Recording Section -->
+        <div class="modal-section">
+          <label class="section-label checked">
+            <i class="fas fa-microphone"></i>
+            Audio Recording
+          </label>
+          
+          <div class="recording-controls">
+            <!-- Recording Status -->
+            <div class="recording-status">
+              <span class="status-text" [class.recording]="modalData.isRecording">
+                {{ getRecordingStatus() }}
+              </span>
+            </div>
+            
+            <!-- Recording Buttons -->
+            <div class="recording-buttons">
+              <button 
+                class="btn-record-modal" 
+                [class.recording]="modalData.isRecording"
+                (click)="startRecording()"
+              >
+                <i class="fas fa-microphone"></i>
+                <span>{{ modalData.isRecording ? 'Stop Recording' : 'Start Recording' }}</span>
+              </button>
+              
+              <div class="divider">or</div>
+              
+              <button class="btn-upload-modal" (click)="uploadFile()">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>Upload Audio File</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message Details Section -->
+        <div class="modal-section">
+          <label class="section-label">
+            <i class="fas fa-edit"></i>
+            Message Title
+          </label>
+          <input 
+            type="text" 
+            class="modal-input" 
+            placeholder="e.g., Important Cooperative Announcement"
+            [value]="modalData.messageTitle"
+            (input)="modalData.messageTitle = $any($event.target).value"
+          />
+        </div>
+
+        <!-- Target Audience -->
+        <div class="modal-section">
+          <label class="section-label">
+            <i class="fas fa-users"></i>
+            Target Audience
+          </label>
+          <div class="select-wrapper">
+            <select 
+              class="modal-select" 
+              [value]="modalData.targetAudience"
+              (change)="modalData.targetAudience = $any($event.target).value"
+            >
+              <option>All Members (300)</option>
+              <option>By Zone (150)</option>
+              <option>By Crop Type (120)</option>
+            </select>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="modal-section settings-section">
+          <!-- Auto-play Toggle -->
+          <div class="toggle-row">
+            <label class="toggle-container">
+              <input 
+                type="checkbox" 
+                [checked]="modalData.autoPlayEnabled"
+                (change)="modalData.autoPlayEnabled = $any($event.target).checked"
+              />
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Auto-play when farmers open the app</span>
+          </div>
+
+          <!-- SMS Transcription Toggle -->
+          <div class="toggle-row">
+            <label class="toggle-container">
+              <input 
+                type="checkbox" 
+                [checked]="modalData.includeSmsTranscription"
+                (change)="modalData.includeSmsTranscription = $any($event.target).checked"
+              />
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Include text transcription for SMS delivery</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeAudioModal()">
+          Cancel
+        </button>
+        <button class="btn-broadcast-modal" (click)="broadcastMessage()">
+          <i class="fas fa-bullhorn"></i>
+          Broadcast Message
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SMS Send Modal -->
+<div class="modal-overlay" *ngIf="showSmsModal" (click)="closeSmsModal()">
+  <div class="modal-content sms-modal-content" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <div class="modal-title-section">
+        <h2 class="modal-title">
+          <i class="fas fa-paper-plane"></i>
+          Send SMS Message
+        </h2>
+        <p class="modal-subtitle">Review and confirm message details before sending</p>
+      </div>
+      <button class="modal-close" (click)="closeSmsModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <!-- Modal Body -->
+    <div class="modal-body">
+      <!-- Recipient Audience -->
+      <div class="modal-form-section">
+        <label class="form-label">
+          <i class="fas fa-users"></i>
+          Recipient Audience
+        </label>
+        <div class="select-wrapper">
+          <select 
+            class="form-select" 
+            [(ngModel)]="modalSmsData.audienceSelection"
+            (change)="updateModalRecipientCount()">
+            <option value="all">All Members (300 farmers)</option>
+            <option value="active">Active members only (245)</option>
+            <option value="douala">Douala zone (87)</option>
+            <option value="yaounde">Yaounde zone (102)</option>
+            <option value="garoua">Garoua zone (56)</option>
+            <option value="cocoa">Cocoa farmers (156)</option>
+            <option value="coffee">Coffee farmers (89)</option>
+            <option value="overdue">Overdue payments (18)</option>
+          </select>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+      </div>
+
+      <!-- Message Template -->
+      <div class="modal-form-section">
+        <label class="form-label">
+          <i class="fas fa-file-alt"></i>
+          Message Template (Optional)
+        </label>
+        <div class="select-wrapper">
+          <select 
+            class="form-select" 
+            [(ngModel)]="modalSmsData.selectedTemplate"
+            (change)="loadModalTemplate()">
+            <option value="">Select a template...</option>
+            <option value="welcome">Welcome Message</option>
+            <option value="payment">Payment Reminder</option>
+            <option value="weather">Weather Alert</option>
+            <option value="meeting">Meeting Announcement</option>
+            <option value="delivery">Product Delivery Notice</option>
+          </select>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+      </div>
+
+      <!-- Message Content -->
+      <div class="modal-form-section">
+        <label class="form-label">
+          <i class="fas fa-edit"></i>
+          Message Content
+        </label>
+        <div class="message-input-container">
+          <textarea 
+            class="form-textarea" 
+            placeholder="Type your message here..."
+            rows="4"
+            [(ngModel)]="modalSmsData.messageContent"
+            (input)="updateModalMessageLength()"
+            maxlength="160">
+          </textarea>
+          <div class="char-count">
+            {{modalSmsData.messageContent.length || 0}}/160 characters
+          </div>
+        </div>
+      </div>
+
+      <!-- Message Priority -->
+      <div class="modal-form-section">
+        <label class="form-label">
+          <i class="fas fa-flag"></i>
+          Message Priority
+        </label>
+        <div class="priority-options">
+          <div class="priority-option" 
+               [class.active]="modalSmsData.priority === 'normal'"
+               (click)="modalSmsData.priority = 'normal'">
+            <i class="fas fa-info-circle"></i>
+            <span>Normal</span>
+            <small>(50 XAF/SMS)</small>
+          </div>
+          <div class="priority-option" 
+               [class.active]="modalSmsData.priority === 'high'"
+               (click)="modalSmsData.priority = 'high'">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>High Priority</span>
+            <small>(+10 XAF/SMS)</small>
+          </div>
+          <div class="priority-option" 
+               [class.active]="modalSmsData.priority === 'urgent'"
+               (click)="modalSmsData.priority = 'urgent'">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>Urgent</span>
+            <small>(+20 XAF/SMS)</small>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <!-- Summary Section -->
+      <div class="modal-form-section summary-section">
+        <div class="summary-card">
+          <div class="summary-header">
+            <i class="fas fa-receipt"></i>
+            <h4>Message Summary</h4>
+          </div>
+          <div class="summary-content">
+            <div class="summary-row">
+              <span class="summary-label">Recipients:</span>
+              <span class="summary-value">{{modalSmsData.recipientCount}} farmers</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Cost per SMS:</span>
+              <span class="summary-value">
+                {{modalSmsData.priority === 'normal' ? '50' : modalSmsData.priority === 'high' ? '60' : '70'}} XAF
+              </span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Total Cost:</span>
+              <span class="summary-value total-cost">{{calculateModalCost()}} XAF</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+
+    <!-- Modal Footer -->
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeSmsModal()">
+        Cancel
+      </button>
+      <button 
+        class="btn-send" 
+        (click)="sendFromModal()"
+        [disabled]="!isModalFormValid()">
+        <i class="fas fa-paper-plane"></i>
+        Send Message
+      </button>
+    </div>
+  </div>
+</div>

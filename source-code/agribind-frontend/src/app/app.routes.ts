@@ -37,8 +37,32 @@ export const routes: Routes = [
         loadComponent: () => import('./modules/cooperative/production/production.component').then(c => c.ProductionComponent)
       },
       {
+        path: 'communication',
+        loadComponent: () => import('./modules/cooperative/communication/communication-wrapper.component').then(c => c.CommunicationWrapperComponent)
+      },
+      {
         path: 'inventory',
         loadComponent: () => import('./modules/cooperative/inventory/inventory.component').then(c => c.InventoryComponent)
+      },
+      {
+        path: 'plant-health',
+        loadComponent: () => import('./modules/cooperative/plant-health/plant-health.component').then(c => c.PlantHealthComponent)
+      },
+      {
+        path: 'contracts',
+        loadComponent: () => import('./modules/cooperative/contracts/contracts.component').then(c => c.ContractsComponent)
+      },
+      {
+        path: 'transactions',
+        loadComponent: () => import('./modules/cooperative/transactions/transactions.component').then(c => c.TransactionsComponent)
+      },
+      {
+        path: 'microcredit',
+        loadComponent: () => import('./modules/cooperative/microcredit/microcredit.component').then(c => c.MicrocreditComponent)
+      },
+      {
+        path: 'settings',
+        loadComponent: () => import('./modules/cooperative/settings/settings.component').then(c => c.SettingsComponent)
       }
     ]
   },

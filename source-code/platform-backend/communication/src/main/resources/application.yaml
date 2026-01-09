@@ -3,9 +3,9 @@ spring:
     name: communication
 
   datasource:
-    url: jdbc:mysql://localhost:3307/agribind_communications?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
-    username: root
-    password: ISI3Eng!2025
+    url: jdbc:mysql://root:gOpBKAtqaFyXJtxIwqJXqmDnbIahZgFo@shuttle.proxy.rlwy.net:38695/railway?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:gOpBKAtqaFyXJtxIwqJXqmDnbIahZgFo}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -37,11 +37,10 @@ eureka:
     prefer-ip-address: true
 
 # Twilio Configuration
-
-# twilio:
- # account-sid: ${TWILIO_ACCOUNT_SID:}
- # auth-token: ${TWILIO_AUTH_TOKEN:}
- # phone-number: ${TWILIO_PHONE_NUMBER:}
+twilio:
+  account-sid: ${TWILIO_ACCOUNT_SID:ACaab9ba4a616ebb99d7e27d0244a0bba7}
+  auth-token: ${TWILIO_AUTH_TOKEN:d147bf85218474298351409bf12a844c}
+  phone-number: ${TWILIO_PHONE_NUMBER:+15736853166}
 
 # File Storage
 file:

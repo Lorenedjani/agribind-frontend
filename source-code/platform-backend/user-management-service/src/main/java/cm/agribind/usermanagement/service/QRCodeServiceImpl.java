@@ -47,6 +47,9 @@ public class QRCodeServiceImpl implements QRCodeService {
 
     @Override
     public QRCodeResponse generateRegistrationQRCode(String userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+
         GenerateQRCodeCommand command = new GenerateQRCodeCommand();
         command.setUserId(userId);
         command.setPurpose("REGISTRATION");
@@ -58,10 +61,13 @@ public class QRCodeServiceImpl implements QRCodeService {
 
     @Override
     public QRCodeResponse generateLoginQRCode(String userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+
         GenerateQRCodeCommand command = new GenerateQRCodeCommand();
         command.setUserId(userId);
         command.setPurpose("LOGIN");
-        command.setSize(250);
+        command.setSize(300);
         command.setFormat("PNG");
 
         return generateQRCode(command);
@@ -134,4 +140,6 @@ public class QRCodeServiceImpl implements QRCodeService {
         // For now, return a simple hash
         return Integer.toHexString(data.hashCode());
     }
+
+
 }

@@ -14,24 +14,24 @@ import java.util.Optional;
 @Repository
 public interface ProductionAggregateRepository extends JpaRepository<ProductionAggregate, Long> {
 
-    List<ProductionAggregate> findByCooperativeId(Long cooperativeId);
+    List<ProductionAggregate> findByCooperativeId(String cooperativeId);  // Changed from Long
 
     List<ProductionAggregate> findByCooperativeIdAndProductType(
-            Long cooperativeId,
+            String cooperativeId,  // Changed from Long
             ProductType productType
     );
 
     Optional<ProductionAggregate> findByCooperativeIdAndProductNameAndPeriodStartAndPeriodEnd(
-            Long cooperativeId,
+            String cooperativeId,  // Changed from Long
             String productName,
             LocalDate periodStart,
             LocalDate periodEnd
     );
 
     @Query("SELECT pa FROM ProductionAggregate pa WHERE pa.cooperativeId = :cooperativeId " +
-           "AND pa.periodStart >= :startDate AND pa.periodEnd <= :endDate")
+            "AND pa.periodStart >= :startDate AND pa.periodEnd <= :endDate")
     List<ProductionAggregate> findByCooperativeIdAndDateRange(
-            @Param("cooperativeId") Long cooperativeId,
+            @Param("cooperativeId") String cooperativeId,  // Changed from Long
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );

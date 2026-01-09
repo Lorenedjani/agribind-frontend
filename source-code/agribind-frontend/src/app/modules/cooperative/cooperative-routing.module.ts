@@ -11,6 +11,14 @@ const routes: Routes = [
         path: 'members',
         loadChildren: () => import('./members/members.module').then(m => m.MembersModule)
       },
+      {
+        path: 'communication',
+        loadComponent: () => import('./communication/communication-wrapper.component').then(c => c.CommunicationWrapperComponent)
+      },
+      {
+        path: 'production',
+        loadChildren: () => import('./production/production.module').then(m => m.ProductionModule)
+      },
       { path: '', redirectTo: 'members', pathMatch: 'full' }
     ]
   }

@@ -14,14 +14,14 @@ public class FarmerContribution {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "farmer_id", nullable = false)
-    private Long farmerId;
+    @Column(name = "farmer_id", nullable = false, length = 20)
+    private String farmerId;  // Changed from Long to String
 
     @Column(name = "farmer_name", nullable = false)
     private String farmerName;
 
-    @Column(name = "cooperative_id", nullable = false)
-    private Long cooperativeId;
+    @Column(name = "cooperative_id", nullable = false, length = 20)
+    private String cooperativeId;  // Changed from Long to String
 
     @Column(name = "product_name", nullable = false)
     private String productName;
@@ -39,4 +39,3 @@ public class FarmerContribution {
     @Column(name = "contribution_count")
     private Integer contributionCount = 1;
 }
-

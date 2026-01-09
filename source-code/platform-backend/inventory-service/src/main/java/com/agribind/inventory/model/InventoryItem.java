@@ -37,6 +37,9 @@ public abstract class InventoryItem {
     @NotBlank
     private String location;
 
+    @NotBlank
+    private String cooperativeId;
+
     @Enumerated(EnumType.STRING)
     private StockStatus status;
 

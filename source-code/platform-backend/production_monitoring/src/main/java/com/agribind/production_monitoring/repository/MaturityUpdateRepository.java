@@ -13,5 +13,6 @@ public interface MaturityUpdateRepository extends JpaRepository<MaturityUpdate, 
 
     List<MaturityUpdate> findByProductionRecordIdOrderByUpdateDateDesc(Long productionRecordId);
 
-    List<MaturityUpdate> findByUpdatedByFarmerId(Long farmerId);
+    // FIXED: Changed parameter type from Long to String to match entity field type
+    List<MaturityUpdate> findByUpdatedByFarmerId(String farmerId);
 }

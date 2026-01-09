@@ -1,160 +1,795 @@
-<div class="layout">
-  <app-cooperative-sidebar></app-cooperative-sidebar>
+<div class="page-content">
+      <!-- LOADING INDICATOR -->
+    <div *ngIf="isLoading" class="loading-overlay">
+      <div class="spinner"></div>
+    </div>
 
-  <div class="content-area">
-    <!-- TOP BAR -->
-    <header class="top-bar">
-      <div class="top-bar-left">
-        <h1 class="page-title">Inventory</h1>
-      </div>
-    </header>
+    <!-- ERROR MESSAGE -->
+    <div *ngIf="errorMessage && !isLoading" class="error-banner">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+      {{ errorMessage }}
+      <button (click)="errorMessage = ''" class="close-error">×</button>
+    </div>
 
-    <div class="inventory-container">
-      <!-- DASHBOARD STATS -->
-      <div class="dashboard-stats">
-        <div class="stat-card">
-          <div class="stat-title">Total Inventory Value</div>
-          <div class="stat-value">{{ formatValue(inventoryStats.totalValue) }}</div>
-          <div class="stat-change positive">+{{ inventoryStats.valueChange }}% vs last month</div>
+    <!-- User Info Header - Top of Page -->
+    <div class="user-header-top">
+      <div class="user-info">
+        <div class="user-avatar">
+          <span class="avatar-text">{{ user.initials }}</span>
         </div>
-
-        <div class="stat-card">
-          <div class="stat-title">Farmer Products Stock</div>
-          <div class="stat-value">{{ inventoryStats.farmerProducts }} MT</div>
-          <div class="stat-change positive">+{{ inventoryStats.productsChange }}% cocoa, coffee, etc.</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-title">Input Supplies</div>
-          <div class="stat-value">{{ inventoryStats.inputSupplies }} items</div>
-          <div class="stat-detail">{{ inventoryStats.activeItems }} active seeds, fertilizers, tools</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-title">Critical Stock Items</div>
-          <div class="stat-value critical">{{ inventoryStats.criticalStock }}</div>
-          <div class="stat-detail danger">Need reorder below minimum</div>
+        <div class="user-details">
+          <span class="user-name">{{ user.name }}</span>
+          <span class="user-role">{{ user.role }}</span>
         </div>
       </div>
+    </div>
 
-      <!-- SEARCH AND FILTERS -->
-      <div class="search-filter-section">
-        <div class="search-bar">
-          <input
-            type="text"
-            placeholder="Search inventory by name, category, or ID..."
-            class="search-input"
-            [(ngModel)]="searchQuery"
-            (input)="applyFilters()"
-          />
-          <button class="search-btn">🔍</button>
-          <button class="clear-search" *ngIf="searchQuery" (click)="clearSearch()">✖</button>
+    <!-- Page Header Section -->
+    <div class="page-header-section">
+      <div class="header-content">
+        <div>
+          <h2>Inventory Management</h2>
+          <p class="page-description">Track and manage your cooperative's inventory, stock levels, and product distribution</p>
         </div>
-
-        <div class="filter-section">
-          <div class="filter-item">
-            <label class="filter-label">Category</label>
-            <select [(ngModel)]="selectedCategory" (change)="applyFilters()">
-              <option *ngFor="let cat of categoryList" [value]="cat">{{ cat }}</option>
-            </select>
-          </div>
+        <div class="header-actions">
+          <button class="btn btn-outline" (click)="exportInventory()">
+            <span class="icon">📥</span>
+            Export
+          </button>
+          <button class="btn btn-primary" (click)="addNewItem()">
+            <span class="icon">➕</span>
+            Add Item
+          </button>
         </div>
       </div>
+    </div>
 
-      <!-- TABS -->
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <button *ngFor="let btn of actionButtons"
+              class="action-btn"
+              [class.active]="btn.active"
+              (click)="onActionButtonClick(btn.name)">
+        <i [class]="btn.icon"></i>
+        <span>{{btn.name}}</span>
+      </button>
+    </div>
+
+    <!-- Inventory Section -->
+    <div *ngIf="isInventorySectionActive">
+      <!-- Cards Overview -->
+    <section class="cards-overview">
+      <div class="card">
+        <div class="card-content">
+          <h2>{{ totalInventoryValue }}</h2>
+          <p class="green-text">{{ totalInventoryPercent }}</p>
+          <p class="card-title">Total Inventory Value</p>
+        </div>
+        <div class="icon-box green">💰</div>
+      </div>
+
+      <div class="card">
+        <div class="card-content">
+          <h2>{{ totalItems }}</h2>
+          <p class="green-text">{{ totalItemsPercent }}</p>
+          <p class="card-title">Total Inventory Items</p>
+        </div>
+        <div class="icon-box green">📦</div>
+      </div>
+
+      <div class="card">
+        <div class="card-content">
+          <h2>{{ lowStockItems }}</h2>
+          <p class="yellow-text">{{ lowStockPercent }}</p>
+          <p class="card-title">Low Stock Items</p>
+        </div>
+        <div class="icon-box yellow">⚠️</div>
+      </div>
+
+      <div class="card">
+        <div class="card-content">
+          <h2>{{ outOfStockItems }}</h2>
+          <p class="red-text">{{ outOfStockPercent }}</p>
+          <p class="card-title">Out of Stock Items</p>
+        </div>
+        <div class="icon-box red">🚫</div>
+      </div>
+
+      <div class="card">
+        <div class="card-content">
+          <h2>{{ criticalItems }}</h2>
+          <p class="orange-text">{{ criticalPercent }}</p>
+          <p class="card-title">Critical Stock Items</p>
+        </div>
+        <div class="icon-box orange">🔴</div>
+      </div>
+
+      <div class="card">
+        <div class="card-content">
+          <h2>{{ farmerProductsStock }}</h2>
+          <p class="green-text">{{ farmerProductsPercent }}</p>
+          <p class="card-title">Farmer Products Stock</p>
+        </div>
+        <div class="icon-box green">🌾</div>
+      </div>
+    </section>
+
+    <!-- SEARCH AND ACTIONS -->
+    <section class="top-filters">
+      <div class="search-wrapper">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"
+             stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="7" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search inventory by name, category, or ID..."
+          [(ngModel)]="searchQuery"
+          (input)="onSearchChange()"
+        />
+      </div>
+      <div class="button-group">
+        <button class="btn btn-primary" (click)="openAddModal()">+ Add Item</button>
+        <button class="btn btn-outline" (click)="onExport()">Export</button>
+      </div>
+    </section>
+
+    <!-- DROPDOWN FILTERS -->
+    <section class="filters">
+      <div class="filter-group">
+        <label for="categorySelect">Category</label>
+        <select id="categorySelect" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange()" class="filter-select">
+          <option *ngFor="let cat of categories" [value]="cat.value">{{ cat.label }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="statusSelect">Stock Status</label>
+        <select id="statusSelect" [(ngModel)]="selectedStatus" (ngModelChange)="onStatusChange()" class="filter-select">
+          <option *ngFor="let status of statuses" [value]="status.value">{{ status.label }}</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- TABS -->
+    <div class="tabs-container">
       <div class="tabs">
         <button
-          [class.active]="activeTab === 'farmer'"
-          (click)="switchTab('farmer')">
+          class="tab"
+          [class.active]="activeTab === 'products'"
+          (click)="switchTab('products')">
           Farmer Products
         </button>
         <button
-          [class.active]="activeTab === 'input'"
-          (click)="switchTab('input')">
+          class="tab"
+          [class.active]="activeTab === 'inputs'"
+          (click)="switchTab('inputs')">
           Input Supplies
         </button>
         <button
+          class="tab"
           [class.active]="activeTab === 'livestock'"
           (click)="switchTab('livestock')">
           Livestock
         </button>
       </div>
+    </div>
 
-      <!-- TABLE SECTION -->
-      <div class="table-section">
-        <div class="table-container">
-          <table class="inventory-table">
-            <thead>
-              <tr>
-                <th class="th-id">ID</th>
-                <th class="th-name">Item Name</th>
-                <th class="th-category">Category</th>
-                <th class="th-quantity">Quantity</th>
-                <th class="th-value">Value (XAF)</th>
-                <th class="th-location">Location</th>
-                <th class="th-status">Status</th>
-                <th class="th-trend">Trend</th>
-                <th class="th-actions">Actions</th>
-              </tr>
-            </thead>
+    <!-- TABLE -->
+    <section class="table-section">
+      <table>
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>Item Name</th>
+          <th>Category</th>
+          <th>Quantity</th>
+          <th>Value (XAF)</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Trend</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let item of filteredItems" class="table-row">
+          <td>{{ item.itemId }}</td>
+          <td>
+            <div class="item-name-wrapper">
+              <div class="item-icon-box">📦</div>
+              <span>{{ item.itemName }}</span>
+            </div>
+          </td>
+          <td>{{ item.category }}</td>
+          <td>
+            <div class="quantity-cell">
+              <div class="qty-main">{{ formatQuantity(item) }}</div>
+              <div class="qty-min">Min: {{ item.minimumQuantity }} {{ item.unit }}</div>
+            </div>
+          </td>
+          <td><strong>{{ formatValue(item.valueXAF) }}</strong></td>
+          <td>{{ item.location }}</td>
+          <td>
+              <span class="badge" [ngClass]="getStatusClass(item.status)">
+                {{ getStatusLabel(item.status) }}
+              </span>
+          </td>
+          <td>
+              <span class="trend-badge" [ngClass]="getTrendClass(item.trend)">
+                {{ getTrendIcon(item.trend) }}
+              </span>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-action btn-view" (click)="openViewModal(item)" title="View Details">👁️</button>
+              <button class="btn-action btn-edit" (click)="openEditModal(item)" title="Edit">✏️</button>
+              <button class="btn-action btn-delete" (click)="onDelete(item)" title="Delete">🗑️</button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="filteredItems.length === 0 && !isLoading">
+          <td colspan="9" class="no-data">No inventory items found</td>
+        </tr>
+        </tbody>
+      </table>
 
-            <tbody>
-              <tr *ngFor="let item of paginatedItems" class="table-row">
-                <td class="td-id">{{ item.id }}</td>
-                <td class="td-name">{{ item.name }}</td>
-                <td class="td-category">{{ item.category }}</td>
-                <td class="td-quantity">
-                  {{ formatQuantity(item) }}
-                  <span class="min-quantity">{{ formatMinQuantity(item) }}</span>
-                </td>
-                <td class="td-value">{{ formatValue(item.value) }}</td>
-                <td class="td-location">{{ item.location }}</td>
-                <td class="td-status">
-                  <span [class]="getStatusClass(item.status)">{{ item.status }}</span>
-                </td>
-                <td class="td-trend">
-                  <span class="trend-icon">{{ getTrendIcon(item.trend) }}</span>
-                </td>
-                <td class="td-actions">
-                  <button class="icon-btn edit-btn">✎</button>
-                  <button class="icon-btn delete-btn">🗑</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      <!-- Pagination Controls -->
+      <div class="pagination">
+        <button (click)="previousPage()" [disabled]="currentPage === 1">← Prev</button>
+        <span>Page {{ currentPage }} of {{ totalPages }}</span>
+        <button (click)="nextPage()" [disabled]="currentPage === totalPages">Next →</button>
+      </div>
+    </section>
+</div>
+
+<!-- ADD MODAL - REACT-STYLE -->
+<div class="modal-overlay" *ngIf="showAddModal" (click)="closeModals()">
+  <div class="modal-content modal-add" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h2>Add Inventory Item</h2>
+        <p class="modal-description">Register farmer products, input supplies, or livestock to inventory</p>
+      </div>
+      <button class="modal-close" (click)="closeModals()">×</button>
+    </div>
+
+    <!-- Tab Selector -->
+    <div class="modal-tabs">
+      <button
+        class="modal-tab"
+        [class.active]="addModalTab === 'products'"
+        (click)="addModalTab = 'products'; updateFormCategory()">
+        Products
+      </button>
+      <button
+        class="modal-tab"
+        [class.active]="addModalTab === 'inputs'"
+        (click)="addModalTab = 'inputs'; updateFormCategory()">
+        Inputs
+      </button>
+      <button
+        class="modal-tab"
+        [class.active]="addModalTab === 'livestock'"
+        (click)="addModalTab = 'livestock'; updateFormCategory()">
+        Livestock
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form>
+        <!-- PRODUCTS TAB -->
+        <div *ngIf="addModalTab === 'products'" class="tab-content">
+          <div class="form-section">
+            <h3 class="section-title">Product Information</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Product Name*</label>
+                <select [(ngModel)]="formData.itemName" name="productName" class="form-input" (change)="onProductSelect()">
+                  <option value="">Select product</option>
+                  <option value="Cocoa Beans">Cocoa Beans</option>
+                  <option value="Coffee Beans">Coffee Beans</option>
+                  <option value="Cotton">Cotton</option>
+                  <option value="Palm Oil">Palm Oil</option>
+                  <option value="Cassava">Cassava</option>
+                  <option value="Maize">Maize</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Quality Grade*</label>
+                <select [(ngModel)]="formData.grade" name="grade" class="form-input">
+                  <option value="">Select grade</option>
+                  <option value="Grade A">Grade A (Premium)</option>
+                  <option value="Grade B">Grade B (Standard)</option>
+                  <option value="Grade C">Grade C (Basic)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3 class="section-title">Quantity & Pricing</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Quantity (MT)*</label>
+                <input type="number" [(ngModel)]="formData.quantity" name="quantity" min="0" step="0.1" class="form-input" placeholder="0.0" />
+              </div>
+              <div class="form-group">
+                <label>Total Value (XAF)*</label>
+                <input type="number" [(ngModel)]="formData.valueXAF" name="valueXAF" min="0" step="1000" class="form-input" placeholder="0" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3 class="section-title">Storage Information</h3>
+            <div class="form-group">
+              <label>Warehouse Location*</label>
+              <select [(ngModel)]="formData.location" name="location" class="form-input">
+                <option value="">Select warehouse</option>
+                <option value="Douala Warehouse">Douala Warehouse</option>
+                <option value="Yaoundé Warehouse">Yaoundé Warehouse</option>
+                <option value="Garoua Warehouse">Garoua Warehouse</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Minimum Quantity*</label>
+                <input type="number" [(ngModel)]="formData.minimumQuantity" name="minimumQuantity" min="0" step="0.1" class="form-input" placeholder="0.0" />
+              </div>
+              <div class="form-group">
+                <label>Trend</label>
+                <select [(ngModel)]="formData.trend" name="trend" class="form-input">
+                  <option value="STABLE">Stable →</option>
+                  <option value="UP">Up ↗</option>
+                  <option value="DOWN">Down ↘</option>
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- PAGINATION -->
-        <div class="pagination-container">
-          <div class="pagination-info">
-            Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, filteredItems.length) }} of {{ filteredItems.length }} entries
+        <!-- INPUTS TAB -->
+        <div *ngIf="addModalTab === 'inputs'" class="tab-content">
+          <div class="form-section">
+            <h3 class="section-title">Input Details</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Input Type*</label>
+                <select [(ngModel)]="formData.category" name="inputType" class="form-input">
+                  <option value="">Select type</option>
+                  <option value="Seeds">Seeds & Seedlings</option>
+                  <option value="Fertilizers">Fertilizers</option>
+                  <option value="Equipment">Equipment & Tools</option>
+                  <option value="Livestock Feed">Livestock Feed</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Item Name*</label>
+                <input type="text" [(ngModel)]="formData.itemName" name="inputName" class="form-input" placeholder="e.g., NPK Fertilizer" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Supplier (Optional)</label>
+              <input type="text" [(ngModel)]="formData.supplier" name="supplier" class="form-input" placeholder="Supplier name" />
+            </div>
           </div>
-          <div class="pagination-controls">
-            <button
-              class="page-btn"
-              [disabled]="currentPage === 1"
-              (click)="goToPage(currentPage - 1)">
-              ‹
-            </button>
 
-            <button
-              *ngFor="let page of getPageNumbers()"
-              class="page-btn"
-              [class.active]="page === currentPage"
-              [class.ellipsis]="page === -1"
-              (click)="page !== -1 && goToPage(page)">
-              {{ page === -1 ? '...' : page }}
-            </button>
+          <div class="form-section">
+            <h3 class="section-title">Quantity & Pricing</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Quantity*</label>
+                <input type="number" [(ngModel)]="formData.quantity" name="inputQuantity" min="0" class="form-input" placeholder="0" />
+              </div>
+              <div class="form-group">
+                <label>Unit*</label>
+                <select [(ngModel)]="formData.unit" name="inputUnit" class="form-input">
+                  <option value="units">Units</option>
+                  <option value="MT">Metric Tons (MT)</option>
+                  <option value="kg">Kilograms (kg)</option>
+                  <option value="liters">Liters</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Total Value (XAF)*</label>
+              <input type="number" [(ngModel)]="formData.valueXAF" name="inputValue" min="0" class="form-input" placeholder="0" />
+            </div>
+          </div>
 
-            <button
-              class="page-btn"
-              [disabled]="currentPage === totalPages"
-              (click)="goToPage(currentPage + 1)">
-              ›
-            </button>
+          <div class="form-section">
+            <h3 class="section-title">Storage Information</h3>
+            <div class="form-group">
+              <label>Location*</label>
+              <select [(ngModel)]="formData.location" name="inputLocation" class="form-input">
+                <option value="">Select location</option>
+                <option value="Central Depot">Central Depot</option>
+                <option value="Yaoundé Depot">Yaoundé Depot</option>
+                <option value="Garoua Depot">Garoua Depot</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Minimum Quantity*</label>
+              <input type="number" [(ngModel)]="formData.minimumQuantity" name="inputMinQuantity" min="0" class="form-input" placeholder="0" />
+            </div>
+          </div>
+        </div>
+
+        <!-- LIVESTOCK TAB -->
+        <div *ngIf="addModalTab === 'livestock'" class="tab-content">
+          <div class="form-section">
+            <h3 class="section-title">Livestock Details</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Livestock Type*</label>
+                <select [(ngModel)]="formData.category" name="livestockType" class="form-input">
+                  <option value="">Select type</option>
+                  <option value="Cattle">Cattle</option>
+                  <option value="Goats">Goats</option>
+                  <option value="Sheep">Sheep</option>
+                  <option value="Poultry">Poultry</option>
+                  <option value="Pigs">Pigs</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Breed (Optional)</label>
+                <input type="text" [(ngModel)]="formData.breed" name="breed" class="form-input" placeholder="e.g., Holstein" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Number of Heads*</label>
+                <input type="number" [(ngModel)]="formData.quantity" name="heads" min="0" class="form-input" placeholder="0" />
+              </div>
+              <div class="form-group">
+                <label>Item Name*</label>
+                <input type="text" [(ngModel)]="formData.itemName" name="livestockName" class="form-input" placeholder="e.g., Adult Cattle" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3 class="section-title">Valuation</h3>
+            <div class="form-group">
+              <label>Total Value (XAF)*</label>
+              <input type="number" [(ngModel)]="formData.valueXAF" name="livestockValue" min="0" class="form-input" placeholder="0" />
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3 class="section-title">Location & Management</h3>
+            <div class="form-group">
+              <label>Farm/Ranch Location*</label>
+              <select [(ngModel)]="formData.location" name="livestockLocation" class="form-input">
+                <option value="">Select location</option>
+                <option value="Ranch A - Adamawa">Ranch A - Adamawa</option>
+                <option value="Farm B - North Region">Farm B - North Region</option>
+                <option value="Poultry Farm C - West">Poultry Farm C - West</option>
+                <option value="Farm D - Centre">Farm D - Centre</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Minimum Quantity*</label>
+              <input type="number" [(ngModel)]="formData.minimumQuantity" name="livestockMinQuantity" min="0" class="form-input" placeholder="0" />
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="errorMessage" class="form-error">{{ errorMessage }}</div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="closeModals()">Cancel</button>
+      <button class="btn btn-primary" (click)="onSaveAdd()" [disabled]="isLoading">
+        {{ isLoading ? 'Saving...' : 'Add to Inventory' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeModals()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Edit Inventory Item</h2>
+      <button class="modal-close" (click)="closeModals()">×</button>
+    </div>
+    <div class="modal-body">
+      <form>
+        <div class="form-section">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Item ID*</label>
+              <input type="text" [(ngModel)]="formData.itemId" name="itemId" readonly class="form-input" />
+            </div>
+            <div class="form-group">
+              <label>Item Name*</label>
+              <input type="text" [(ngModel)]="formData.itemName" name="itemName" class="form-input" />
+            </div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Category*</label>
+              <select [(ngModel)]="formData.category" name="category" class="form-input">
+                <option *ngFor="let cat of categories.slice(1)" [value]="cat.value">{{ cat.label }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Quantity*</label>
+              <input type="number" [(ngModel)]="formData.quantity" name="quantity" min="0" step="0.1" class="form-input" />
+            </div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Minimum Quantity*</label>
+              <input type="number" [(ngModel)]="formData.minimumQuantity" name="minimumQuantity" min="0" step="0.1" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label>Unit*</label>
+              <select [(ngModel)]="formData.unit" name="unit" class="form-input">
+                <option value="MT">MT</option>
+                <option value="units">Units</option>
+                <option value="heads">Heads</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Value (XAF)*</label>
+              <input type="number" [(ngModel)]="formData.valueXAF" name="valueXAF" min="0" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label>Location*</label>
+              <select [(ngModel)]="formData.location" name="location" class="form-input">
+                <option *ngFor="let loc of locations" [value]="loc">{{ loc }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="errorMessage" class="form-error">{{ errorMessage }}</div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="closeModals()">Cancel</button>
+      <button class="btn btn-primary" (click)="onSaveEdit()" [disabled]="isLoading">
+        {{ isLoading ? 'Updating...' : 'Update Item' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="modal-overlay" *ngIf="showViewModal && currentItem" (click)="closeModals()">
+  <div class="modal-content modal-view" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Item Details</h2>
+      <button class="modal-close" (click)="closeModals()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-section">
+        <div class="detail-row">
+          <span class="detail-label">Item ID:</span>
+          <span class="detail-value">{{ currentItem.itemId }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Item Name:</span>
+          <span class="detail-value">{{ currentItem.itemName }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Category:</span>
+          <span class="detail-value">{{ currentItem.category }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Quantity:</span>
+          <span class="detail-value">{{ formatQuantity(currentItem) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Minimum Quantity:</span>
+          <span class="detail-value">{{ currentItem.minimumQuantity }} {{ currentItem.unit }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Value:</span>
+          <span class="detail-value">{{ formatValue(currentItem.valueXAF) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Location:</span>
+          <span class="detail-value">{{ currentItem.location }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Status:</span>
+          <span class="badge" [ngClass]="getStatusClass(currentItem.status)">
+            {{ getStatusLabel(currentItem.status) }}
+          </span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Trend:</span>
+          <span class="trend-badge" [ngClass]="getTrendClass(currentItem.trend)">
+            {{ getTrendIcon(currentItem.trend) }}
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="closeModals()">Close</button>
+      <button class="btn btn-primary" (click)="openEditModal(currentItem); showViewModal = false">Edit Item</button>
+    </div>
+  </div>
+</div>
+
+    <!-- Sales & Market Section -->
+    <div *ngIf="isSalesMarketSectionActive">
+      <div class="sales-market-section">
+        <div class="section-header">
+          <i class="fas fa-shopping-cart"></i>
+          <h2>Sales & Market Management</h2>
+          <button class="btn-create-listing" (click)="openNewProductModal()">
+            <i class="fas fa-plus"></i>
+            <span>New Listing</span>
+          </button>
+        </div>
+
+        <!-- Market Prices -->
+        <div class="market-prices-card">
+          <div class="card-header">
+            <h3>Current Market Prices</h3>
+            <span class="update-time">Updated: Today</span>
+          </div>
+          <div class="market-prices-grid">
+            <div class="market-price-item" *ngFor="let price of marketPrices">
+              <div class="price-header">
+                <span class="crop-name">{{ price.crop }}</span>
+                <span class="trend-icon" [ngClass]="price.trend">
+                  {{ getTrendIcon(price.trend) }}
+                </span>
+              </div>
+              <div class="price-values">
+                <div class="price-value">
+                  <span class="label">Local:</span>
+                  <span class="amount">{{ formatCurrency(price.localPrice) }}</span>
+                </div>
+                <div class="price-value">
+                  <span class="label">Regional:</span>
+                  <span class="amount">{{ formatCurrency(price.regionalPrice) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product Listings -->
+        <div class="product-listings-card">
+          <h3>Product Listings</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Farmer</th>
+                  <th>Product</th>
+                  <th>Quantity</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let product of productListings">
+                  <td>{{ product.id }}</td>
+                  <td>{{ product.farmerName }}</td>
+                  <td>{{ product.productName }}</td>
+                  <td>{{ product.quantity }} {{ product.unit }}</td>
+                  <td>{{ formatCurrency(product.pricePerUnit) }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="getProductStatusColor(product.status)">
+                      {{ product.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="btn-action btn-view" (click)="viewProduct(product)">👁️</button>
+                      <button class="btn-action btn-edit" (click)="editProduct(product)">✏️</button>
+                      <button class="btn-action btn-delete" (click)="deleteProduct(product)">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resources Section -->
+    <div *ngIf="isResourcesSectionActive">
+      <div class="resources-section">
+        <div class="section-header">
+          <i class="fas fa-tools"></i>
+          <h2>Resource Procurement</h2>
+          <button class="btn-create-request" (click)="openNewResourceRequestModal()">
+            <i class="fas fa-plus"></i>
+            <span>New Request</span>
+          </button>
+        </div>
+
+        <!-- Resource Requests -->
+        <div class="resource-requests-card">
+          <h3>Resource Requests</h3>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Resource</th>
+                  <th>Type</th>
+                  <th>Quantity</th>
+                  <th>Urgency</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let request of resourceRequests">
+                  <td>{{ request.id }}</td>
+                  <td>{{ request.resourceName }}</td>
+                  <td>{{ request.resourceType }}</td>
+                  <td>{{ request.quantity }} {{ request.unit }}</td>
+                  <td>
+                    <span class="urgency-badge" [ngClass]="getUrgencyColor(request.urgency)">
+                      {{ request.urgency }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="getRequestStatusColor(request.status)">
+                      {{ request.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="btn-action btn-view" (click)="viewResourceRequest(request)">👁️</button>
+                      <button class="btn-action btn-edit" (click)="editResourceRequest(request)">✏️</button>
+                      <button class="btn-action btn-delete" (click)="deleteResourceRequest(request)">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Suppliers Directory -->
+        <div class="suppliers-card">
+          <div class="card-header">
+            <h3>Available Suppliers</h3>
+            <button class="btn-view-all">View All</button>
+          </div>
+          <div class="suppliers-grid">
+            <div class="supplier-card" *ngFor="let supplier of suppliers">
+              <div class="supplier-header">
+                <h4>{{ supplier.name }}</h4>
+                <div class="rating">
+                  <span class="stars">⭐</span>
+                  <span>{{ supplier.rating }}</span>
+                </div>
+              </div>
+              <p class="supplier-location">{{ supplier.location }}</p>
+              <div class="supplier-specialties">
+                <span *ngFor="let specialty of supplier.specialties" class="specialty-tag">
+                  {{ specialty }}
+                </span>
+              </div>
+              <button class="btn-contact">Contact</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
