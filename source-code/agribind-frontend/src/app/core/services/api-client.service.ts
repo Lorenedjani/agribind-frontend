@@ -9,9 +9,6 @@ import { environment } from '../../../environments/environment';
   providedIn: 'root'
 })
 export class ApiClientService {
-  patch<T>(arg0: string, arg1: {}): Observable<import("./user.service").User> {
-    throw new Error('Method not implemented.');
-  }
   private baseUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {
@@ -85,6 +82,18 @@ export class ApiClientService {
       headers: this.getHeaders()
     }).pipe(
       tap(response => console.log('DELETE Response:', response)),
+      catchError(this.handleError)
+    );
+  }
+
+  patch<T>(endpoint: string, data: any = {}): Observable<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+    console.log('PATCH Request:', url, data);
+
+    return this.http.patch<T>(url, data, {
+      headers: this.getHeaders()
+    }).pipe(
+      tap(response => console.log('PATCH Response:', response)),
       catchError(this.handleError)
     );
   }

@@ -1,12 +1,19 @@
+
 spring:
   application:
-    name: communication
-
+    name: communication-service
   datasource:
-    url: jdbc:mysql://root:gOpBKAtqaFyXJtxIwqJXqmDnbIahZgFo@shuttle.proxy.rlwy.net:38695/railway?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:gOpBKAtqaFyXJtxIwqJXqmDnbIahZgFo}
+    url: jdbc:mysql://localhost:3306/communication_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    username: root
+    password: 237Work1234
     driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
+
 
   jpa:
     hibernate:
@@ -17,11 +24,6 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
 
-  servlet:
-    multipart:
-      enabled: true
-      max-file-size: 50MB
-      max-request-size: 50MB
 
 server:
   port: 8084
@@ -69,3 +71,15 @@ communication:
       - South
       - South-West
       - West
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  show-actuator: false

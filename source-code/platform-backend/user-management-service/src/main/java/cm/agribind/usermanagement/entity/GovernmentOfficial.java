@@ -26,6 +26,9 @@ public class GovernmentOfficial extends User {
 
     private String department;
 
+    @Column(name = "official_rank")
+    private String officialRank;
+
     private String employeeId;
 
     private String jurisdiction; // Specific area of responsibility
@@ -35,4 +38,12 @@ public class GovernmentOfficial extends User {
     private Boolean canViewStatistics = true;
 
     private String supervisor;
+
+    public String getOfficialRank() {
+        return officialRank;
+    }
+
+    public void setOfficialRank(String officialRank) {
+        this.officialRank = officialRank;
+    }
 }

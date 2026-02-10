@@ -4,11 +4,7 @@ spring:
     name: production-monitoring-service
 
   datasource:
-<<<<<<< HEAD
     url: jdbc:mysql://localhost:3307/agri_production_dbmysql://root:gOpBKAtqaFyXJtxIwqJXqmDnbIahZgFo@shuttle.proxy.rlwy.net:38695/railway?createDatabaseIfNotExist=true
-=======
-    url: jdbc:mysql://localhost:3307/agri_production_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
->>>>>>> e5d3c9b455daadf9a49a3e40cd8bda3f862c66a0
     username: root
     password: gOpBKAtqaFyXJtxIwqJXqmDnbIahZgFo
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -99,6 +95,18 @@ management:
     export:
       prometheus:
         enabled: true
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  show-actuator: false
 
 # Application-specific configurations
 app:

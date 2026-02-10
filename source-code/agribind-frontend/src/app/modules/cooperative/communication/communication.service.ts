@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, catchError, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import {
   AudioMessage,
@@ -23,9 +24,24 @@ import {
   providedIn: 'root'
 })
 export class CommunicationService {
-  private apiUrl = `${environment.services.communication}/communications`;
+  private apiUrl = environment.services.communication;
 
   constructor(private http: HttpClient) {}
+
+  private getHeaders(contentType: string = 'application/json'): HttpHeaders {
+    const token = localStorage.getItem('accessToken');
+    let headers = new HttpHeaders();
+
+    if (contentType) {
+      headers = headers.set('Content-Type', contentType);
+    }
+
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    return headers;
+  }
 
   // ==================== SMS Methods ====================
 
@@ -37,7 +53,7 @@ export class CommunicationService {
     scheduledAt?: Date;
     templateId?: string;
   }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/sms/bulk`, request).pipe(
+    return this.http.post(`${this.apiUrl}/sms/bulk`, request, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('sendBulkSms'))
     );
   }
@@ -50,7 +66,7 @@ export class CommunicationService {
     scheduledDelivery?: Date;
     templateId?: string;
   }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/sms/compose`, request).pipe(
+    return this.http.post(`${this.apiUrl}/sms/compose`, request, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('composeBulkMessage'))
     );
   }
@@ -58,20 +74,29 @@ export class CommunicationService {
   // ==================== Audio Message Methods ====================
 
   uploadAudioMessage(formData: FormData): Observable<any> {
-    return this.http.post(`${this.apiUrl}/audio/upload`, formData).pipe(
+    // Don't set Content-Type for FormData - browser will set it with boundary
+    const token = localStorage.getItem('accessToken');
+    let headers = new HttpHeaders();
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+    return this.http.post(`${this.apiUrl}/audio/upload`, formData, { headers }).pipe(
       catchError(this.handleError('uploadAudioMessage'))
     );
   }
 
   broadcastAudioMessage(request: any, audioFileId: number): Observable<any> {
     const params = new HttpParams().set('audioFileId', audioFileId.toString());
-    return this.http.post(`${this.apiUrl}/audio/broadcast`, request, { params }).pipe(
+    return this.http.post(`${this.apiUrl}/audio/broadcast`, request, { 
+      headers: this.getHeaders(),
+      params 
+    }).pipe(
       catchError(this.handleError('broadcastAudioMessage'))
     );
   }
 
   getSupportedLanguages(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/audio/languages`).pipe(
+    return this.http.get<string[]>(`${this.apiUrl}/audio/languages`, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('getSupportedLanguages', []))
     );
   }
@@ -88,19 +113,19 @@ export class CommunicationService {
     channels: string[];
     expiresAt?: Date;
   }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/alerts`, request).pipe(
+    return this.http.post(`${this.apiUrl}/alerts`, request, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('createAlert'))
     );
   }
 
   getAlertHistory(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/alerts/history`).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/alerts/history`, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('getAlertHistory', []))
     );
   }
 
   getAlertById(alertId: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/alerts/${alertId}`).pipe(
+    return this.http.get<any>(`${this.apiUrl}/alerts/${alertId}`, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('getAlertById'))
     );
   }
@@ -119,25 +144,25 @@ export class CommunicationService {
     budgetAmount?: number;
     currency?: string;
   }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/resources/requests`, request).pipe(
+    return this.http.post(`${this.apiUrl}/resources/requests`, request, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('createResourceRequest'))
     );
   }
 
   getActiveResourceRequests(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/resources/requests`).pipe(
+    return this.http.get<any[]>(`${this.apiUrl}/resources/requests`, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('getActiveResourceRequests', []))
     );
   }
 
   getResourceRequestById(requestId: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/resources/requests/${requestId}`).pipe(
+    return this.http.get<any>(`${this.apiUrl}/resources/requests/${requestId}`, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('getResourceRequestById'))
     );
   }
 
   matchSuppliers(requestId: string, supplierIds: number[]): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/resources/requests/${requestId}/match`, supplierIds).pipe(
+    return this.http.put<void>(`${this.apiUrl}/resources/requests/${requestId}/match`, supplierIds, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('matchSuppliers'))
     );
   }
@@ -152,31 +177,31 @@ export class CommunicationService {
     language: string;
     variables?: string[];
   }): Observable<MessageTemplate> {
-    return this.http.post<MessageTemplate>(`${this.apiUrl}/templates`, template).pipe(
+    return this.http.post<MessageTemplate>(`${this.apiUrl}/templates`, template, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('createTemplate'))
     );
   }
 
   getAllTemplates(): Observable<MessageTemplate[]> {
-    return this.http.get<MessageTemplate[]>(`${this.apiUrl}/templates`).pipe(
+    return this.http.get<MessageTemplate[]>(`${this.apiUrl}/templates`, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('getAllTemplates', []))
     );
   }
 
   getTemplateById(id: number): Observable<MessageTemplate> {
-    return this.http.get<MessageTemplate>(`${this.apiUrl}/templates/${id}`).pipe(
+    return this.http.get<MessageTemplate>(`${this.apiUrl}/templates/${id}`, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('getTemplateById'))
     );
   }
 
   updateTemplate(id: number, template: Partial<MessageTemplate>): Observable<MessageTemplate> {
-    return this.http.put<MessageTemplate>(`${this.apiUrl}/templates/${id}`, template).pipe(
+    return this.http.put<MessageTemplate>(`${this.apiUrl}/templates/${id}`, template, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('updateTemplate'))
     );
   }
 
   deleteTemplate(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/templates/${id}`).pipe(
+    return this.http.delete<void>(`${this.apiUrl}/templates/${id}`, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('deleteTemplate'))
     );
   }
@@ -184,13 +209,13 @@ export class CommunicationService {
   // ==================== Statistics Methods ====================
 
   getStatistics(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/statistics`).pipe(
+    return this.http.get<any>(`${this.apiUrl}/statistics`, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('getStatistics'))
     );
   }
 
   refreshStatistics(): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/statistics/refresh`, {}).pipe(
+    return this.http.post<void>(`${this.apiUrl}/statistics/refresh`, {}, { headers: this.getHeaders() }).pipe(
       catchError(this.handleError('refreshStatistics'))
     );
   }
@@ -227,34 +252,56 @@ export class CommunicationService {
 
   // Dashboard
   getDashboardStats(): Observable<DashboardStats> {
-    return of(DEFAULT_DASHBOARD_STATS);
+    return this.http.get<any>(`${this.apiUrl}/statistics`, { headers: this.getHeaders() }).pipe(
+      catchError(this.handleError('getDashboardStats')),
+      // Map backend stats to frontend DashboardStats format
+      map(stats => ({
+        totalMessages: {
+          current: stats.totalMessagesSent || 0,
+          previous: (stats.totalMessagesSent || 0) - (stats.messagesSentThisWeek || 0),
+          trend: stats.deliveryRateChange || 0
+        },
+        activeAlerts: {
+          count: stats.activeAlerts || 0,
+          status: AlertStatus.NORMAL // Default mapping
+        },
+        audioMessages: {
+          count: stats.audioMessagesTotal || 0,
+          languages: stats.audioLanguagesSupported || 5,
+          deliveryRate: stats.deliveryRate || 0,
+          deliveryTrend: stats.deliveryRateChange || 0
+        }
+      }))
+    );
   }
 
   getDashboardSummary(): Observable<DashboardSummary> {
-    const summary: DashboardSummary = {
-      totalMessages: 247,
-      totalAlerts: 23,
-      totalAudioMessages: 87,
-      totalListeners: 15420,
-      averageDeliveryRate: 94.5,
-      recentActivity: [
-        {
-          id: 1,
-          type: 'message',
-          action: 'Bulk SMS sent to farmers',
-          user: 'Admin',
-          timestamp: new Date()
-        },
-        {
-          id: 2,
-          type: 'alert',
-          action: 'Weather alert created',
-          user: 'Admin',
-          timestamp: new Date(Date.now() - 3600000)
-        }
-      ]
-    };
-    return of(summary);
+    return this.http.get<any>(`${this.apiUrl}/statistics`, { headers: this.getHeaders() }).pipe(
+      catchError(this.handleError('getDashboardSummary')),
+      map(stats => ({
+        totalMessages: stats.totalMessagesSent || 247,
+        totalAlerts: stats.activeAlerts || 23,
+        totalAudioMessages: stats.audioMessagesTotal || 87,
+        totalListeners: stats.activeMembers || 15420, // Approximate mapping
+        averageDeliveryRate: stats.deliveryRate || 94.5,
+        recentActivity: [
+          {
+            id: 1,
+            type: 'message',
+            action: 'Bulk SMS sent to farmers',
+            user: 'Admin',
+            timestamp: new Date()
+          },
+          {
+            id: 2,
+            type: 'alert',
+            action: 'Weather alert created',
+            user: 'Admin',
+            timestamp: new Date(Date.now() - 3600000)
+          }
+        ]
+      }))
+    );
   }
 
   // Utility methods

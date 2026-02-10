@@ -1,184 +1,71 @@
-#server:
-#  port: 8082
-
-#spring:
-#  application:
-#    name: api-gateway
-#  cloud:
-#    gateway:
-#      discovery:
-#        locator:
-#          enabled: true
-#          lower-case-service-id: true
-#      routes:
-        # Auth Service
-#        - id: auth-service
-#          uri: lb://auth-service
-#          predicates:
-#            - Path=/api/v1/auth/**
-#          filters:
-            #- StripPrefix=1
-#            - name: RequestLoggingFilter
-#
-#        # User Management Service
-#        - id: user-management-service
-#          uri: lb://user-management-service
-#          predicates:
-#            - Path=/api/v1/users/**, /api/v1/farmers/**, /api/v1/cooperatives/**, /api/v1/qrcodes/**, /api/v1/dashboard/**, /api/v1/exports/**
-#          filters:
-#            #- StripPrefix=1
-#            - name: RequestLoggingFilter
-
-#        # Notification Service
-#        - id: notification-service
-#          uri: lb://notification-service
-#          predicates:
-#            - Path=/api/notifications/**
-#          filters:
-#            #StripPrefix=0
-#            - name: RequestLoggingFilter
-#
-#        # Add this NEW route for Communication Service
-#        - id: communication-service
-#          uri: lb://communication  # 'communication' matches the spring.application.name
-#          predicates:
-#            - Path=/api/communications/**, /api/messages/**, /api/alerts/**, /api/sms/**, /api/audio/**  # Add your communication endpoints
- #         filters:
-#            - name: RequestLoggingFilter
-
-        # Add this NEW route for Inventory Service
- #       - id: inventory-service
-#          uri: lb://inventory-service  # 'communication' matches the spring.application.name
-#          predicates:
-#            - Path=/api/inventory/**  # Add your communication endpoints
-#          filters:
-#            - name: RequestLoggingFilter
-
-#      default-filters:
-#        - DedupeResponseHeader=Access-Control-Allow-Origin
-
-#eureka:
-#  client:
-#    service-url:
-#      defaultZone: http://localhost:8761/eureka/
-#  instance:
-#    prefer-ip-address: true
-
-#management:
-#  endpoints:
- #   web:
-#      exposure:
-#        include: "*"
-#  endpoint:
-#    health:
-#      show-details: always
-#    gateway:
-#      enabled: true
-
-#logging:
-#  level:
-#    org.springframework.cloud.gateway: DEBUG
-#    com.agribind.api_gateway: DEBUG
-
-
-server:
-  port: ${PORT:8081}  # ← Render will set PORT automatically
-
 spring:
   application:
     name: api-gateway
   cloud:
     gateway:
-      # CORS Configuration (essential for frontend)
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowed-origins: ${ALLOWED_ORIGINS:"*"}
-            allowed-methods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - OPTIONS
-              - PATCH
-            allowed-headers:
-              - "*"
-            allow-credentials: true
-      discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
       routes:
-        # Auth Service
+        - id: user-management
+          uri: lb://USER-MANAGEMENT-SERVICE
+          predicates:
+            - Path=/api/v1/auth/**,/api/v1/users/**
+          filters:
+            - StripPrefix=0
+        
+        - id: production
+          uri: lb://PRODUCTION-SERVICE
+          predicates:
+            - Path=/api/v1/production/**
+          filters:
+            - StripPrefix=0
+        
         - id: auth-service
-          uri: lb://auth-service
+          uri: lb://AUTH-SERVICE
           predicates:
-            - Path=/api/v1/auth/**
+            - Path=/api/auth/**
           filters:
-            - name: RequestLoggingFilter
-
-        # User Management Service
-        - id: user-management-service
-          uri: lb://user-management-service
-          predicates:
-            - Path=/api/v1/users/**, /api/v1/farmers/**, /api/v1/cooperatives/**, /api/v1/qrcodes/**, /api/v1/dashboard/**, /api/v1/exports/**
-          filters:
-            - name: RequestLoggingFilter
-
-        # Notification Service
-        - id: notification-service
-          uri: lb://notification-service
-          predicates:
-            - Path=/api/notifications/**
-          filters:
-            - name: RequestLoggingFilter
-
-        # Communication Service
-        - id: communication-service
-          uri: lb://communication
-          predicates:
-            - Path=/api/communications/**, /api/messages/**, /api/alerts/**, /api/sms/**, /api/audio/**
-          filters:
-            - name: RequestLoggingFilter
-
-        # Inventory Service
-        - id: inventory-service
-          uri: lb://inventory-service
+            - StripPrefix=0
+        
+        - id: inventory
+          uri: lb://INVENTORY-SERVICE
           predicates:
             - Path=/api/inventory/**
           filters:
-            - name: RequestLoggingFilter
+            - StripPrefix=0
+        
+        - id: communication
+          uri: lb://COMMUNICATION-SERVICE
+          predicates:
+            - Path=/api/communications/**
+          filters:
+            - StripPrefix=0
+        
+        - id: notification
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - StripPrefix=0
+        
+        - id: microcredit
+          uri: lb://MICROCREDIT-SERVICE
+          predicates:
+            - Path=/api/microcredit/**
+          filters:
+            - StripPrefix=0
+      
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:4200"
+            allowedMethods: GET,POST,PUT,DELETE,PATCH,OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
 
-      default-filters:
-        - DedupeResponseHeader=Access-Control-Allow-Origin
-
-# CRITICAL FIX: Updated Eureka URL for Render
 eureka:
   client:
-    service-url:
-      defaultZone: ${EUREKA_URL:https://agribind-frontend-795v.onrender.com/eureka/}  # ← Your Eureka URL
-    register-with-eureka: true
-    fetch-registry: true
-  instance:
-    hostname: ${RENDER_SERVICE_NAME:api-gateway}.onrender.com
-    prefer-ip-address: false
-    instance-id: ${spring.application.name}:${server.port}
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,gateway
-  endpoint:
-    health:
-      show-details: always
-    gateway:
-      enabled: true
-
-
-
-logging:
-  level:
-    org.springframework.cloud.gateway: INFO
-    com.agribind.api_gateway: INFO
-    org.springframework.cloud.netflix.eureka: INFO
+server:
+  port: 8080
