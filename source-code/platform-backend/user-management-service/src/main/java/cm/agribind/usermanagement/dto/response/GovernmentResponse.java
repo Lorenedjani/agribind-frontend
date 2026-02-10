@@ -1,6 +1,7 @@
 package cm.agribind.usermanagement.dto.response;
 
 import cm.agribind.usermanagement.enums.GovernmentRole;
+import jakarta.persistence.Column;
 import cm.agribind.usermanagement.enums.Region;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;

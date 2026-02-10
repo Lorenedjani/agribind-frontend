@@ -83,7 +83,7 @@ public interface UserMapper {
     default Address toAddressFromUpdate(UpdateUserCommand command) {
         if (command.getRegion() == null &&
                 command.getDepartment() == null &&
-                command.getDepartment() == null &&
+                command.getDistrict() == null &&
                 command.getVillage() == null &&
                 command.getGpsCoordinates() == null) {
             return null;

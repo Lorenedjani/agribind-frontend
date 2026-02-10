@@ -126,6 +126,7 @@ resilience4j:
 # Changed from mongo to db
 health:
 <<<<<<< HEAD
+<<<<<<< HEAD
   db:
     enabled: true
 =======
@@ -144,3 +145,7 @@ springdoc:
     try-it-out-enabled: true
   show-actuator: false
 >>>>>>> 2ccad2b0c7ae3e3a482bea80b6e3fe026d5124f8
+=======
+  db:
+    enabled: true
+>>>>>>> Lorene

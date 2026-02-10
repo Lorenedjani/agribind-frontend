@@ -17,9 +17,9 @@ spring:
 
   # ✅ YOUR RENDER POSTGRESQL DATABASE
   datasource:
-    url: ${MYSQL_URL:jdbc:mysql://root:vTbUrkBvUEsYHAxcIBNnSzzGiTSjMBCr@turntable.proxy.rlwy.net:49592/railway?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8}
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/auth_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8}
     username: ${MYSQLUSER:root}
-    password: ${MYSQLPASSWORD:vTbUrkBvUEsYHAxcIBNnSzzGiTSjMBCr}
+    password: ${MYSQLPASSWORD:237Work1234}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 5
@@ -48,7 +48,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_URL:https://agribind-frontend-795v.onrender.com/eureka/}
+      defaultZone: ${EUREKA_URL:https://localhost:8761/eureka/}
     register-with-eureka: true  # ⬅️ REGISTER WITH EUREKA
     fetch-registry: true        # ⬅️ DISCOVER OTHER SERVICES
     enabled: true
