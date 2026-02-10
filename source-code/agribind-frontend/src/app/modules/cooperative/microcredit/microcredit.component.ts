@@ -2,6 +2,7 @@ import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
+import { MicrocreditService, CashLoanDTO, MaterialLoanDTO, DashboardStatsDTO, LoanApplicationDTO } from '../../../core/services/microcredit.service';
 
 interface Loan {
   id: string;
@@ -93,44 +94,10 @@ export class MicrocreditComponent implements OnInit {
     }
   ];
 
-  loans: Loan[] = [
-    {
-      id: 'LOAN-001',
-      borrower: 'Jean Baptiste',
-      amount: '500,000 XAF',
-      interestRate: '5%',
-      duration: '6 months',
-      status: 'active',
-      startDate: '2025-07-01',
-      dueDate: '2025-12-31',
-      amountPaid: '250,000 XAF',
-      amountRemaining: '250,000 XAF'
-    },
-    {
-      id: 'LOAN-002',
-      borrower: 'Marie Kouam',
-      amount: '750,000 XAF',
-      interestRate: '5%',
-      duration: '12 months',
-      status: 'active',
-      startDate: '2025-06-01',
-      dueDate: '2026-05-31',
-      amountPaid: '375,000 XAF',
-      amountRemaining: '375,000 XAF'
-    },
-    {
-      id: 'LOAN-003',
-      borrower: 'Paul Mbarga',
-      amount: '1,000,000 XAF',
-      interestRate: '5%',
-      duration: '6 months',
-      status: 'completed',
-      startDate: '2025-01-01',
-      dueDate: '2025-06-30',
-      amountPaid: '1,000,000 XAF',
-      amountRemaining: '0 XAF'
-    }
-  ];
+  loans: Loan[] = [];
+  cashLoans: CashLoanDTO[] = [];
+  materialLoans: MaterialLoanDTO[] = [];
+  dashboardStats: DashboardStatsDTO | null = null;
 
   filteredLoans: Loan[] = [];
   
@@ -146,10 +113,16 @@ export class MicrocreditComponent implements OnInit {
     { value: 'defaulted', label: 'Defaulted' }
   ];
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private microcreditService: MicrocreditService
+  ) {}
 
   ngOnInit(): void {
     this.loadCurrentUser();
+    this.loadDashboardStats();
+    this.loadCashLoans();
+    this.loadMaterialLoans();
     this.applyFilters();
   }
 
@@ -166,6 +139,123 @@ export class MicrocreditComponent implements OnInit {
         initials: this.getInitials(currentUser.username || currentUser.email || 'User'),
         cooperativeId: cooperativeId || ''
       };
+    }
+  }
+
+  loadDashboardStats(): void {
+    this.microcreditService.getDashboardStats().subscribe({
+      next: (stats) => {
+        this.dashboardStats = stats;
+        this.updateLoanStats();
+      },
+      error: (error) => {
+        console.error('Error loading dashboard stats:', error);
+        // Fallback to mock stats if API fails
+        this.updateLoanStats();
+      }
+    });
+  }
+
+  loadCashLoans(): void {
+    this.microcreditService.getCashLoans().subscribe({
+      next: (loans) => {
+        this.cashLoans = loans;
+        this.updateLoansList();
+      },
+      error: (error) => {
+        console.error('Error loading cash loans:', error);
+        this.cashLoans = [];
+        this.updateLoansList();
+      }
+    });
+  }
+
+  loadMaterialLoans(): void {
+    this.microcreditService.getMaterialLoans().subscribe({
+      next: (loans) => {
+        this.materialLoans = loans;
+        this.updateLoansList();
+      },
+      error: (error) => {
+        console.error('Error loading material loans:', error);
+        this.materialLoans = [];
+        this.updateLoansList();
+      }
+    });
+  }
+
+  updateLoansList(): void {
+    // Combine cash and material loans into the loans array for display
+    const combinedLoans: Loan[] = [];
+
+    // Convert cash loans to frontend Loan format
+    this.cashLoans.forEach(loan => {
+      combinedLoans.push({
+        id: loan.loanId,
+        borrower: loan.farmerName,
+        amount: this.formatAmount(loan.loanAmount.toString()) + ' XAF',
+        interestRate: '5%', // Default, could be calculated
+        duration: `${loan.totalInstallments} months`,
+        status: loan.status.toLowerCase(),
+        startDate: '2025-01-01', // Default, backend doesn't provide
+        dueDate: loan.dueDate,
+        amountPaid: this.formatAmount(loan.repaidAmount.toString()) + ' XAF',
+        amountRemaining: this.formatAmount(loan.balance.toString()) + ' XAF'
+      });
+    });
+
+    // Convert material loans to frontend Loan format
+    this.materialLoans.forEach(loan => {
+      combinedLoans.push({
+        id: loan.loanId,
+        borrower: loan.farmerName,
+        amount: this.formatAmount(loan.loanAmount.toString()) + ' XAF',
+        interestRate: '5%', // Default
+        duration: '12 months', // Default
+        status: loan.status.toLowerCase(),
+        startDate: '2025-01-01', // Default
+        dueDate: '2025-12-31', // Default
+        amountPaid: this.formatAmount(loan.repaidAmount.toString()) + ' XAF',
+        amountRemaining: this.formatAmount(loan.balance.toString()) + ' XAF'
+      });
+    });
+
+    this.loans = combinedLoans;
+    this.applyFilters();
+  }
+
+  updateLoanStats(): void {
+    if (this.dashboardStats) {
+      this.loanStats = [
+        {
+          title: 'Total Cash Loans',
+          value: this.formatAmount(this.dashboardStats.totalCashLoans?.toString() || '0') + ' XAF',
+          change: `+${this.dashboardStats.activeCashLoans || 0} active`,
+          icon: '💵',
+          color: 'bg-primary'
+        },
+        {
+          title: 'Total Material Loans',
+          value: this.formatAmount(this.dashboardStats.totalMaterialLoans?.toString() || '0') + ' XAF',
+          change: `+${this.dashboardStats.activeMaterialLoans || 0} active`,
+          icon: '🚜',
+          color: 'bg-success'
+        },
+        {
+          title: 'Active Loans',
+          value: (this.dashboardStats.activeCashLoans || 0) + (this.dashboardStats.activeMaterialLoans || 0) + '',
+          change: `${this.dashboardStats.repaymentRate?.toFixed(1) || 0}% repayment rate`,
+          icon: '📋',
+          color: 'bg-info'
+        },
+        {
+          title: 'Overdue Loans',
+          value: this.dashboardStats.overdueLoansCount?.toString() || '0',
+          change: this.formatAmount(this.dashboardStats.overdueAmount?.toString() || '0') + ' XAF overdue',
+          icon: '⚠️',
+          color: 'bg-warning'
+        }
+      ];
     }
   }
 
@@ -379,28 +469,30 @@ export class MicrocreditComponent implements OnInit {
 
     console.log('Submitting loan:', this.loanForm);
 
-    // Calculate amount remaining (initially full amount)
-    const amountRemaining = parseFloat(this.loanForm.amount);
-
-    // Create new loan
-    const newLoan: Loan = {
-      id: `LOAN-${String(this.loans.length + 1).padStart(3, '0')}`,
-      borrower: this.loanForm.borrower,
-      amount: `${this.formatAmount(this.loanForm.amount)} XAF`,
-      interestRate: `${this.loanForm.interestRate}%`,
-      duration: `${this.loanForm.duration} months`,
-      status: 'Active',
-      startDate: this.loanForm.startDate,
-      dueDate: this.loanForm.dueDate,
-      amountPaid: '0 XAF',
-      amountRemaining: `${this.formatAmount(amountRemaining.toString())} XAF`
+    // Create loan application DTO
+    const application: LoanApplicationDTO = {
+      farmerId: this.user.cooperativeId || 'farmer-001', // Use cooperativeId as farmerId for now
+      loanType: 'CASH', // Default to cash loan
+      requestedAmount: parseFloat(this.loanForm.amount),
+      purpose: this.loanForm.purpose || 'Working Capital',
+      preferredDisbursementDate: this.loanForm.startDate,
+      repaymentPeriod: parseInt(this.loanForm.duration)
     };
 
-    this.loans.unshift(newLoan);
-    this.applyFilters();
-    this.closeNewLoanModal();
-
-    alert('Loan application submitted successfully!');
+    this.microcreditService.applyForCashLoan(application).subscribe({
+      next: (loan) => {
+        console.log('Loan created successfully:', loan);
+        // Reload loans to show the new one
+        this.loadCashLoans();
+        this.loadDashboardStats();
+        this.closeNewLoanModal();
+        alert('Loan application submitted successfully!');
+      },
+      error: (error) => {
+        console.error('Error submitting loan:', error);
+        alert('Error submitting loan application. Please try again.');
+      }
+    });
   }
 
   updateLoan(): void {

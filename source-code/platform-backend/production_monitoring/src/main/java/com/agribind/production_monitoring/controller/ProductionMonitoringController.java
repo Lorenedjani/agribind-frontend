@@ -4,6 +4,13 @@ import com.agribind.production_monitoring.model.MaturityStatus;
 import com.agribind.production_monitoring.model.ProductionRecord;
 import com.agribind.production_monitoring.dto.*;
 import com.agribind.production_monitoring.service.ProductionMonitoringService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +28,7 @@ import java.util.List;
 @RequestMapping("/api/v1/production")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
+@Tag(name = "Production Monitoring Service", description = "API for managing production records, farmer contributions, maturity updates, and production aggregates")
 public class ProductionMonitoringController {
 
     private final ProductionMonitoringService productionMonitoringService;
@@ -29,8 +37,16 @@ public class ProductionMonitoringController {
      * Record new production entry
      * POST /api/v1/production/record
      */
+    @Operation(summary = "Record production", description = "Record a new production entry for a farmer")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Production recorded successfully",
+            content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PostMapping("/record")
     public ResponseEntity<ApiResponse<ProductionRecord>> recordProduction(
+            @Parameter(description = "Production record details", required = true)
             @Valid @RequestBody ProductionRecordDTO dto
     ) {
         try {

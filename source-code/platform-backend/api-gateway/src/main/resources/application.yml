@@ -149,6 +149,32 @@ spring:
           filters:
             - name: RequestLoggingFilter
 
+        # Microcredit Service
+        - id: microcredit-service
+          uri: lb://microcredit-service
+          predicates:
+            - Path=/api/microcredit/**
+          filters:
+            - RewritePath=/api/microcredit/(?<segment>.*), /microcredit/api/microcredit/$\{segment}
+            - name: RequestLoggingFilter
+
+        # Production Monitoring Service
+        - id: production-monitoring-service
+          uri: lb://production-monitoring-service
+          predicates:
+            - Path=/api/v1/production/**
+          filters:
+            - name: RequestLoggingFilter
+
+        # Plant Monitoring Service
+        - id: plant-monitoring-service
+          uri: lb://plant-health-monitoring-system
+          predicates:
+            - Path=/api/v1/plants/**, /api/v1/health/**, /api/v1/disease-reports/**, /api/v1/plant-photos/**
+          filters:
+            - RewritePath=/api/v1/disease-reports/(?<segment>.*), /api/disease-reports/$\{segment}
+            - name: RequestLoggingFilter
+
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin
 

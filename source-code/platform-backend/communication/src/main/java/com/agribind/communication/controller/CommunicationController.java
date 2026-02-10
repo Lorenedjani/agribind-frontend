@@ -3,6 +3,13 @@ package com.agribind.communication.controller;
 import com.agribind.communication.dto.*;
 import com.agribind.communication.service.AudioMessageService;
 import com.agribind.communication.service.CommunicationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/communications")
 @CrossOrigin(origins = "*")
+@Tag(name = "Communication Service", description = "API for managing SMS, audio messages, alerts, templates, and resource requests")
 public class CommunicationController {
 
     private static final Logger log = LoggerFactory.getLogger(CommunicationController.class);
@@ -31,8 +39,16 @@ public class CommunicationController {
 
     // ==================== SMS Endpoints ====================
 
+    @Operation(summary = "Send bulk SMS", description = "Send SMS messages to multiple recipients based on target audience")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "SMS sent successfully",
+            content = @Content(schema = @Schema(implementation = SmsMessageResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PostMapping("/sms/bulk")
     public ResponseEntity<SmsMessageResponse> sendBulkSms(
+        @Parameter(description = "SMS request details", required = true)
         @Valid @RequestBody SmsMessageRequest request
     ) {
         log.info("Received bulk SMS request for: {}", request.getTargetAudience());
@@ -40,8 +56,14 @@ public class CommunicationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Operation(summary = "Compose bulk message", description = "Compose and send a bulk message to selected audience")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Message composed and queued successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request")
+    })
     @PostMapping("/sms/compose")
     public ResponseEntity<BulkMessageResponse> composeBulkMessage(
+        @Parameter(description = "Bulk message request", required = true)
         @Valid @RequestBody BulkMessageRequest request
     ) {
         log.info("Composing bulk message for: {}", request.getRecipientAudience());

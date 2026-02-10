@@ -125,5 +125,22 @@ resilience4j:
 
 # Changed from mongo to db
 health:
+<<<<<<< HEAD
   db:
     enabled: true
+=======
+  mongo:
+    enabled: true
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  show-actuator: false
+>>>>>>> 2ccad2b0c7ae3e3a482bea80b6e3fe026d5124f8
