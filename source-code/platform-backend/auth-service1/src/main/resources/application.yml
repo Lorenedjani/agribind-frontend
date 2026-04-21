@@ -1,0 +1,63 @@
+server:
+  port: 8082
+
+# Eureka Client Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 10
+
+spring:
+  application:
+    name: auth-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3307/auth_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+# ✅ Service URLs - User Management runs on port 8083
+services:
+  user-management: http://localhost:8083
+  notification: http://localhost:8087
+  communication: http://localhost:8084
+  inventory: http://localhost:8085
+
+# Password reset configuration
+password-reset:
+  token-expiration-minutes: 30
+
+# Feign logging
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: full
+
+# JWT Configuration
+jwt:
+  secret: agribind-super-secure-jwt-secret-key-2025-minimum-32-chars
+  access-token-expiration-ms: 900000
+  refresh-token-expiration-ms: 2592000000
+
+logging:
+  level:
+    cm.agribind.auth: DEBUG
+    org.springframework.cloud.openfeign: DEBUG
+    feign: DEBUG
+    org.springframework.web: INFO
+    org.springframework.cloud.gateway: INFO

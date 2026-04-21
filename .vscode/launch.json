@@ -1,0 +1,70 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CommunicationApplication",
+            "request": "launch",
+            "mainClass": "com.agribind.communication.CommunicationApplication",
+            "projectName": "communication"
+        },
+        {
+            "type": "java",
+            "name": "UserManagementServiceApplication",
+            "request": "launch",
+            "mainClass": "cm.agribind.usermanagement.UserManagementServiceApplication",
+            "projectName": "user-management-service"
+        },
+        {
+            "type": "java",
+            "name": "AuthServiceApplication",
+            "request": "launch",
+            "mainClass": "cm.agribind.auth.AuthServiceApplication",
+            "projectName": "auth-service"
+        },
+        {
+            "type": "java",
+            "name": "EurekaServerApplication",
+            "request": "launch",
+            "mainClass": "cm.agribind.eureka.EurekaServerApplication",
+            "projectName": "eureka-server"
+        },
+        {
+            "type": "java",
+            "name": "ApiGatewayApplication",
+            "request": "launch",
+            "mainClass": "com.agribind.api_gateway.ApiGatewayApplication",
+            "projectName": "api-gateway"
+        },
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "ApiGatewayApplication",
+            "request": "launch",
+            "mainClass": "com.agribind.api_gateway.ApiGatewayApplication",
+            "projectName": "com.agriconnect-api-gateway"
+        },
+        {
+            "type": "java",
+            "name": "ServiceDiscoveryApplication",
+            "request": "launch",
+            "mainClass": "com.agribind.discovery.ServiceDiscoveryApplication",
+            "projectName": "com.agriconnect-service-discovery"
+        },
+        {
+            "type": "java",
+            "name": "NotificationServiceApplication",
+            "request": "launch",
+            "mainClass": "com.agribind.notification_service.NotificationServiceApplication",
+            "projectName": "notification-service"
+        }
+    ]
+}

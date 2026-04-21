@@ -1,0 +1,7 @@
+package cm.agribind.auth.exception;
+
+public class UserNotFoundException extends BusinessException {
+    public UserNotFoundException(String message) {
+        super(message, "USER_NOT_FOUND");
+    }
+}

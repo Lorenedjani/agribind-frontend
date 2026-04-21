@@ -1,0 +1,116 @@
+# application.yml — production-monitoring-service
+spring:
+  application:
+    name: production-monitoring-service  # Must match gateway route exactly
+
+  datasource:
+    url: jdbc:mysql://localhost:3307/agri_production_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      leak-detection-threshold: 60000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+# ============================================================
+# EUREKA CLIENT CONFIGURATION
+# FIX: Added ip-address, hostname, and instance-id to resolve
+#      "Cannot determine local hostname" on Windows, which was
+#      preventing registration and causing the 503 error.
+# ============================================================
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+    initial-instance-info-replication-interval-seconds: 5
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+    ip-address: 127.0.0.1                                      # FIX: Force IP instead of hostname lookup
+    hostname: localhost                                         # FIX: Explicit hostname for Windows
+    instance-id: ${spring.application.name}:${server.port}     # FIX: Unique, stable instance ID
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+# Server Configuration
+server:
+  port: ${SERVER_PORT:8086}
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.agribind.production_monitoring: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/production-service.log
+    max-size: 10MB
+    max-history: 30
+
+# Management & Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  show-actuator: false
+
+# Application-specific configurations
+app:
+  production:
+    offline-sync-interval: 300000
+    cache-ttl: 3600
+    max-batch-size: 100
+    enable-notifications: true
+
+  security:
+    jwt:
+      secret: ${JWT_SECRET:agribind-super-secure-jwt-secret-key-2025-minimum-32-chars}
+      expiration: 86400000

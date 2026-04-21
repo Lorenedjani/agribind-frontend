@@ -1,0 +1,38 @@
+﻿# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+misc.xml
+modules.xml
+vcs.xml
+workspace.xml
+
+# Angular
+/dist/
+/node_modules/
+/.angular/cache
+
+# Spring Boot
+/target/
+/.mvn/
+/mvnw
+/mvnw.cmd
+*.jar
+*.war
+*.ear
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files
+# /agribind-web/src/environments/environment.ts
+# /agribind-web/src/environments/environment.prod.ts
+"target/" 
+"*.jar" 
+"*.war" 

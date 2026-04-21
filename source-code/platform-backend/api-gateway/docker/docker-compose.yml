@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka
+      - SPRING_REDIS_HOST=redis-service
+    depends_on:
+      - discovery-service
+      - redis-service
+    networks:
+      - cooperative-network
+
+  redis-service:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - cooperative-network
+
+  discovery-service:
+    image: cooperative/discovery-service:latest
+    ports:
+      - "8761:8761"
+    networks:
+      - cooperative-network

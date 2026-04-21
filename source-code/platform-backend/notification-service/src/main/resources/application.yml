@@ -1,0 +1,133 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: notification-service
+  # Flyway must stay off: user-management JAR on classpath would run its migrations on this DB.
+  flyway:
+    enabled: false
+  datasource:
+    url: jdbc:mysql://localhost:3307/agribind_notifications?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+  # profiles:
+  #   active: prod  # Commented out for local development
+
+  # Disable Security and related auto-configurations
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+
+  # Disable Kafka for now
+  kafka:
+    enabled: false
+
+  # DISABLE RabbitMQ Configuration
+  rabbitmq:
+    enabled: false
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+  # Email Configuration
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            required: true
+            enable: true
+          starttls.enable: true
+          ssl:
+            trust: smtp.gmail.com
+
+# Eureka — enable so API Gateway (lb://notification-service) resolves this instance
+eureka:
+  client:
+    enabled: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    hostname: localhost
+    ip-address: 127.0.0.1
+    instance-id: ${spring.application.name}:${server.port}
+
+# Application Configuration
+app:
+  rabbitmq:
+    enabled: false
+    queue: notification-queue
+    exchange: notification-exchange
+    routing-key: notification.routing.key
+
+  sms:
+    cameroon:
+      country-code: "+237"
+      enabled: true
+
+# Phone SMS Gateway Configuration (Traccar)
+local-gateway:
+  url: ${TRACCAR_URL:http://192.168.43.29:8082}
+  token: ${TRACCAR_TOKEN:05aac354-ece7-4f1d-a364-c810137b0cdc}
+
+# Actuator - Disable security for actuator endpoints
+management:
+  health:
+    defaults:
+      enabled: false
+    diskspace:
+      enabled: true
+    ping:
+      enabled: true
+    rabbit:
+      enabled: false
+  endpoint:
+    health:
+      show-details: always
+    enabled-by-default: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+      base-path: /
+  security:
+    enabled: false
+
+# Completely disable security
+security:
+  basic:
+    enabled: false
+  enabled: false
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  show-actuator: false

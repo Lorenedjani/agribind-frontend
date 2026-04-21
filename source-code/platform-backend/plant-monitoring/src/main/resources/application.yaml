@@ -1,0 +1,107 @@
+spring:
+  application:
+    name: plant-health-monitoring-system
+  
+  datasource:
+    url: jdbc:mysql://localhost:3307/agribind_plants?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 5
+      minimum-idle: 2
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+  
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+# File Storage Configuration
+file:
+  upload:
+    dir: ./uploads/plant-photos
+    max-size: 10485760 # 10MB
+    allowed-extensions: jpg,jpeg,png,gif,bmp
+    thumbnail:
+      width: 300
+      height: 300
+  storage:
+    upload-dir: ./uploads/disease-reports
+    max-size: 5242880 # 5MB
+    allowed-extensions: jpg,jpeg,png,gif
+    thumbnail:
+      width: 200
+      height: 200
+
+# Health Analysis Configuration
+plant:
+  health:
+    thresholds:
+      healthy: 80
+      moderate: 50
+      poor: 20
+
+# Disease Report Configuration
+app:
+  disease-report:
+    auto-generate-id: true
+
+# Farmer microservice configuration
+farmer:
+  service:
+    url: http://localhost:8081
+
+server:
+  port: 8080
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    hostname: 127.0.0.1
+    ip-address: 127.0.0.1
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+
+# Logging configuration
+logging:
+  level:
+    com.plantmonitoring: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.agribind: DEBUG
+  file:
+    name: logs/plant-monitoring.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

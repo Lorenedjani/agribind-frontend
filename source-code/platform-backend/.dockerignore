@@ -1,0 +1,25 @@
+# Build artifacts
+**/target/
+**/build/
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+*.iws
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*.temp

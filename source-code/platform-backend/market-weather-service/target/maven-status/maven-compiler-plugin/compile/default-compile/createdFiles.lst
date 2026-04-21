@@ -1,0 +1,8 @@
+cm\agribind\marketweather\service\MarketWeatherService.class
+cm\agribind\marketweather\dto\WeatherSubscribeRequest.class
+cm\agribind\marketweather\dto\MarketPriceDto.class
+cm\agribind\marketweather\MarketWeatherServiceApplication.class
+cm\agribind\marketweather\dto\PriceTrendDto.class
+cm\agribind\marketweather\dto\WeatherForecastDto.class
+cm\agribind\marketweather\controller\MarketWeatherController.class
+cm\agribind\marketweather\dto\WeatherAlertDto.class

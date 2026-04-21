@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="FarmerProductionReport" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenNoDataType="AllSectionsNoDetail" uuid="abcdef12-3456-7890-abcd-ef1234567890">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<parameter name="REPORT_TITLE" class="java.lang.String"/>
+	<parameter name="COOPERATIVE_ID" class="java.lang.String"/>
+	<parameter name="REGION_FILTER" class="java.lang.String"/>
+	<parameter name="PERIOD" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<field name="farmerId" class="java.lang.String"/>
+	<field name="farmerName" class="java.lang.String"/>
+	<field name="farmerRegion" class="java.lang.String"/>
+	<field name="productName" class="java.lang.String"/>
+	<field name="quantity" class="java.math.BigDecimal"/>
+	<field name="unit" class="java.lang.String"/>
+	<field name="valueXaf" class="java.math.BigDecimal"/>
+	<field name="productionDate" class="java.time.LocalDate"/>
+	
+	<variable name="TotalValue" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{valueXaf}]]></variableExpression>
+	</variable>
+	<variable name="TotalQuantity" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{quantity}]]></variableExpression>
+	</variable>
+
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="90" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="802" height="30" forecolor="#328048" uuid="1234"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="20" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{REPORT_TITLE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="30" width="802" height="20" forecolor="#64748B" uuid="1235"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Cooperative: " + $P{COOPERATIVE_ID} + " | Region: " + $P{REGION_FILTER}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="50" width="802" height="20" forecolor="#64748B" uuid="1236"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Period: " + $P{PERIOD}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="30" splitType="Stretch">
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="0" width="80" height="30" forecolor="#FFFFFF" backcolor="#328048" uuid="2001"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Date]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="80" y="0" width="80" height="30" forecolor="#FFFFFF" backcolor="#328048" uuid="2002"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Farmer ID]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="160" y="0" width="160" height="30" forecolor="#FFFFFF" backcolor="#328048" uuid="2003"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Farmer Name]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="320" y="0" width="100" height="30" forecolor="#FFFFFF" backcolor="#328048" uuid="2004"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Region]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="420" y="0" width="120" height="30" forecolor="#FFFFFF" backcolor="#328048" uuid="2005"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Crop]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="540" y="0" width="100" height="30" forecolor="#FFFFFF" backcolor="#328048" uuid="2006"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Quantity]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="640" y="0" width="162" height="30" forecolor="#FFFFFF" backcolor="#328048" uuid="2007"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font isBold="true"/></textElement>
+				<text><![CDATA[Estimated Value (XAF)]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="25" splitType="Stretch">
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="0" y="0" width="80" height="25" uuid="3001"/>
+				<box><bottomPen lineWidth="0.5" lineColor="#E2E8F0"/></box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[java.util.Date.from($F{productionDate}.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant())]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="80" y="0" width="80" height="25" uuid="3002"/>
+				<box><bottomPen lineWidth="0.5" lineColor="#E2E8F0"/></box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{farmerId}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="160" y="0" width="160" height="25" uuid="3003"/>
+				<box><bottomPen lineWidth="0.5" lineColor="#E2E8F0"/></box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<paragraph leftIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{farmerName}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="320" y="0" width="100" height="25" uuid="3004"/>
+				<box><bottomPen lineWidth="0.5" lineColor="#E2E8F0"/></box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{farmerRegion}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="420" y="0" width="120" height="25" uuid="3005"/>
+				<box><bottomPen lineWidth="0.5" lineColor="#E2E8F0"/></box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{productName}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00">
+				<reportElement x="540" y="0" width="100" height="25" uuid="3006"/>
+				<box><bottomPen lineWidth="0.5" lineColor="#E2E8F0"/></box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<paragraph rightIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{quantity}.toString() + " " + $F{unit}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0">
+				<reportElement x="640" y="0" width="162" height="25" uuid="3007"/>
+				<box><bottomPen lineWidth="0.5" lineColor="#E2E8F0"/></box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<paragraph rightIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{valueXaf}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="30" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="400" height="30" forecolor="#94A3B8" uuid="4001"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Generated on: " + new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="402" y="0" width="400" height="30" forecolor="#94A3B8" uuid="4002"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="40" splitType="Stretch">
+			<staticText>
+				<reportElement x="420" y="0" width="120" height="30" uuid="5001"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true" size="12"/>
+					<paragraph rightIndent="5"/>
+				</textElement>
+				<text><![CDATA[Grand Total:]]></text>
+			</staticText>
+			<textField pattern="#,##0">
+				<reportElement x="640" y="0" width="162" height="30" forecolor="#328048" uuid="5003"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true" size="12"/>
+					<paragraph rightIndent="5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{TotalValue}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

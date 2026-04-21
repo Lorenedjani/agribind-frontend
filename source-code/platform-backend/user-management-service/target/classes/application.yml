@@ -1,0 +1,119 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: user-management-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3307/agribind_users?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: false
+    repair-on-migrate: true
+    clean-on-validation-error: true
+    out-of-order: true
+
+  # Kafka auto-config is excluded in UserManagementServiceApplication (KafkaAutoConfiguration).
+  # When enabling agribind.notifications.use-kafka=true, uncomment and configure brokers.
+  # kafka:
+  #   bootstrap-servers: localhost:9092
+  #   producer:
+  #     key-serializer: org.apache.kafka.common.serialization.StringSerializer
+  #     value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  #     properties:
+  #       spring.json.add.type.headers: false
+  #   consumer:
+  #     group-id: user-management-group
+  #     auto-offset-reset: earliest
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    metadata-map:
+      zone: primary
+
+# Service Integration
+services:
+  auth-service:
+    url: http://auth-service
+  notification-service:
+    url: http://localhost:8085 # 👈 UPDATED: Use localhost for direct access
+    # url: http://notification-service  # Use this when using Eureka service discovery
+
+
+# Application Configuration
+agribind:
+  security:
+    jwt-secret: agribind-super-secure-jwt-secret-key-2025-minimum-32-chars
+
+  qrcode:
+    default-size: 300
+    default-format: PNG
+    expiration-minutes: 30
+
+  default-password:
+    enabled: true
+    length: 12
+    pattern: "AG${random}${year}"
+
+  sms:
+    enabled: true
+    provider: twilio
+
+  google-maps:
+    api-key: ${GOOGLE_MAPS_API_KEY:your-api-key}
+    enabled: true
+
+  notifications:
+    enabled: true
+    use-kafka: false              # Keep false - Kafka not configured
+    use-direct-mode: true         # 👈 NEW: Enable direct mode (bypasses RabbitMQ)
+    send-sms: true
+    send-email: true
+    # Email for specific user types
+    email-for-cooperative: true
+    email-for-government: true
+    email-for-farmer: true        # SMS and Email for farmers if provided
+
+logging:
+  level:
+    cm.agribind.usermanagement: INFO
+    org.springframework.cloud: DEBUG
+    org.flywaydb: DEBUG
+  file:
+    name: logs/user-management.log
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: true

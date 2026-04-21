@@ -1,0 +1,136 @@
+server:
+  port: ${PORT:8081}
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins: ${ALLOWED_ORIGINS:"*"}
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowed-headers:
+              - "*"
+            allow-credentials: true
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        # Auth Service
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/v1/auth/**
+          filters:
+            - name: RequestLoggingFilter
+
+        # User Management Service
+        - id: user-management-service
+          uri: lb://user-management-service
+          predicates:
+            - Path=/api/v1/users/**, /api/v1/farmers/**, /api/v1/cooperatives/**, /api/v1/qrcodes/**, /api/v1/dashboard/**, /api/v1/exports/**
+          filters:
+            - name: RequestLoggingFilter
+
+        # Notification Service
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - name: RequestLoggingFilter
+
+        # ── Communication Service ──────────────────────────────────────────────
+        # FIX: service name must exactly match spring.application.name = "communication"
+        # FIX: route covers /api/communications/** which is what the Angular service calls
+        - id: communication-service
+          uri: lb://communication
+          predicates:
+            - Path=/api/communications/**
+          filters:
+            - name: RequestLoggingFilter
+
+        # Inventory Service
+        - id: inventory-service
+          uri: lb://production-monitoring-service
+          predicates:
+            - Path=/api/inventory/**
+          filters:
+            - name: RequestLoggingFilter
+
+        # Market Weather Service
+        - id: market-weather-service
+          uri: lb://market-weather-service
+          predicates:
+            - Path=/api/v1/market/**, /api/v1/weather/**
+          filters:
+            - name: RequestLoggingFilter
+
+        # Microcredit Service
+        - id: microcredit-service
+          uri: lb://microcredit-service
+          predicates:
+            - Path=/api/microcredit/**
+          filters:
+            - RewritePath=/api/microcredit/(?<segment>.*), /microcredit/api/microcredit/$\{segment}
+            - name: RequestLoggingFilter
+
+        # Production Monitoring Service
+        - id: production-monitoring-service
+          uri: lb://production-monitoring-service
+          predicates:
+            - Path=/api/v1/production/**
+          filters:
+            - name: RequestLoggingFilter
+
+        # Plant Monitoring Service
+        - id: plant-monitoring-service
+          uri: lb://plant-health-monitoring-system
+          predicates:
+            - Path=/api/v1/plants/**, /api/v1/health/**, /api/v1/disease-reports/**, /api/v1/plant-photos/**
+          filters:
+            - name: RequestLoggingFilter
+
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin
+
+# FIX: explicit IP address so Eureka registration succeeds on Windows
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    hostname: 127.0.0.1
+    ip-address: 127.0.0.1
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    com.agribind.api_gateway: INFO
+    org.springframework.cloud.netflix.eureka: INFO

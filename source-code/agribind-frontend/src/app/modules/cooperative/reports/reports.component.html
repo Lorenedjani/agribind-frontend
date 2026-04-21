@@ -1,0 +1,290 @@
+<div class="reports-container">
+  <!-- Modern Header -->
+  <div class="modern-header">
+    <div class="header-content">
+      <div class="header-info">
+        <h1><i class="fas fa-chart-line"></i>Analytics Dashboard</h1>
+        <p class="header-subtitle">Comprehensive insights for your cooperative</p>
+        <div class="user-badge" *ngIf="isCoopManager">
+          <i class="fas fa-users"></i>
+          <span>{{ currentUser?.cooperativeDetails?.name || 'Your Cooperative' }}</span>
+          <span class="coop-id">ID: {{ coopId }}</span>
+        </div>
+      </div>
+      <div class="header-stats">
+        <div class="stat-card">
+          <div class="stat-value">{{ cropsByRegion.length }}</div>
+          <div class="stat-label">Active Regions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ cropsByFarmer.length }}</div>
+          <div class="stat-label">Active Farmers</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ formattedTotalValue }}</div>
+          <div class="stat-label">Total Value (XAF)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modern Filter Section -->
+  <div class="modern-filters">
+    <div class="filter-header">
+      <h2><i class="fas fa-filter"></i>Filter Analytics</h2>
+      <div class="filter-summary" *ngIf="startDate && endDate">
+        <span class="period-badge">{{ selectedPreset === 'CUSTOM' ? 'Custom' : selectedPreset }}</span>
+        <span class="date-range">{{ startDate }} to {{ endDate }}</span>
+        <span class="region-badge" *ngIf="selectedRegion !== 'All Regions'">
+          <i class="fas fa-map-marker-alt"></i>{{ selectedRegion }}
+        </span>
+      </div>
+    </div>
+    
+    <div class="filter-grid">
+      <div class="filter-card">
+        <label class="filter-label">
+          <i class="fas fa-calendar-alt"></i>
+          Time Period
+        </label>
+        <select class="modern-select" [(ngModel)]="selectedPreset" (change)="setPreset(selectedPreset); onFiltersChange()">
+          <option *ngFor="let preset of presets" [value]="preset.value">
+            {{ preset.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-card" *ngIf="selectedPreset === 'CUSTOM'">
+        <label class="filter-label">
+          <i class="fas fa-calendar"></i>
+          Date Range
+        </label>
+        <div class="date-inputs">
+          <input type="date" class="modern-input" [(ngModel)]="startDate" (change)="validateDates(); onFiltersChange()" placeholder="Start">
+          <span class="date-separator">to</span>
+          <input type="date" class="modern-input" [(ngModel)]="endDate" (change)="validateDates(); onFiltersChange()" placeholder="End">
+        </div>
+      </div>
+
+      <div class="filter-card">
+        <label class="filter-label" *ngIf="isCoopManager">
+          <i class="fas fa-globe"></i>
+          Filter by Region
+        </label>
+        <label class="filter-label" *ngIf="!isCoopManager">
+          <i class="fas fa-globe"></i>
+          Region Scope
+        </label>
+        <select class="modern-select" [(ngModel)]="selectedRegion" (change)="onFiltersChange()">
+          <option *ngFor="let region of getAvailableRegions()" [value]="region">
+            {{ region }}
+          </option>
+        </select>
+        <small class="filter-hint" *ngIf="isCoopManager">
+          <i class="fas fa-info-circle"></i>
+          Filter farmers by region within your cooperative
+        </small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading analytics data...</p>
+  </div>
+
+  <!-- Analytics Content -->
+  <div *ngIf="!isLoading" class="analytics-content">
+    
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <div class="charts-grid">
+        <!-- Region Production Chart -->
+        <div class="chart-card modern-card">
+          <div class="chart-header">
+            <h3><i class="fas fa-chart-pie"></i>Production by Region</h3>
+            <p class="chart-subtitle">Distribution across regions</p>
+          </div>
+          <div class="chart-container">
+            <div class="simple-chart">
+              <div *ngFor="let item of regionChartData" class="chart-bar">
+                <div class="bar-label">{{ item.label }}</div>
+                <div class="bar-wrapper">
+                  <div class="bar modern-bar" [style.width.%]="item.percentage"></div>
+                  <span class="bar-value">{{ item.value }} MT</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Farmers Chart -->
+        <div class="chart-card modern-card">
+          <div class="chart-header">
+            <h3><i class="fas fa-trophy"></i>Top Performing Farmers</h3>
+            <p class="chart-subtitle">Highest production volumes</p>
+          </div>
+          <div class="chart-container">
+            <div class="simple-chart">
+              <div *ngFor="let item of farmerChartData; let i = index" class="chart-bar">
+                <div class="rank-badge">#{{ i + 1 }}</div>
+                <div class="bar-label">{{ item.label | slice:0:15 }}{{ item.label.length > 15 ? '...' : '' }}</div>
+                <div class="bar-wrapper">
+                  <div class="bar modern-bar" [style.width.%]="(item.value / (farmerChartData[0].value || 1)) * 100"></div>
+                  <span class="bar-value">{{ item.value }} MT</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Data Tables Section -->
+    <div class="data-section">
+      <!-- Crops by Region Table -->
+      <div class="table-card modern-card">
+        <div class="table-header">
+          <h3><i class="fas fa-map-marked-alt"></i>Regional Production Details</h3>
+          <p class="table-subtitle">Crop quantities and farmer distribution by region</p>
+        </div>
+        
+        <div class="table-container modern-table">
+          <table>
+            <thead>
+              <tr>
+                <th><i class="fas fa-globe"></i>Region</th>
+                <th><i class="fas fa-users"></i>Farmers</th>
+                <th><i class="fas fa-weight"></i>Total Quantity</th>
+                <th><i class="fas fa-seedling"></i>Crop Breakdown</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let reg of cropsByRegion" class="data-row">
+                <td>
+                  <div class="region-cell">
+                    <span class="region-indicator"></span>
+                    <strong>{{ reg.region }}</strong>
+                  </div>
+                </td>
+                <td>
+                  <span class="farmer-count">{{ reg.farmerCount }}</span>
+                </td>
+                <td>
+                  <span class="quantity-value">{{ reg.totalQuantity }}</span>
+                  <span class="unit">MT</span>
+                </td>
+                <td class="breakdown-cell">
+                  <div class="crop-tags">
+                    <span class="crop-tag" *ngFor="let crop of reg.crops">
+                      <i class="fas fa-leaf"></i>{{ crop.cropName }}
+                      <span class="crop-quantity">{{ crop.quantity }}</span>
+                    </span>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="cropsByRegion.length === 0">
+                <td colspan="4" class="no-data">
+                  <i class="fas fa-inbox"></i>
+                  <p>No regional data available for this period</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Crops by Farmer Table -->
+      <div class="table-card modern-card">
+        <div class="table-header">
+          <h3><i class="fas fa-user-friends"></i>Farmer Performance Details</h3>
+          <p class="table-subtitle">Individual production metrics and values</p>
+        </div>
+        
+        <div class="table-container modern-table">
+          <table>
+            <thead>
+              <tr>
+                <th><i class="fas fa-user"></i>Farmer</th>
+                <th><i class="fas fa-map-marker-alt"></i>Region</th>
+                <th><i class="fas fa-money-bill-wave"></i>Total Value</th>
+                <th><i class="fas fa-weight"></i>Total Quantity</th>
+                <th><i class="fas fa-boxes"></i>Crops Delivered</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let farm of cropsByFarmer" class="data-row">
+                <td>
+                  <div class="farmer-cell">
+                    <div class="farmer-avatar">
+                      <i class="fas fa-user"></i>
+                    </div>
+                    <div class="farmer-info">
+                      <strong>{{ farm.farmerName }}</strong>
+                      <span class="delivery-count">{{ farm.deliveryCount }} deliveries</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="region-badge small">{{ farm.farmerRegion }}</span>
+                </td>
+                <td>
+                  <span class="value-xaf">{{ getFarmValue(farm) }}</span>
+                  <span class="currency">XAF</span>
+                </td>
+                <td>
+                  <span class="quantity-value">{{ farm.totalQuantity }}</span>
+                  <span class="unit">MT</span>
+                </td>
+                <td class="breakdown-cell">
+                  <div class="crop-tags small">
+                    <span class="crop-tag" *ngFor="let c of farm.crops">
+                      <i class="fas fa-leaf"></i>{{ c.cropName }}
+                      <span class="quality-grade">{{ c.qualityGrade }}</span>
+                    </span>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="cropsByFarmer.length === 0">
+                <td colspan="5" class="no-data">
+                  <i class="fas fa-inbox"></i>
+                  <p>No farmer data available for this period</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export Section -->
+    <div class="export-section modern-card">
+      <div class="export-header">
+        <h3><i class="fas fa-download"></i>Export Reports</h3>
+        <p class="export-subtitle">Download detailed analytics for {{ selectedRegion }} ({{ startDate }} to {{ endDate }})</p>
+      </div>
+
+      <div class="export-content">
+        <div class="export-options">
+          <div class="format-card" [class.active]="exportFormat === 'pdf'" (click)="exportFormat = 'pdf'">
+            <i class="fas fa-file-pdf"></i>
+            <span>PDF Report</span>
+            <small>Complete formatted report</small>
+          </div>
+          <div class="format-card" [class.active]="exportFormat === 'excel'" (click)="exportFormat = 'excel'">
+            <i class="fas fa-file-excel"></i>
+            <span>Excel Data</span>
+            <small>Raw data for analysis</small>
+          </div>
+        </div>
+
+        <button class="modern-generate-btn" (click)="generateReport()" [disabled]="isGenerating || !!dateError">
+          <span class="btn-icon" *ngIf="!isGenerating"><i class="fas fa-download"></i></span>
+          <span class="btn-spinner" *ngIf="isGenerating"></span>
+          <span class="btn-text">{{ isGenerating ? 'Generating...' : 'Download Report' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
